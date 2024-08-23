@@ -5,19 +5,19 @@ CPPFLAGS=-g
 LDFLAGS=-g 
 LDLIBS=
 
-SRCS=main.cpp v4l2camera.cpp
-OBJS=$(subst .cpp,.o,$(SRCS))
-
 all: main
 
-main: $(OBJS)
-	$(CXX) $(LDFLAGS) -o v4l2test $(OBJS) $(LDLIBS)
+main: main.o v4l2camera.o
+	$(CXX) $(LDFLAGS) -o v4l2test main.o v4l2camera.o $(LDLIBS)
 
-%.o: %.cpp
-	$(CXX) $(CFLAGS) $(CPPFLAGS) -c $<
+main.o: main.cpp defines.h v4l2camera.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -c main.cpp
+
+v4l2camera.o: v4l2camera.cpp v4l2camera.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -c v4l2camera.cpp
 
 clean:
-	$(RM) $(OBJS)
+	$(RM) *.o
 
 distclean: clean
 	$(RM) v4l2test
