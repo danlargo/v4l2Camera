@@ -118,47 +118,88 @@ void V4l2Camera::clearLog()
     this->m_debugLog.clear();
 }
 
-int V4l2Camera::setValue( int id, int newVal )
+int V4l2Camera::setValue( int id, int newVal, bool openOnDemand )
 {
     struct v4l2_control outQuery;
+
+    bool closeOnExit = false;
     int ret = -1;
 
-    // this is the actual control ID, get the value to set
-    if( -1 == this->m_fid ) log( "Unable to call setValue() as device is NOT open", warning );
-
-    else
+    // check if the device is open before trying to set the value
+    if( !openOnDemand && (-1 == this->m_fid) )
     {
-        memset( &outQuery, 0, sizeof(struct v4l2_control));
-        outQuery.id = id;
-        outQuery.value = newVal;
-        ret = ioctl(this->m_fid, VIDIOC_S_CTRL, &outQuery );
+        log( "Unable to call setValue() as device is NOT open", warning );
+        return -1;
+    }
 
-        if( -1 == ret ) log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
-        else log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] = " + std::to_string(newVal), info );
+    // if device is closed, check if we ae being asked to open it
+    if( openOnDemand && (-1 == this->m_fid) )
+    {
+        if( !this->open() )
+        {
+            log( "Unable to openOnDemand for setValue() : " + std::string(strerror(errno)), error );
+            return -1;
+        }
+        closeOnExit = true;
+    }
+
+    memset( &outQuery, 0, sizeof(struct v4l2_control));
+    outQuery.id = id;
+    outQuery.value = newVal;
+    ret = ioctl(this->m_fid, VIDIOC_S_CTRL, &outQuery );
+
+    if( -1 == ret ) log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
+    else log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] = " + std::to_string(newVal), info );
+
+    if( closeOnExit )
+    {
+        ::close( this->m_fid );
+        this->m_fid = -1;
     }
 
     return ret;
 }
 
-int V4l2Camera::getValue( int id )
+int V4l2Camera::getValue( int id, bool openOnDemand )
 {
     struct v4l2_control outQuery;
 
+    bool closeOnExit = false;
     int ret = -1;
 
-    // this is the actual control ID, get the value to set
-    if( -1 == this->m_fid ) log( "Unable to call getValue() as device is NOT open", warning );
+    // check if device is open
+    if( !openOnDemand && (-1 == this->m_fid) )
+    {
+        log( "Unable to call getValue() as device is NOT open", warning );
+        return -1;
+    }
 
+    // check if we are asked to open it
+    if( openOnDemand && (-1 == this->m_fid) )
+    {
+        if( !this->open() )
+        {
+            log( "Unable to openOnDemand for getValue() : " + std::string(strerror(errno)), error );
+            return -1;
+        }
+        closeOnExit = true;
+    }
+
+    // get the actual value
+    memset( &outQuery, 0, sizeof(struct v4l2_control));
+    outQuery.id = id;
+    if( -1 == ioctl(m_fid, VIDIOC_G_CTRL, &outQuery ) ) log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
     else
     {
-        memset( &outQuery, 0, sizeof(struct v4l2_control));
-        outQuery.id = id;
-        if( -1 == ioctl(m_fid, VIDIOC_G_CTRL, &outQuery ) ) log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
-        else
-        {
-            ret = outQuery.value;
-            log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) +"] = " + std::to_string(ret), info );
-        }
+        ret = outQuery.value;
+        log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) +"] = " + std::to_string(ret), info );
+    }
+
+    // close it if we opened on demand
+    if( closeOnExit )
+    {
+        ::close(this->m_fid);
+        this->m_fid = -1;
     }
 
     return ret;
@@ -394,10 +435,6 @@ struct image_buffer * V4l2Camera::fetch( bool lastOne )
                     retBuffer->buffer = this->m_frameBuffer->buffer;
                     retBuffer->length = buf.bytesused;
 
-                    log( "ioctl(VIDIOC_DQBUF) success, DeQ'd "
-                            + std::to_string(((float)buf.bytesused/1024.)) + " kB of "
-                            + std::to_string(((float)this->m_frameBuffer->length/1024.)) +  "kB allocated", info );
-
                     // only re-queue if we are going to be getting more
                     if( !lastOne )
                     {
@@ -417,7 +454,6 @@ struct image_buffer * V4l2Camera::fetch( bool lastOne )
                         buf.length = this->m_frameBuffer->length;
 
                         if( -1 == ioctl(this->m_fid, VIDIOC_QBUF, &buf) ) log( "ioctl(VIDIOC_QBUF) failed : " + std::string(strerror(errno) ), error );
-                        else log( "ioctl(VIDIOC_QBUF) success, Re-Q'd 1 buffer", info );
                     }
                 }
                 break;
@@ -567,40 +603,40 @@ std::string V4l2Camera::cntrlTypeToString( int type )
     switch( type )
     {
         case V4L2_CTRL_TYPE_INTEGER:
-            ret = "Integer";
+            ret = "int";
             break;
         case V4L2_CTRL_TYPE_BOOLEAN:
-            ret = "Boolean";
+            ret = "bool";
             break;
         case V4L2_CTRL_TYPE_MENU:
-            ret = "Menu";
+            ret = "menu";
             break;
         case V4L2_CTRL_TYPE_INTEGER_MENU:
-            ret = "Integer Menu";
+            ret = "int-menu";
             break;
         case V4L2_CTRL_TYPE_BITMASK:
-            ret = "Bitmask";
+            ret = "bitmask";
             break;
         case V4L2_CTRL_TYPE_BUTTON:
-            ret = "Button";
+            ret = "button";
             break;
         case V4L2_CTRL_TYPE_INTEGER64:
-            ret = "Integer 64";
+            ret = "int64";
             break;
         case V4L2_CTRL_TYPE_STRING:
-            ret = "String";
+            ret = "str";
             break;
         case V4L2_CTRL_TYPE_CTRL_CLASS:
-            ret = "Control Class";
+            ret = "cntrl-class";
             break;
         case V4L2_CTRL_TYPE_U8:
-            ret = "Integer U8";
+            ret = "uint8";
             break;
         case V4L2_CTRL_TYPE_U16:
-            ret = "Integer U16";
+            ret = "uint16";
             break;
         case V4L2_CTRL_TYPE_U32:
-            ret = "Integer U32";
+            ret = "uint32";
             break;
         default:
             break;

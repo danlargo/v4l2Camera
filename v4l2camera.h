@@ -115,7 +115,6 @@ public:
     bool enumCapabilities();
 
     std::string cntrlTypeToString(int type);
-\
     int setValue( int id, int val );
     int getValue( int id );
 
