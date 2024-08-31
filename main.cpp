@@ -9,7 +9,7 @@ int main( int argc, char** argv )
 {
     std::map<std::string, std::string> cmdLine;
 
-    std::cout   << "Welcome to " << argv[0] << "example application" 
+    std::cout   << "Welcome to " << argv[0] << " sample application" 
                 << "   ...using V4l2Camera " << V4l2Camera::getVersionString() 
                 << " " << V4l2Camera::getCodeName()
                 << std::endl;

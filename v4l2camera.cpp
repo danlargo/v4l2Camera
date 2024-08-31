@@ -29,7 +29,7 @@ V4l2Camera::V4l2Camera( std::string device_name )
 
 V4l2Camera::~V4l2Camera()
 {
-    // close the device before we disappear
+    // close the device before we disappear - if m_fid is set then the device is likely open
     if( this->m_fid > -1 ) ::close(this->m_fid);
 }
 
@@ -68,7 +68,7 @@ void V4l2Camera::setLogMode( enum logging_mode newMode )
 
 void V4l2Camera::log( std::string out, enum msg_type tag )
 {
-    if( this->m_logMode != logOff )
+    if( logOff != this->m_logMode )
     {
         // build the log message
         std::string msg = "[" + this->getTagStr(tag) + "] " + this->m_fidName +  " : " + out;
@@ -77,16 +77,13 @@ void V4l2Camera::log( std::string out, enum msg_type tag )
         this->m_debugLog.push_back( msg );
 
         // check if we should do anything else with it
-        if( this->m_logMode == logToStdErr ) std::cerr << msg << std::endl;
-        if( this->m_logMode == logToStdOut ) std::cout << msg << std::endl;
+        if( logToStdErr == this->m_logMode ) std::cerr << msg << std::endl;
+        if( logToStdOut == this->m_logMode ) std::cout << msg << std::endl;
 
         // check the length of the log, if greater than logDepth then clean from beginning
         while( this->m_debugLog.size() > this->s_logDepth ) this->m_debugLog.erase(this->m_debugLog.begin() );
 
-    } else{
-        // make sure log is off and empty
-        this->m_debugLog.clear();
-    }
+    } else this->m_debugLog.clear();       // make sure log is off and empty
 }
 
 std::string V4l2Camera::getTagStr( enum msg_type tag )
@@ -127,15 +124,18 @@ int V4l2Camera::setValue( int id, int newVal )
     int ret = -1;
 
     // this is the actual control ID, get the value to set
-    if( this->m_fid > -1 )
+    if( -1 == this->m_fid ) log( "Unable to call setValue() as device is NOT open", warning );
+
+    else
     {
         memset( &outQuery, 0, sizeof(struct v4l2_control));
         outQuery.id = id;
         outQuery.value = newVal;
         ret = ioctl(this->m_fid, VIDIOC_S_CTRL, &outQuery );
-        log( "setValue(" + std::to_string(id) + ") to " + std::to_string(newVal), info );
 
-    } else log( "Unable to call setValue() as device is NOT open", warning );
+        if( -1 == ret ) log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
+        else log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] = " + std::to_string(newVal), info );
+    }
 
     return ret;
 }
@@ -147,14 +147,19 @@ int V4l2Camera::getValue( int id )
     int ret = -1;
 
     // this is the actual control ID, get the value to set
-    if( this->m_fid > -1 )
+    if( -1 == this->m_fid ) log( "Unable to call getValue() as device is NOT open", warning );
+
+    else
     {
         memset( &outQuery, 0, sizeof(struct v4l2_control));
         outQuery.id = id;
-        if( ioctl(m_fid, VIDIOC_G_CTRL, &outQuery ) != -1 ) ret = outQuery.value;
-        log( "getValue(" + std::to_string(id) +") is " + std::to_string(ret), info );
-
-    } else log( "Unable to call getValue() as device is NOT open", warning );
+        if( -1 == ioctl(m_fid, VIDIOC_G_CTRL, &outQuery ) ) log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
+        else
+        {
+            ret = outQuery.value;
+            log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) +"] = " + std::to_string(ret), info );
+        }
+    }
 
     return ret;
 }
@@ -164,16 +169,18 @@ bool V4l2Camera::open()
     bool ret = false;
 
     this->m_fid = ::open(this->m_fidName.c_str(), O_RDWR);
-    if( this->m_fid > -1 )
+
+    if( -1 == this->m_fid ) log( "::open(" + this->m_fidName + ") failed : " + std::string(strerror(errno)), error );
+
+    else
     {
         // set the fetch mode to USERPtr as a default, UNTIL WE SUPPORT MMAP
         this->m_bufferMode = userPtrMode;
 
         // indicate we are open ok
         ret = true;
-        log( "Device opened successfully with FID = " + std::to_string(this->m_fid), info );
-
-    } else log( "Device failed to open : " + std::string(strerror(errno)), error );
+        log( "::open(" + this->m_fidName + ") success, FID = " + std::to_string(this->m_fid), info );
+    }
 
     return ret;
 }
@@ -189,18 +196,21 @@ bool V4l2Camera::enumCapabilities()
 
     bool ret = false;
 
-    if( this->m_fid > -1 )
+    if( -1 == this->m_fid ) log( "Unable to call getCaps() as device is NOT open", warning );
+
+    else
     {
-        if( ioctl(this->m_fid, VIDIOC_QUERYCAP, &tmpV) > -1 )
+        if( -1 == ioctl(this->m_fid, VIDIOC_QUERYCAP, &tmpV) ) log( "ioctl(VIDIOC_QUERYCAP) failed :  " + std::string(strerror(errno)), error );
+
+        else
         {
             // grab the device name
             this->m_userName = (char *)(tmpV.card);
             this->m_capabilities = tmpV.capabilities;
             ret = true;
-            log( "getCaps( " + this->m_fidName + " ) returned vector = " + std::to_string(this->m_capabilities), info );
-
-        } else log( "Unable to query capabilities vector :  " + std::string(strerror(errno)), error );
-    } else log( "Unable to call getCaps() as device is NOT open", warning );
+            log( "ioctl(VIDIOC_QUERYCAP) " + this->m_fidName + " success, vector = " + std::to_string(this->m_capabilities), info );
+        }
+    }
 
     return ret;
 }
@@ -224,8 +234,8 @@ void V4l2Camera::close()
         case userPtrMode:
         case mMapMode:
             type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            if( ioctl( this->m_fid, VIDIOC_STREAMOFF, &type) > -1 ) log( "VIDIOC_STREAMOFF success (streaming off) for " + this->m_fidName, info );
-            else log( "ioctl(VIDIOC_STREAMOFF) failed : " + std::string(strerror(errno)), error );
+            if( -1 == ioctl( this->m_fid, VIDIOC_STREAMOFF, &type) ) log( "ioctl(VIDIOC_STREAMOFF) failed : " + std::string(strerror(errno)), error );
+            else log( "VIDIOC_STREAMOFF success (streaming off) for " + this->m_fidName, info );
             break;
     }
 
@@ -240,34 +250,49 @@ bool V4l2Camera::setFrameFormat( struct video_mode vm )
     struct v4l2_format fmt;
 
     bool ret = false;
-    if( this->m_fid > -1 )
+    if( -1 == this->m_fid ) log( "Unable to call setFrameFormat() as device is NOT open", warning );
     {
         fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         fmt.fmt.pix.pixelformat = vm.fourcc;
         fmt.fmt.pix.width       = vm.width;
         fmt.fmt.pix.height      = vm.height;
 
-        if (ioctl(this->m_fid, VIDIOC_S_FMT, &fmt) > -1)
+        if( -1 == ioctl(this->m_fid, VIDIOC_S_FMT, &fmt) ) log( "ioctl(VIDIOC_S_FMT) failed : " + std::string(strerror(errno)), error );
         {
             this->m_currentMode = vm;
             ret = true;
-            log( "VIDIOC_S_FMT success (frame format) as : " 
+            log( "ioctl(VIDIOC_S_FMT) success, set to : "
                     + vm.format_str + " at [" 
                     + std::to_string(vm.width) + " x " 
                     + std::to_string(vm.height) + "]", info );
-
-        } else log( "ioctl(VIDIOC_S_FMT) failed : " + std::string(strerror(errno)), error );
-    } else log( "Unable to call setFrameFormat() as device is NOT open", warning );
+        }
+    }
 
     return ret;
 }
 
+bool V4l2Camera::setFrameFormat( std::string mode, int width, int height )
+{
+    // lets see if we can find the requested mode
+    for( auto x : this->m_modes )
+    {
+        struct video_mode tmpMode = x.second;
+        if( (tmpMode.format_str == mode) && (tmpMode.width == width) && (tmpMode.height == height) )
+        {
+            return setFrameFormat( tmpMode );
+        }
+    }
+
+    log( "Requested mode not found");
+
+    return false;
+}
 
 bool V4l2Camera::init( enum fetch_mode newMode )
 {
     bool ret = false;
 
-    if( this->m_fid > -1 )
+    if( -1 == this->m_fid ) log( "Unable to call init() as device is NOT open", info );
     {
         this->m_bufferMode = newMode;
 
@@ -287,9 +312,11 @@ bool V4l2Camera::init( enum fetch_mode newMode )
                 req.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 req.memory = V4L2_MEMORY_USERPTR;
 
-                if( ioctl(this->m_fid, VIDIOC_REQBUFS, &req) > -1 )
+                if( -1 == ioctl(this->m_fid, VIDIOC_REQBUFS, &req) ) log( "ioctl(VIDIOC_REQBUF) failed : " + std::string(strerror(errno)), error );
+
+                else
                 {
-                    log( "VIDIOC_REQBUFS success ", info );
+                    log( "ioctl(VIDIOC_REQBUF) success", info );
 
                     // queuing up this->numBuffers fetch buffers
                     this->m_frameBuffer = new struct image_buffer;
@@ -306,23 +333,24 @@ bool V4l2Camera::init( enum fetch_mode newMode )
                     buf.m.userptr = (unsigned long)(this->m_frameBuffer->buffer);
                     buf.length = this->m_frameBuffer->length;
 
-                    if( ioctl(this->m_fid, VIDIOC_QBUF, &buf) == -1 )
+                    if( -1 == ioctl(this->m_fid, VIDIOC_QBUF, &buf) ) log( "ioctl(VIDIOC_QBUF) failed : " + std::string(strerror(errno)), error );
+
+                    else
                     {
-                        log( "ioctl VIDIOC_QBUF failed : " + std::string(strerror(errno)), error );
-                        return false;
+                        log( "ioctl(VIDIOC_QBUF) Q'd 1 buffer", info );
 
-                    } else log( "Q'd 1 buffer", info );
+                        // turn streaming on
+                        enum v4l2_buf_type type;
+                        type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                        if( -1 == ioctl(this->m_fid, VIDIOC_STREAMON, &type) ) log( "ioctl(VIDIOC_STREAMON) failed : " + std::string(strerror(errno)), error );
 
-                    // turn streaming on
-                    enum v4l2_buf_type type;
-                    type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                    if( ioctl(this->m_fid, VIDIOC_STREAMON, &type) > -1 )
-                    {
-                        log( "VIDIOC_STREAMON activated", info );
-                        ret = true;
-
-                    } else log( "ioctl VIDIOC_STREAMON failed : " + std::string(strerror(errno)), error );
-                } else log( "ioctl VIDIOC_REQBUF failed : " + std::string(strerror(errno)), error );
+                        else
+                        {
+                            log( "ioctl(VIDIOC_STREAMON) success", info );
+                            ret = true;
+                        }
+                    }
+                }
 
                 break;
 
@@ -332,8 +360,7 @@ bool V4l2Camera::init( enum fetch_mode newMode )
             case notset:
                 break;
         }
-
-    } else log( "Unable to call init() as device is NOT open", info );
+    }
 
     return ret;
 }
@@ -342,7 +369,7 @@ struct image_buffer * V4l2Camera::fetch( bool lastOne )
 {
     struct image_buffer * retBuffer = nullptr;
 
-    if( this->m_fid > -1 )
+    if( -1 == this->m_fid ) log( "Unable to call fetch() as no device is open", warning );
     {
         switch( this->m_bufferMode )
         {
@@ -358,42 +385,40 @@ struct image_buffer * V4l2Camera::fetch( bool lastOne )
                 buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 buf.memory = V4L2_MEMORY_USERPTR;
 
-                if( ioctl(this->m_fid, VIDIOC_DQBUF, &buf) > -1)
+                if( -1 == ioctl(this->m_fid, VIDIOC_DQBUF, &buf) ) log( "ioctl(VIDIOC_DQBUF) failed : " + std::string(strerror(errno)), error );
+
+                else
                 {
                     retBuffer = new struct image_buffer;
                     // this should have de-queued into the previous buffer we allocated
                     retBuffer->buffer = this->m_frameBuffer->buffer;
                     retBuffer->length = buf.bytesused;
 
-                    log( "DeQ'd " 
+                    log( "ioctl(VIDIOC_DQBUF) success, DeQ'd "
                             + std::to_string(((float)buf.bytesused/1024.)) + " kB of "
                             + std::to_string(((float)this->m_frameBuffer->length/1024.)) +  "kB allocated", info );
 
-                } else log( "ioctl( VIDIOC_DQBUF ) failed : " + std::string(strerror(errno)), error );
+                    // only re-queue if we are going to be getting more
+                    if( !lastOne )
+                    {
+                        // aloocating for this->numBuffers fetch buffers
+                        this->m_frameBuffer = new struct image_buffer;
+                        this->m_frameBuffer->length =  this->m_currentMode.size;
+                        this->m_frameBuffer->buffer = new unsigned char[this->m_currentMode.size];
 
-                // only re-queue if we are going to be getting more
-                if( !lastOne )
-                {
-                    log( "ReQ'd buffer", info );
+                        // queue up the first buffer
+                        struct v4l2_buffer buf;
 
-                    // aloocating for this->numBuffers fetch buffers
-                    this->m_frameBuffer = new struct image_buffer;
-                    this->m_frameBuffer->length =  this->m_currentMode.size;
-                    this->m_frameBuffer->buffer = new unsigned char[this->m_currentMode.size];
+                        memset(&buf, 0, sizeof(struct v4l2_buffer));
+                        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                        buf.memory = V4L2_MEMORY_USERPTR;
+                        buf.index = 0;
+                        buf.m.userptr = (unsigned long)(this->m_frameBuffer->buffer);
+                        buf.length = this->m_frameBuffer->length;
 
-                    // queue up the first buffer
-                    struct v4l2_buffer buf;
-
-                    memset(&buf, 0, sizeof(struct v4l2_buffer));
-                    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                    buf.memory = V4L2_MEMORY_USERPTR;
-                    buf.index = 0;
-                    buf.m.userptr = (unsigned long)(this->m_frameBuffer->buffer);
-                    buf.length = this->m_frameBuffer->length;
-
-                    if( ioctl(this->m_fid, VIDIOC_QBUF, &buf) == -1 ) log( "ioctl( VIDIOC_QBUF ) failed : " + std::string(strerror(errno) ), error );
-                    else log( "Re-Q'd 1 buffer", info );
-
+                        if( -1 == ioctl(this->m_fid, VIDIOC_QBUF, &buf) ) log( "ioctl(VIDIOC_QBUF) failed : " + std::string(strerror(errno) ), error );
+                        else log( "ioctl(VIDIOC_QBUF) success, Re-Q'd 1 buffer", info );
+                    }
                 }
                 break;
 
@@ -403,10 +428,14 @@ struct image_buffer * V4l2Camera::fetch( bool lastOne )
             case notset:
                 break;
         }
-
-    } else std::cout << "Unable to call setValue() as no device is open" << std::endl;
+    }
 
     return retBuffer;
+}
+
+struct video_mode V4l2Camera::getOneVM( int index )
+{
+    return this->m_modes[index];
 }
 
 bool V4l2Camera::enumVideoModes()
@@ -424,22 +453,24 @@ bool V4l2Camera::enumVideoModes()
     this->m_modes.clear();
 
     // make sure fid is valid
-    if( this->m_fid > -1 )
+    if( -1 == this->m_fid ) log( "Unable to call enumVideoModes() as device is NOT open", warning );
+
+    else
     {
-        log( "Querying Pixel Formats from : " + this->m_userName, info );
+        log( "ioctl(VIDIOC_ENUM_FMT) for : " + this->m_userName, info );
 
         // walk the list of pixel formats, for each format, walk the list of video modes (sizes)
         tmpF.index = 0;
         tmpF.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
-        while( ioctl(this->m_fid, VIDIOC_ENUM_FMT, &tmpF ) > -1 )
+        while( -1 != ioctl(this->m_fid, VIDIOC_ENUM_FMT, &tmpF ) )
         {
-            log( "Querying video modes for format [" + std::string((char*)(tmpF.description)) + "]", info );
+            log( "ioctl(VIDIOC_ENUM_FRAMESIZES) for : " + std::string((char*)(tmpF.description)), info );
 
             // walk tje frame sizes for this pixel format
             tmpS.index = 0;
             tmpS.pixel_format = tmpF.pixelformat;
-            while( ioctl( this->m_fid, VIDIOC_ENUM_FRAMESIZES, &tmpS ) > -1 )
+            while( -1 != ioctl( this->m_fid, VIDIOC_ENUM_FRAMESIZES, &tmpS ) )
             {
                 log( "Found : " + std::to_string(tmpS.discrete.width) + " x " + std::to_string(tmpS.discrete.height), info );
 
@@ -452,14 +483,17 @@ bool V4l2Camera::enumVideoModes()
 
                 tmpS.index++;
             }
-
             tmpF.index++;
         }
         ret = true;
-
-    } else log( "Unable to call enumVideoModes() as device is NOT open", warning );
+    }
 
     return ret;
+}
+
+struct user_control V4l2Camera::getOneCntrl( int index )
+{
+    return this->m_controls[index];
 }
 
 bool V4l2Camera::enumControls()
@@ -467,9 +501,11 @@ bool V4l2Camera::enumControls()
     bool ret = false;
 
     // make sure fid is valid
-    if( this->m_fid > -1 )
+    if( -1 == this->m_fid ) log( "Unable to call enumControls() as device is NOT open", warning );
+
+    else
     {
-        log( "Querying User Controls from [" + this->m_userName + "]", info );
+        log( "ioctl(VIDIOC_QUERY_EXT_CTRL) for : " + this->m_userName, info );
 
         // clear the existing control structure
         this->m_controls.clear();
@@ -481,7 +517,7 @@ bool V4l2Camera::enumControls()
         memset(&query_ext_ctrl, 0, sizeof(query_ext_ctrl));
 
         query_ext_ctrl.id = V4L2_CTRL_FLAG_NEXT_CTRL;
-        while (0 == ioctl(this->m_fid, VIDIOC_QUERY_EXT_CTRL, &query_ext_ctrl))
+        while (-1 != ioctl(this->m_fid, VIDIOC_QUERY_EXT_CTRL, &query_ext_ctrl))
         {
             if (!(query_ext_ctrl.flags & V4L2_CTRL_FLAG_DISABLED))
             {
@@ -492,10 +528,26 @@ bool V4l2Camera::enumControls()
                     this->m_controls[query_ext_ctrl.id].name = (char*)(query_ext_ctrl.name);
                     this->m_controls[query_ext_ctrl.id].value = query_ext_ctrl.default_value;
                     this->m_controls[query_ext_ctrl.id].type = query_ext_ctrl.type;
-                    this->m_controls[query_ext_ctrl.id].typeStr = setTypeStr(query_ext_ctrl.type);
+                    this->m_controls[query_ext_ctrl.id].typeStr = cntrlTypeToString(query_ext_ctrl.type);
                     this->m_controls[query_ext_ctrl.id].min = query_ext_ctrl.minimum;
                     this->m_controls[query_ext_ctrl.id].max = query_ext_ctrl.maximum;
                     this->m_controls[query_ext_ctrl.id].step = query_ext_ctrl.step;
+
+                    // if this is a menu then grab the menu items
+                    struct v4l2_querymenu querymenu;
+                    memset (&querymenu, 0, sizeof (querymenu));
+                    querymenu.id = query_ext_ctrl.id;
+
+                    log( "ioctl(VIDIOC_QUERYMENU) for : " + std::to_string(querymenu.id), info );
+
+                    for (querymenu.index = query_ext_ctrl.minimum; querymenu.index <= query_ext_ctrl.maximum; querymenu.index++)
+                    {
+                        if (-1 != ioctl (this->m_fid, VIDIOC_QUERYMENU, &querymenu))
+                        {
+                            log( "Menu item : " + std::string((char*)(querymenu.name)) );
+                            this->m_controls[query_ext_ctrl.id].menuItems[querymenu.index] = std::string((char*)(querymenu.name));
+                        }
+                    }
 
                 } else log( "Skipping : " + std::string(query_ext_ctrl.name), info );
             }
@@ -503,13 +555,12 @@ bool V4l2Camera::enumControls()
             query_ext_ctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;
         }
         ret = true;
-
-    } else log( "Unable to call enumControls() as device is NOT open", warning );
+    }
 
     return ret;
 }
 
-std::string V4l2Camera::setTypeStr( int type )
+std::string V4l2Camera::cntrlTypeToString( int type )
 {
     std::string ret = "unknown";
 
