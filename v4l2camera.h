@@ -9,6 +9,7 @@
 // v0.2.104 : refarctor, reverse if statements to meet driver specs ( if( -1 == function_call(...) ) instead of if( function_call == -1) ), ensures compiles will pick up missing double equal sign
 //
 // v0.2.105 : added support for sub classing, to allow handling of custom camera APIs
+// v0.2.106 : minor enhancements, added MMAP data access support
 //
 
 #include <linux/videodev2.h>
@@ -67,9 +68,9 @@ class V4l2Camera
 private:
     static const int s_majorVersion = 0;
     static const int s_minorVersion = 2;
-    static const int s_revision = 105;
-    inline static const std::string s_codeName = "Karen";
-    inline static const std::string s_lastCommitMsg = "[sjd] added support for sub classing, to allow handling of custom camera APIs";
+    static const int s_revision = 106;
+    inline static const std::string s_codeName = "Janet";
+    inline static const std::string s_lastCommitMsg = "[sjd] minor enhancements, added MMAP data access support";
 
     static const int s_logDepth = 500;
 
@@ -96,7 +97,7 @@ protected:
 
 public:
     V4l2Camera( std::string );
-    ~V4l2Camera();
+    virtual ~V4l2Camera();
 
     static std::string getVersionString() 
     { 

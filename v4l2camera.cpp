@@ -252,9 +252,15 @@ bool V4l2Camera::enumCapabilities()
         {
             // grab the device name
             this->m_userName = (char *)(tmpV.card);
+            // truncate the name if it is duplicated
+            int colon = this->m_userName.find(":");
+            if(  colon > -1 ) this->m_userName = this->m_userName.substr(0,this->m_userName.find(":"));
+
+            // save the capabilities vector
             this->m_capabilities = tmpV.capabilities;
-            ret = true;
             log( "ioctl(VIDIOC_QUERYCAP) " + this->m_fidName + " success, vector = " + std::to_string(this->m_capabilities), info );
+
+            ret = true;
         }
     }
 
@@ -534,7 +540,9 @@ bool V4l2Camera::enumVideoModes()
 
 struct user_control V4l2Camera::getOneCntrl( int index )
 {
-    return this->m_controls[index];
+    // check if it exists
+    if( this->m_controls.find(index) == this->m_controls.end() ) throw std::runtime_error("Control does not exist");
+    else return this->m_controls[index];
 }
 
 bool V4l2Camera::enumControls()
