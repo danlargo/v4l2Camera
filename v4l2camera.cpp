@@ -33,6 +33,11 @@ V4l2Camera::~V4l2Camera()
     if( this->m_fid > -1 ) ::close(this->m_fid);
 }
 
+std::string V4l2Camera::getCameraType()
+{
+    return "generic";
+}
+
 std::string V4l2Camera::getFidName()
 {
     return this->m_fidName;

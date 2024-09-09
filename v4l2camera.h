@@ -8,6 +8,7 @@
 // v0.2.103 : adding internal, tagged logging and serious refactoring
 // v0.2.104 : refarctor, reverse if statements to meet driver specs ( if( -1 == function_call(...) ) instead of if( function_call == -1) ), ensures compiles will pick up missing double equal sign
 //
+// v0.2.105 : added support for sub classing, to allow handling of custom camera APIs
 //
 
 #include <linux/videodev2.h>
@@ -41,6 +42,8 @@ struct video_mode
 struct image_buffer
 {
     int length;
+    int width;
+    int height;
     unsigned char * buffer;
 };
 
@@ -64,20 +67,18 @@ class V4l2Camera
 private:
     static const int s_majorVersion = 0;
     static const int s_minorVersion = 2;
-    static const int s_revision = 104;
+    static const int s_revision = 105;
     inline static const std::string s_codeName = "Karen";
-    inline static const std::string s_lastCommitMsg = "[sjd] refactor, change logic on ioctl calls to check for == -1 instead of > -1, check for failure, not for success";
+    inline static const std::string s_lastCommitMsg = "[sjd] added support for sub classing, to allow handling of custom camera APIs";
 
     static const int s_logDepth = 500;
 
     std::string m_fidName;
-    std::string m_userName;
 
     int m_fid;
 
     unsigned int m_capabilities;
     struct video_mode m_currentMode;
-    enum fetch_mode m_bufferMode;
     struct image_buffer * m_frameBuffer;
 
     enum logging_mode m_logMode;
@@ -88,6 +89,10 @@ private:
 
     void log( std::string msg, enum msg_type tag = info );
     std::string getTagStr( enum msg_type );
+
+protected:
+    std::string m_userName;
+    enum fetch_mode m_bufferMode;
 
 public:
     V4l2Camera( std::string );
@@ -115,8 +120,8 @@ public:
     bool enumCapabilities();
 
     std::string cntrlTypeToString(int type);
-    int setValue( int id, int val );
-    int getValue( int id );
+    int setValue( int id, int val, bool openOnDemand = false );
+    int getValue( int id, bool openOnDemand = false );
 
     bool checkCapabilities( unsigned int val );
     struct video_mode getOneVM( int index );
@@ -126,18 +131,19 @@ public:
     void clearLog();
     std::vector<std::string>getLogMsgs();
 
-    bool isOpen();
-    bool canOpen();
-
     bool canFetch();
     bool canRead();
 
-    bool open();
-    bool setFrameFormat( struct video_mode );
-    bool setFrameFormat( std::string mode, int width, int height );
-    bool init( enum fetch_mode );
-    struct image_buffer * fetch( bool lastOne );
-    void close();
+    // Methods that should be overridden in sublcass
+    virtual bool isOpen();
+    virtual bool canOpen();
+    virtual std::string getCameraType();
+    virtual bool open();
+    virtual bool setFrameFormat( struct video_mode );
+    virtual bool init( enum fetch_mode );
+    virtual void close();
+    virtual bool setFrameFormat( std::string mode, int width, int height );
+    virtual struct image_buffer * fetch( bool lastOne );
 
 };
 
