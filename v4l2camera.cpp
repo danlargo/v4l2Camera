@@ -281,10 +281,10 @@ void V4l2Camera::close()
     {
         case notset:
         case readMode:
+        case mMapMode:
             break;
 
         case userPtrMode:
-        case mMapMode:
             type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
             if( -1 == ioctl( this->m_fid, VIDIOC_STREAMOFF, &type) ) log( "ioctl(VIDIOC_STREAMOFF) failed : " + std::string(strerror(errno)), error );
             else log( "VIDIOC_STREAMOFF success (streaming off) for " + this->m_fidName, info );
@@ -407,8 +407,6 @@ bool V4l2Camera::init( enum fetch_mode newMode )
                 break;
 
             case mMapMode:
-                break;
-
             case notset:
                 break;
         }
@@ -470,8 +468,6 @@ struct image_buffer * V4l2Camera::fetch( bool lastOne )
                 break;
 
             case mMapMode:
-                break;
-
             case notset:
                 break;
         }
