@@ -1,5 +1,7 @@
 #include <iostream>
+#include <fstream>
 #include <map>
+#include <cstring>
 
 #include "defines.h"
 
@@ -7,95 +9,64 @@
 
 int main( int argc, char** argv )
 {
-    std::map<std::string, std::string> cmdLine;
 
-    std::cout   << "Welcome to " << argv[0] << " sample application" 
+    std::cerr   << std::endl
+                << "Welcome to " << argv[0] << " app" 
                 << "   ...using V4l2Camera " << V4l2Camera::getVersionString() 
                 << " " << V4l2Camera::getCodeName()
                 << std::endl;
 
     // check for command line arguments and then bail
-    if( argc == 1 ) printBasicHelp();
-    else
+    if( argc == 1 ) return printBasicHelp();
+
+    // parse the input command line
+    std::map<std::string, std::string> cmdLine = parseCmdLine( argc, argv );
+
+    //
+    // now process the commands, some depend on others, some can be done in sequence 
+    // ex. -l -a can both be completed in single cmd line request
+    //
+
+    // always print the version info if asked
+    if( cmdLine["v"] == "1" ) printVersionInfo();
+
+    // Video Mode - should be done alone, skip all other commands
+    if( cmdLine["m"] == "1" )
     {
-        // parse the command options, then process them
-        int i = 1;
-        while( i < argc )
-        {
-            std::string argS = argv[i++];
-
-            // fouund help request, ignore everything else
-            if( argS == "-h" )
-            {
-                // print the help message nd ignore everything else
-                printBasicHelp();
-                return 0;
-            }
-
-            // found verbose flag, turn it on ASAP
-            if( argS == "-V" ) verbose = true;
-            else
-            {
-                // Version request
-                if( argS == "-v" ) cmdLine["v"] = "1";
-
-                else 
-                {
-                    // USB Camera discovery
-                    if( argS == "-l" ) cmdLine["l"] = "1";
-
-                    else 
-                    {
-                        // Device query
-                        if( argS == "-a" ) cmdLine["a"] = "1";
-
-                        else 
-                        {
-                            // Query Video modes
-                            if( argS == "-m" )
-                            {
-                                // check for another parameter, must be a number, between 0 and 63
-                                if( (i < argc) && (is_number(argv[i])) ) cmdLine["m"] = argv[i++];
-
-                                else 
-                                {
-                                    // print error message and bail
-                                    outln( "ERR : invalid attribute for [-m]" );
-                                    printBasicHelp();
-                                    return -1;
-                                }
-
-                            } else 
-                            {
-                                // if we made it here then the command is invalid
-                                outln( "ERR : invalid command [" + argS + "]" );
-                                printBasicHelp();
-                                return -1;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // now process the commands, some depend on others, some can be done in sequence 
-        // ex. -l -a can both be completed in single cmd line request
-        //
-
-        // always print the version info if asked
-        if( cmdLine["v"] == "1" ) printVersionInfo();
-
-        // Video Mode - should be done alone, skip all other commands
-        if( cmdLine["m"].length() > 0 )
-        {
-            listVideoModes( cmdLine["m"] ) ;
-            return 1;
-        }
-
-        if( cmdLine["l"] == "1" ) listUSBCameras();
-
-        if( cmdLine["a"] == "1" ) listAllDevices();
+        // make sure there is a device specified
+        if( cmdLine["d"].length() > 0 ) listVideoModes( cmdLine["d"] ) ;
+        else outerr( "Must provide a device number to list video modes : -d [0..63]" );
+        
+        return 1;
     }
+
+    // Snap Image - should be done alone, skip all other commands
+    if( cmdLine["s"].length() > 0 )
+    {
+        outerr( "Capturing image, all other commands will be ignored" );
+
+        // make sure there is a device specified
+        if( cmdLine["d"].length() > 0 ) snapImage( cmdLine["d"], cmdLine["s"], cmdLine["o"] );
+        else outerr( "Must provide a device number to snap an image : -d [0..63]" );
+        
+        return 1;
+    }
+
+    // Capture Video - should be done alone, skip all other commands
+    if( cmdLine["c"].length() > 0 )
+    {
+        outerr( "Starting video capture, all other commands will be ignored" );
+        
+        // make sure there is a device specified
+        if( cmdLine["d"].length() > 0 ) captureVideo( cmdLine["d"], cmdLine["s"], cmdLine["t"], cmdLine["o"] ) ;
+        else outerr( "Must provide a device number to start video capture : -d [0..63]" );
+        
+        return 1;
+    }
+
+    if( cmdLine["l"] == "1" ) listUSBCameras();
+
+    if( cmdLine["a"] == "1" ) listAllDevices();
 
     return 0;
 }
@@ -105,8 +76,8 @@ void listUSBCameras()
 {
     std::map<int, V4l2Camera *> camList;
 
-    outerr( "" );
-    outerr( "USB camera discovery starting..." );
+    outinfo( "" );
+    outinfo( "USB camera discovery starting..." );
 
     for( int i=0; i<64; i++ )
     {
@@ -139,12 +110,12 @@ void listUSBCameras()
                                 // save the camera for display later
                                 keep = true;
                                 camList[i] = tmpC;
-                            } else outerr( nam + " : zero video modes detected" );
-                        } else outerr( nam + " : does not support video capture" );
-                    } else outerr( nam + " : unable to query capabilities" );
-                } else outerr( nam + " : failed to open device" );
-            } else outerr( nam + " : device indicates unable to open" );
-        } else outln( nam + " : failed to create V4l2Camera object for device" );
+                            } else outinfo( nam + " : zero video modes detected" );
+                        } else outinfo( nam + " : does not support video capture" );
+                    } else outinfo( nam + " : unable to query capabilities" );
+                } else outinfo( nam + " : failed to open device" );
+            } else outinfo( nam + " : device indicates unable to open" );
+        } else outerr( nam + " : failed to create V4l2Camera object for device" );
 
         if( !keep ) delete tmpC;
     }
@@ -196,7 +167,7 @@ void listAllDevices()
                 outln( nam + " : can be opened" );
                 numFound++;
             }
-        } else outln( nam + " : error !!! - failed to create V4l2Camera object for device" );
+        } else outerr( nam + " : error !!! - failed to create V4l2Camera object for device" );
 
         delete tmpC;
     }
@@ -224,7 +195,7 @@ void listVideoModes( std::string deviceID )
             for( auto x : tmp->getVideoModes() )
             {
                 struct video_mode vm = x.second;
-                outln( vm.format_str + " : " + std::to_string(vm.width) + " x " + std::to_string(vm.height) );
+                outln( std::to_string(x.first) + " - " + vm.format_str + " : " + std::to_string(vm.width) + " x " + std::to_string(vm.height) );
             }
             outln( "" );
             outln( "..." + std::to_string(tmp->getVideoModes().size()) + " video modes supported" );
@@ -234,6 +205,128 @@ void listVideoModes( std::string deviceID )
 
     outln( "" );
     outln( "...discovery complete" );
+
+}
+
+void snapImage( std::string deviceID, std::string videoMode, std::string fileName )
+{
+    bool sendToStdout = true;
+    std::ofstream outFile;
+
+    // check if filename is specified
+    if( fileName.length() > 0 ) 
+    {
+        outln("Using /dev/video" + deviceID );
+        sendToStdout = false;
+    }
+    else outerr( "No filename specified, writing output data (image frame) to STDOUT");
+
+    // initiate image (one frame) capture
+
+    // open the output file
+    if( !sendToStdout ) 
+    {
+        outFile.open( fileName );
+        if( !outFile.is_open() ) 
+        {
+            outerr( "Failed to open output file : " + fileName + " - " + strerror(errno) );
+            return;
+        }
+    }
+
+    // create the camera object and try to open if
+    V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
+    if( cam && cam->open() )
+    {
+        // find all the video modes
+        cam->enumCapabilities();
+        cam->enumVideoModes();
+
+        // grab the requested video mode
+        struct video_mode vm;
+        try { vm = cam->getOneVM( std::stoi(videoMode) ); }
+        catch(const std::exception& e) 
+        { 
+            outerr( "Failed to set image mode - operation aborted ");
+            return; 
+        }
+        // set the video mode
+        if( cam->setFrameFormat( vm ) )
+        {
+            outerr( "Set image mode to : " + vm.format_str + " @ " + std::to_string(vm.width) + "x" + std::to_string(vm.height) );
+            // initialize the camera
+            if( cam->init( userPtrMode ) )
+            {
+                // grab a single frame
+                struct image_buffer * inB = cam->fetch(true);
+                if( inB )
+                {
+                    // write the buffer out to the file
+                    if( sendToStdout ) std::cout.write( (char*)inB->buffer, inB->length );
+                    else outFile.write( (char *)inB->buffer, inB->length );
+
+                    // delete the returned data
+                    delete inB->buffer;
+                    delete inB;
+
+                } else outerr( "Nothing returned from fetch call for : /dev/video" + deviceID );
+            } else outerr( "Failed to initilize fetch mode for : /dev/video" + deviceID );
+        } else outerr( "Failed to set video mode for : /dev/video" + deviceID );
+
+        // close the camera
+        cam->close();
+
+    } else outerr( "Failed to create/open camera : /dev/video" + deviceID );
+
+    // close the file
+    if( sendToStdout ) outFile.close();
+
+}
+
+void captureVideo( std::string deviceID, std::string videoMode, std::string timeDuration, std::string fileName )
+{
+    bool sendToStdout = true;
+    std::ofstream outFile;
+    
+    int timeToCapture = 10;
+    int fpsVideo = 30;      // let's try to capture 30 FPS
+    int framesToCapture;
+
+    // check if filename is specified
+    if( fileName.length() > 0 ) 
+    {
+        outln("Using /dev/video" + deviceID + " for video capture" );
+        sendToStdout = false;
+    }
+    else outerr( "No filename specified, writing output data (video frames) to STDOUT");
+
+    // check the time duration
+    if( timeDuration.length() > 0 ) timeToCapture = std::stoi( timeDuration );
+    else outerr( "No time duration specified");
+    
+    // initiate video (multiple frame) capture
+    framesToCapture = timeToCapture * fpsVideo;
+    outerr( "Video capture duration is : " + std::to_string(timeToCapture) );
+
+    // open the output file
+    if( !sendToStdout ) 
+    {
+        outFile.open( fileName );
+        if( !outFile.is_open() ) 
+        {
+            outerr( "Failed to open output file : " + fileName + " - " + strerror(errno) );
+            return;
+        }
+    }
+
+    // write some data
+    std::string outData = "Here is some output data";
+    if( sendToStdout ) std::cout << outData;
+    else outFile.write( outData.c_str(), outData.length() );
+
+    // close the file
+    if( sendToStdout ) std::cout << std::endl;
+    else outFile.close();
 
 }
 
@@ -249,7 +342,7 @@ void printVersionInfo()
     outln( "" );
 }
 
-void printBasicHelp()
+int printBasicHelp()
 {
     outln( "" );
     outln( "Usage" );
@@ -260,16 +353,28 @@ void printBasicHelp()
     outln( "-V :            operate in verbose mode (lots of information messages)");
     outln( "-l :            list all USB cameras in the /dev/videoX driver space" );
     outln( "-a :            identify all openable devices in /dev/videoX driver space" );
-    outln( "-m [0..63] :    list all the video modes supported by camera /dev/video<number>" );
+    outln( "-d [0..63] :    select camera /dev/video<number> for operation" );
+    outln( "-m :            list all the video modes supported by camera -d [0..63]" );
+    outln( "-s [0..??] :    grab an image from camera -d [0..63], using video mode <number>" );
+    outln( "-c [0..??] :    capture video from camera -d [0..63], using video mode <number>, for time -t [0..??] seconds, default is 10 seconds" );
+    outln( "-o file    :    specify filename for output, will send to stdout if not set" );
+    outln( "-t [0..6?? :    specify a time duration for video capture, default is 10 seconds" );
     outln( "" );
+
+    return 1;
 }
 
 void outln( std::string line )
 {
-    std::cout << "[\x1b[32mrslt\x1b[0m] " << line << std::endl;
+    std::cout << "   " << line << std::endl;
 }
 
 void outerr( std::string line )
+{
+    std::cerr << std::endl << "[\x1b[1;31mwarning\x1b[0m] " << line << std::endl;
+}
+
+void outinfo( std::string line )
 {
     if( verbose ) std::cout << "[\x1b[1;33minfo\x1b[0m] " << line << std::endl;
 }
@@ -279,4 +384,115 @@ bool is_number(const std::string& s)
     std::string::const_iterator it = s.begin();
     while (it != s.end() && std::isdigit(*it)) ++it;
     return !s.empty() && it == s.end();
+}
+
+std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
+{
+    std::map<std::string, std::string> cmdLine;
+
+    //
+    // parse the command options, process them once we know everything that was requested
+    //
+    int i = 1;
+    while( i < argc )
+    {
+        std::string argS = argv[i++];
+
+        // fouund help request, print the help message nd ignore everything else
+        if( argS == "-h" ) 
+        {
+            printBasicHelp();
+            cmdLine.clear();
+            return cmdLine;
+        }
+
+        // found verbose flag, turn it on ASAP
+        if( argS == "-V" ) { verbose = true; continue; }
+
+        // Version request
+        if( argS == "-v" ) { cmdLine["v"] = "1"; continue; }
+
+        // USB Camera discovery
+        if( argS == "-l" ) { cmdLine["l"] = "1"; continue; }
+
+        // Devices query
+        if( argS == "-a" ) { cmdLine["a"] = "1"; continue; }
+
+        // List all video mdoes
+        if( argS == "-m" ) { cmdLine["m"] = "1"; continue; }
+
+        // Specify device number for operation, specify device number in second parameter, between 0 and 63
+        if( argS == "-d" )
+        {
+            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["d"] = argv[i++]; continue; }
+            else
+            {
+                outerr( "Invalid attribute for Device Number [-d]" );
+                printBasicHelp();
+                cmdLine.clear();
+                return cmdLine;
+            }
+        }
+
+        // Snap Image - specify video mode in second parameter
+        if( argS == "-s" )
+        {
+            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["s"] = argv[i++]; continue; }
+            else
+            {
+                outerr( "Invalid attribute for Snap Image [-s]" );
+                printBasicHelp();
+                cmdLine.clear();
+                return cmdLine;
+            }
+        }
+
+        // Capture Video - specify video mode in second parameter
+        if( argS == "-c" )
+        {
+            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["c"] = argv[i++]; continue; }
+            else
+            {
+                outerr( "Invalid attribute for Capture Video [-c]" );
+                printBasicHelp();
+                cmdLine.clear();
+                return cmdLine;
+            }
+        }
+
+        // Set Time duration  - specify time (seconds) in second parameter
+        if( argS == "-t" )
+        {
+            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["t"] = argv[i++]; continue; }
+            else
+            {
+                outerr( "Invalid attribute for Time duration [-t]" );
+                printBasicHelp();
+                cmdLine.clear();
+                return cmdLine;
+            }
+        }
+
+        // Output File name, default to STDOUT if not set, second parameter is filename
+        if( argS == "-o" )
+        {
+
+            if( (i < argc) ) { cmdLine["o"] = argv[i++]; continue; }
+            else
+            {
+                outerr( "Invalid attribute for File name [-o]" );
+                printBasicHelp();
+                cmdLine.clear();
+                return cmdLine;
+            }
+        }
+
+        // if we made it here then the command is invalid
+        outerr( "Invalid command [" + argS + "]" );
+        printBasicHelp();
+        cmdLine.clear();
+        return cmdLine;
+    }
+
+    return cmdLine;
 }

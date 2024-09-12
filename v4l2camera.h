@@ -10,6 +10,7 @@
 //
 // v0.2.105 : added support for sub classing, to allow handling of custom camera APIs
 // v0.2.106 : minor enhancements, decided to remove MMAP data access support
+// v0.2.107 : enhanced the v4l2Test app, added image and video capture
 //
 
 #include <linux/videodev2.h>
@@ -68,9 +69,9 @@ class V4l2Camera
 private:
     static const int s_majorVersion = 0;
     static const int s_minorVersion = 2;
-    static const int s_revision = 106;
+    static const int s_revision = 107;
     inline static const std::string s_codeName = "Janet";
-    inline static const std::string s_lastCommitMsg = "[sjd] minor enhancements, removed MMAP data access support";
+    inline static const std::string s_lastCommitMsg = "[sjd] enhanced the v4l2Test app, added image and video capture";
 
     static const int s_logDepth = 500;
 

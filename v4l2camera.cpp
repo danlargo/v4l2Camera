@@ -478,7 +478,9 @@ struct image_buffer * V4l2Camera::fetch( bool lastOne )
 
 struct video_mode V4l2Camera::getOneVM( int index )
 {
-    return this->m_modes[index];
+    // check if it exists
+    if( this->m_modes.find(index) == this->m_modes.end() ) throw std::runtime_error("Video Mode does not exist");
+    else return this->m_modes[index];
 }
 
 bool V4l2Camera::enumVideoModes()
