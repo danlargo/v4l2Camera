@@ -5,12 +5,13 @@
     "version": "0.2.0",
     "configurations": [
 
+
         {
             "name": "(gdb) Snap Image",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/v4l2test",
-            "args": [ "-s", "1", "-d", "0"],
+            "program": "${workspaceFolder}/v4l2cam",
+            "args": [ "-g", "1", "-d", "0", "-o", "test.jpg"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
@@ -34,7 +35,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/v4l2test",
+            "program": "${workspaceFolder}/v4l2cam",
             "args": ["-m", "0"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

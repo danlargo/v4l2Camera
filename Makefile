@@ -8,7 +8,7 @@ LDLIBS=
 all: main
 
 main: main.o v4l2camera.o
-	$(CXX) $(LDFLAGS) -o v4l2test main.o v4l2camera.o $(LDLIBS)
+	$(CXX) $(LDFLAGS) -o v4l2cam main.o v4l2camera.o $(LDLIBS)
 
 main.o: main.cpp defines.h v4l2camera.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -c main.cpp
@@ -20,4 +20,4 @@ clean:
 	$(RM) *.o
 
 distclean: clean
-	$(RM) v4l2test
+	$(RM) v4l2cam
