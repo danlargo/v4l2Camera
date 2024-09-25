@@ -18,7 +18,8 @@ Dependent on the STD C++ namespace support.
 
 - main.cpp, will provide overview of basic operation, compiles into v4l2Test
 
-- command line options :
+
+# Command line options
 
 - $ ./v4l2cam 
 ```
@@ -47,8 +48,9 @@ Usage
    -o file    :    specify filename for output, will send to stdout if not set
 ```
 
-- sample usage
 
+# Sample usage
+```
    v4l2cam - example usage
    -------------------------
    ...skipping al the obvious examples
@@ -70,4 +72,4 @@ Usage
    
    ...set the value for /dev/video2, for user control 9963776 to 25
    $ ./v4l2cam -t 25 -k 9963776 -d 2
-
+```
