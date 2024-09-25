@@ -21,7 +21,7 @@ Dependent on the STD C++ namespace support.
 - command line options :
 
 - $ ./v4l2cam 
-
+```
 Usage
    -----
    -h :            this message
@@ -45,7 +45,7 @@ Usage
    -c [0..##] :    capture video from camera -d [0..63], using video mode <number>, for time -t [0..##] seconds, default is 10 seconds
    -t [0..##] :    specify a time duration for video capture, default is 10 seconds
    -o file    :    specify filename for output, will send to stdout if not set
-
+```
 
 - sample usage
 
