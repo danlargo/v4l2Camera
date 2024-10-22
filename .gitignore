@@ -32,4 +32,4 @@
 *.app
 
 # Specific Executable
-v4l2test
+v4l2cam
