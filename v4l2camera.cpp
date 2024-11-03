@@ -33,6 +33,55 @@ V4l2Camera::~V4l2Camera()
     if( this->m_fid > -1 ) ::close(this->m_fid);
 }
 
+std::map<int, V4l2Camera *> V4l2Camera::discoverCameras()
+{
+    std::map<int, V4l2Camera *> camList;
+
+    for( int i=0; i<64; i++ )
+    {
+        bool keep = false;
+
+        // build the device name
+        std::string nam = "/dev/video" + std::to_string(i);
+
+        // create the camera object
+        V4l2Camera * tmpC = new V4l2Camera(nam);
+        tmpC->setLogMode( logToStdOut );
+
+        if( tmpC )
+        {
+            if( tmpC->canOpen() )
+            {
+                // open the camera so we can query all its capabilities
+                if( tmpC->open() )
+                {
+                    if( tmpC->enumCapabilities() )
+                    {
+                        if( tmpC->canFetch() )
+                        {
+                            // have it query its own capabilities
+                            tmpC->enumControls();
+                            tmpC->enumVideoModes();
+
+                            if( tmpC->getVideoModes().size() > 0 )
+                            {
+                                // save the camera for display later
+                                keep = true;
+                                camList[i] = tmpC;
+                                
+                            } else tmpC->log( nam + " : zero video modes detected", info );
+                        } else tmpC->log( nam + " : does not support video capture", info  );
+                    } else tmpC->log( nam + " : unable to query capabilities", info  );
+                } else tmpC->log( nam + " : failed to open device", info  );
+            } else tmpC->log( nam + " : device indicates unable to open", info  );
+        } else tmpC->log( nam + " : failed to create V4l2Camera object for device", info );
+
+        if( !keep ) delete tmpC;
+    }
+
+    return camList;
+}
+
 std::string V4l2Camera::getCameraType()
 {
     return "generic";

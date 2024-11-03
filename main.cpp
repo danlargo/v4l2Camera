@@ -98,46 +98,7 @@ void listUSBCameras()
     outinfo( "" );
     outinfo( "USB camera discovery starting..." );
 
-    for( int i=0; i<64; i++ )
-    {
-        bool keep = false;
-
-        // build the device name
-        std::string nam = "/dev/video" + std::to_string(i);
-
-        // create the camera object
-        V4l2Camera * tmpC = new V4l2Camera(nam);
-        if( verbose ) tmpC->setLogMode( logToStdOut );
-
-        if( tmpC )
-        {
-            if( tmpC->canOpen() )
-            {
-                // open the camera so we can query all its capabilities
-                if( tmpC->open() )
-                {
-                    if( tmpC->enumCapabilities() )
-                    {
-                        if( tmpC->canFetch() )
-                        {
-                            // have it query its own capabilities
-                            tmpC->enumControls();
-                            tmpC->enumVideoModes();
-
-                            if( tmpC->getVideoModes().size() > 0 )
-                            {
-                                // save the camera for display later
-                                keep = true;
-                                camList[i] = tmpC;
-                            } else outinfo( nam + " : zero video modes detected" );
-                        } else outinfo( nam + " : does not support video capture" );
-                    } else outinfo( nam + " : unable to query capabilities" );
-                } else outinfo( nam + " : failed to open device" );
-            } else outinfo( nam + " : device indicates unable to open" );
-        } else outerr( nam + " : failed to create V4l2Camera object for device" );
-
-        if( !keep ) delete tmpC;
-    }
+    camList = V4l2Camera::discoverCameras();
 
     // output the collected information
     outln( "" );

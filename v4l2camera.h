@@ -12,6 +12,7 @@
 // v0.2.106 : minor enhancements, decided to remove MMAP data access support
 // v0.2.107 : enhanced the v4l2cam app, added image and video capture
 //
+// v0.3.100 : adding support for MacOS, using libusb instead of video4linux2
 
 #ifdef __linux__
     #include <linux/videodev2.h>
@@ -73,10 +74,10 @@ class V4l2Camera
 {
 private:
     static const int s_majorVersion = 0;
-    static const int s_minorVersion = 2;
-    static const int s_revision = 107;
-    inline static const std::string s_codeName = "Janet";
-    inline static const std::string s_lastCommitMsg = "[sjd] enhanced the v4l2cam app, added image and video capture";
+    static const int s_minorVersion = 3;
+    static const int s_revision = 101;
+    inline static const std::string s_codeName = "Andrea";
+    inline static const std::string s_lastCommitMsg = "[sjd] adding support for MacOS using libusb";
 
     static const int s_logDepth = 500;
 
@@ -116,11 +117,14 @@ public:
 
     static std::string getCodeName() { return "(" + s_codeName +")"; }
     static std::string getLastMsg() { return s_lastCommitMsg; }
+
     std::map<int, struct user_control> getControls() { return this->m_controls; };
     std::map<int, struct video_mode> getVideoModes() { return this->m_modes; };
 
     std::string getFidName();
     std::string getUserName();
+
+    static std::map<int, V4l2Camera *>  discoverCameras();
 
     bool enumControls();
     bool enumVideoModes();
