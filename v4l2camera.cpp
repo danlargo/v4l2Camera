@@ -36,18 +36,21 @@ V4l2Camera::~V4l2Camera()
 std::map<int, V4l2Camera *> V4l2Camera::discoverCameras()
 {
     std::map<int, V4l2Camera *> camList;
+    int count = 0;
 
-    for( int i=0; i<64; i++ )
+    std::vector<std::string> devList = V4l2Camera::buildCamList_dev();
+
+    for( const auto &x : devList )
     {
         bool keep = false;
 
-        // build the device name
-        std::string nam = "/dev/video" + std::to_string(i);
+        std::string nam = x;
 
         // create the camera object
         V4l2Camera * tmpC = new V4l2Camera(nam);
         tmpC->setLogMode( logToStdOut );
 
+        // check if this is actually a UVC camera
         if( tmpC )
         {
             if( tmpC->canOpen() )
@@ -67,8 +70,8 @@ std::map<int, V4l2Camera *> V4l2Camera::discoverCameras()
                             {
                                 // save the camera for display later
                                 keep = true;
-                                camList[i] = tmpC;
-                                
+                                camList[count++] = tmpC;
+
                             } else tmpC->log( nam + " : zero video modes detected", info );
                         } else tmpC->log( nam + " : does not support video capture", info  );
                     } else tmpC->log( nam + " : unable to query capabilities", info  );
@@ -80,6 +83,20 @@ std::map<int, V4l2Camera *> V4l2Camera::discoverCameras()
     }
 
     return camList;
+}
+
+std::vector<std::string> V4l2Camera::buildCamList_dev()
+{
+    std::vector<std::string> ret;
+    int maxCams = 64;
+
+    std::cout << "Building list of potential UVC Cameras (using /dev/video*)" << std::endl;
+
+    for( int i=0;i<maxCams;i++ ) ret.push_back( "/dev/video" + std::to_string(i) );
+
+    std::cout << "Added " << maxCams << " potential devices" << std::endl;
+
+    return ret;
 }
 
 std::string V4l2Camera::getCameraType()

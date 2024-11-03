@@ -125,6 +125,7 @@ public:
     std::string getUserName();
 
     static std::map<int, V4l2Camera *>  discoverCameras();
+    static std::vector<std::string> buildCamList_dev();
 
     bool enumControls();
     bool enumVideoModes();
