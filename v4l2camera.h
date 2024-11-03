@@ -13,7 +13,12 @@
 // v0.2.107 : enhanced the v4l2cam app, added image and video capture
 //
 
-#include <linux/videodev2.h>
+#ifdef __linux__
+    #include <linux/videodev2.h>
+    
+#elif __APPLE__
+    #include <libusb-1.0/libusb.h>
+#endif
 
 #include <map>
 #include <vector>

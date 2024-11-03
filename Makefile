@@ -1,9 +1,17 @@
 CC=gcc
 CXX=g++
 RM=rm -f
-CPPFLAGS=-g 
+
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+	CPPFLAGS=-g -I/opt/homebrew/include
+	LDLIBS=-L/opt/homebrew/lib -lusb-1.0
+else
+	CPPFLAGS=-g 
+	LDLIBS=
+endif
+
 LDFLAGS=-g 
-LDLIBS=
 
 all: main
 
