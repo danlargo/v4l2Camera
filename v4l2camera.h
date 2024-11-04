@@ -19,6 +19,16 @@
     
 #elif __APPLE__
     #include <libusb-1.0/libusb.h>
+
+    struct usb_device
+    {
+        int bus;
+        int address;
+        int vid;
+        int pid;
+        std::string productName;
+        std::string manufacturerName;
+    };
 #endif
 
 #include <map>
@@ -81,9 +91,14 @@ private:
 
     static const int s_logDepth = 500;
 
-    std::string m_fidName;
-
-    int m_fid;
+    // device identifiers
+    #ifdef __linux__
+        int m_fid;
+        std::string m_fidName;
+    #elif __APPLE__
+        struct usb_device * m_dev;
+        libusb_device_handle * m_Handle;
+    #endif
 
     unsigned int m_capabilities;
     struct video_mode m_currentMode;
@@ -103,7 +118,12 @@ protected:
     enum fetch_mode m_bufferMode;
 
 public:
-    V4l2Camera( std::string );
+    #ifdef __linux__
+        V4l2Camera( std::string );
+    #elif __APPLE__
+        V4l2Camera( struct usb_device * dev );
+    #endif
+
     virtual ~V4l2Camera();
 
     static std::string getVersionString() 
@@ -125,7 +145,15 @@ public:
     std::string getUserName();
 
     static std::map<int, V4l2Camera *>  discoverCameras();
-    static std::vector<std::string> buildCamList_dev();
+    static void initAPI();
+    static void closeAPI();
+    
+    #ifdef __linux__
+        static std::vector<std::string> buildCamList_dev();
+    #elif __APPLE__
+        static std::vector<struct usb_device *> buildCamList_usb();
+        libusb_device_handle * openCamera_usb( int bus, int address, int vid, int pid );
+    #endif
 
     bool enumControls();
     bool enumVideoModes();

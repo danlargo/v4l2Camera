@@ -14,8 +14,15 @@
 
 int main( int argc, char** argv )
 {
+    // init the handler library for the V4l2Camera class
+    V4l2Camera::initAPI();
+
     // check for command line arguments and then bail
-    if( argc == 1 ) return printBasicHelp();
+    if( argc == 1 ) 
+    {
+        V4l2Camera::closeAPI();
+        return printBasicHelp();
+    }
 
     // parse the input command line
     std::map<std::string, std::string> cmdLine = parseCmdLine( argc, argv );
@@ -33,60 +40,61 @@ int main( int argc, char** argv )
     if( cmdLine["v"] == "1" ) printVersionInfo();
 
     // show example commands
-    if( cmdLine["x"] == "1" ) 
-    {
-        printExamples();
-        return 1;
+    if( cmdLine["x"] == "1" ) printExamples();
+
+    else {
+
+        // Video Mode - should be done alone, skip all other commands
+        if( cmdLine["m"] == "1" )
+        {
+            // make sure there is a device specified
+            if( cmdLine["d"].length() > 0 ) listVideoModes( cmdLine["d"] ) ;
+            else outerr( "Must provide a device number to list video modes : -d [0..63]" );
+            
+        } else {
+
+            // User Controls - should be done alone, skip all other commands
+            if( cmdLine["u"] == "1" )
+            {
+                // make sure there is a device specified
+                if( cmdLine["d"].length() > 0 ) listUserControls( cmdLine["d"] ) ;
+                else outerr( "Must provide a device number to list user controls : -d [0..63]" );
+                
+            } else {
+
+                // Grab an Image - should be done alone, skip all other commands
+                if( cmdLine["g"].length() > 0 )
+                {
+                    outerr( "Capturing image, all other commands will be ignored" );
+
+                    // make sure there is a device specified
+                    if( cmdLine["d"].length() > 0 ) grabImage( cmdLine["d"], cmdLine["g"], cmdLine["o"] );
+                    else outerr( "Must provide a device number to grab an image : -d [0..63]" );
+                    
+                } else {
+
+                    // Capture Video - should be done alone, skip all other commands
+                    if( cmdLine["c"].length() > 0 )
+                    {
+                        outerr( "Starting video capture, all other commands will be ignored" );
+                        
+                        // make sure there is a device specified
+                        if( cmdLine["d"].length() > 0 ) captureVideo( cmdLine["d"], cmdLine["c"], cmdLine["t"], cmdLine["o"] ) ;
+                        else outerr( "Must provide a device number to start video capture : -d [0..63]" );
+                        
+                    } else {
+
+                        if( cmdLine["l"] == "1" ) listUSBCameras();
+
+                        if( cmdLine["i"] == "1" ) listAllDevices();
+                    }
+                }
+            }
+        }
     }
 
-    // Video Mode - should be done alone, skip all other commands
-    if( cmdLine["m"] == "1" )
-    {
-        // make sure there is a device specified
-        if( cmdLine["d"].length() > 0 ) listVideoModes( cmdLine["d"] ) ;
-        else outerr( "Must provide a device number to list video modes : -d [0..63]" );
-        
-        return 1;
-    }
-
-    // User Controls - should be done alone, skip all other commands
-    if( cmdLine["u"] == "1" )
-    {
-        // make sure there is a device specified
-        if( cmdLine["d"].length() > 0 ) listUserControls( cmdLine["d"] ) ;
-        else outerr( "Must provide a device number to list user controls : -d [0..63]" );
-        
-        return 1;
-    }
-
-    // GRan an Image - should be done alone, skip all other commands
-    if( cmdLine["g"].length() > 0 )
-    {
-        outerr( "Capturing image, all other commands will be ignored" );
-
-        // make sure there is a device specified
-        if( cmdLine["d"].length() > 0 ) grabImage( cmdLine["d"], cmdLine["g"], cmdLine["o"] );
-        else outerr( "Must provide a device number to grab an image : -d [0..63]" );
-        
-        return 1;
-    }
-
-    // Capture Video - should be done alone, skip all other commands
-    if( cmdLine["c"].length() > 0 )
-    {
-        outerr( "Starting video capture, all other commands will be ignored" );
-        
-        // make sure there is a device specified
-        if( cmdLine["d"].length() > 0 ) captureVideo( cmdLine["d"], cmdLine["c"], cmdLine["t"], cmdLine["o"] ) ;
-        else outerr( "Must provide a device number to start video capture : -d [0..63]" );
-        
-        return 1;
-    }
-
-    if( cmdLine["l"] == "1" ) listUSBCameras();
-
-    if( cmdLine["i"] == "1" ) listAllDevices();
-
+    // close down the handler library for the V4l2Camera class
+    V4l2Camera::closeAPI();
     return 0;
 }
 
@@ -109,7 +117,8 @@ void listUSBCameras()
     {
         V4l2Camera * tmp = x.second;
 
-        outln( tmp->getFidName() + " : " + tmp->getUserName() + ", " 
+        outln( "[" + std::to_string(x.first) + "] "
+                + tmp->getFidName() + " : " + tmp->getUserName() + ", " 
                 + std::to_string(tmp->getVideoModes().size()) + " video modes, "
                 + std::to_string(tmp->getControls().size()) + " user controls"
             );
@@ -136,6 +145,7 @@ void listUSBCameras()
 
 void listAllDevices()
 {
+    #ifdef __linux__
     outln( "" );
     outln( "Devices in range /dev/video[0..63]" );
     outln( "----------------------------------" );
@@ -168,16 +178,29 @@ void listAllDevices()
     outln( "...found : " + std::to_string(numFound) + " devices that can be opened by user" );
     outln( "" );
     outln( "...discovery complete" );
+
+    #elif __APPLE__
+    outln( "*** Not supported on MACOS" );
+    outln( "" );
+    #endif
 }
 
 void listVideoModes( std::string deviceID )
 {
     outln( "" );
-    outln( "Video Mode(s) for /dev/video" + deviceID );
     outln( "------------------------------");
 
-    // recreate the camera object
-    V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
+    // create the camera object
+    #ifdef __linux__
+        V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
+        outln( "Video Mode(s) for /dev/video" + deviceID );
+    #elif __APPLE__
+        std::map<int, V4l2Camera *> camList;
+        camList = V4l2Camera::discoverCameras();
+        V4l2Camera * tmp = camList[std::stoi(deviceID)];
+        outln( "Video Mode(s) for " + tmp->getUserName() );
+    #endif
+
     if( verbose ) tmp->setLogMode( logToStdOut );
 
     if( tmp )
@@ -195,7 +218,9 @@ void listVideoModes( std::string deviceID )
     }
     delete tmp;
 
+    outln( "");
     outln( "---------------------------------------");
+    outln( "" );
     outln( "Extra info on saving video mode frames to a file :");
     outln(  "");
     outln( "Motion-JPEG" );
@@ -222,12 +247,17 @@ void listVideoModes( std::string deviceID )
 
 void listUserControls( std::string deviceID )
 {
-    outln( "" );
-    outln( "User Control(s) for /dev/video" + deviceID );
-    outln( "------------------------------");
+    // create the camera object
+    #ifdef __linux__
+        V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
+        outln( "Video Mode(s) for /dev/video" + deviceID );
+    #elif __APPLE__
+        std::map<int, V4l2Camera *> camList;
+        camList = V4l2Camera::discoverCameras();
+        V4l2Camera * tmp = camList[std::stoi(deviceID)];
+        outln( "Video Mode(s) for " + tmp->getUserName() );
+    #endif
 
-    // recreate the camera object
-    V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
     if( verbose ) tmp->setLogMode( logToStdOut );
 
     if( tmp )
@@ -245,12 +275,14 @@ void listUserControls( std::string deviceID )
                                 + "\t:" + ct.name
 
                                 );
-                if( ct.type == V4L2_CTRL_TYPE_MENU )
-                {
-                    std::string menStr = "     menu items are :";
-                    for( const auto &y : ct.menuItems ) menStr += " [" + std::to_string(y.first) + "]" + y.second;
-                    outln( menStr );
-                }
+                #ifdef __linux__
+                    if( ct.type == V4L2_CTRL_TYPE_MENU )
+                    {
+                        std::string menStr = "     menu items are :";
+                        for( const auto &y : ct.menuItems ) menStr += " [" + std::to_string(y.first) + "]" + y.second;
+                        outln( menStr );
+                    }
+                #endif
             }
             outln( "" );
             outln( "..." + std::to_string(tmp->getControls().size()) + " user controls supported" );
@@ -286,8 +318,17 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
         }
     }
 
-    // create the camera object and try to open if
-    V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
+    // create the camera object
+    #ifdef __linux__
+        V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
+        outln( "Video Mode(s) for /dev/video" + deviceID );
+    #elif __APPLE__
+        std::map<int, V4l2Camera *> camList;
+        camList = V4l2Camera::discoverCameras();
+        V4l2Camera * cam = camList[std::stoi(deviceID)];
+        outln( "Video Mode(s) for " + cam->getUserName() );
+    #endif
+
     if( verbose ) cam->setLogMode( logToStdOut );
 
     if( cam && cam->open() )
@@ -431,8 +472,16 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
         }
     }
 
-        // create the camera object and try to open if
-    V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
+    #ifdef __linux__
+        V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
+        outln( "Video Mode(s) for /dev/video" + deviceID );
+    #elif __APPLE__
+        std::map<int, V4l2Camera *> camList;
+        camList = V4l2Camera::discoverCameras();
+        V4l2Camera * cam = camList[std::stoi(deviceID)];
+        outln( "Video Mode(s) for " + cam->getUserName() );
+    #endif
+
     if( verbose ) cam->setLogMode( logToStdOut );
 
     if( cam && cam->open() )

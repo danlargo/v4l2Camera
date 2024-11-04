@@ -4,7 +4,7 @@ RM=rm -f
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
-	CPPFLAGS=-g -I/opt/homebrew/include
+	CPPFLAGS=-g -I/opt/homebrew/include -std=c++20
 	LDLIBS=-L/opt/homebrew/lib -lusb-1.0
 else
 	CPPFLAGS=-g 
