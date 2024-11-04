@@ -322,11 +322,11 @@ bool V4l2Camera::canOpen()
 bool V4l2Camera::canFetch()
 {
     #ifdef __linux__
-        return ( this->m_capabilities & V4L2_CAP_READWRITE );
+        return ( this->m_capabilities & V4L2_CAP_VIDEO_CAPTURE );
     #elif __APPLE__
         return true;
     #endif
-
+    
 }
 
 bool V4l2Camera::canRead()
