@@ -15,17 +15,28 @@ LDFLAGS=-g
 
 all: main
 
-main: main.o v4l2camera.o
-	$(CXX) $(LDFLAGS) -o v4l2cam main.o v4l2camera.o $(LDLIBS)
+ifeq ($(UNAME_S),Linux)
+main: main.o uvccamera.o v4l2camera.o
+	$(CXX) $(LDFLAGS) -o uvccam main.o uvccamera.o v4l2camera.o $(LDLIBS)
 
-main.o: main.cpp defines.h v4l2camera.h
+v4l2camera.o: v4l2camera.cpp v4l2camera.h uvccamera.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -c v4l2camera.cpp
+endif
+
+ifeq ($(UNAME_S),Darwin)
+main: main.o uvccamera.o maccamera.o
+	$(CXX) $(LDFLAGS) -o uvccam main.o uvccamera.o v4l2camera.o $(LDLIBS)
+
+maccamera.o: maccamera.cpp maccamera.h uvccamera.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -c maccamera.cpp
+endif
+
+main.o: main.cpp defines.h uvccamera.h maccamera.h v4l2camera.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -c main.cpp
 
-v4l2camera.o: v4l2camera.cpp v4l2camera.h
-	$(CXX) $(CFLAGS) $(CPPFLAGS) -c v4l2camera.cpp
+uvccamera.o: uvccamera.cpp uvccamera.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -c uvccamera.cpp
 
 clean:
 	$(RM) *.o
-
-distclean: clean
-	$(RM) v4l2cam
+	$(RM) uvccam

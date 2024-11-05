@@ -9,18 +9,30 @@
 
 #include "defines.h"
 
-#include "v4l2camera.h"
+#include "uvccamera.h"
+
+#ifdef __linux__
+    #include "v4l2camera.h"
+#elif __APPLE__
+    #include "maccamera.h"
+#endif
+
+
 #include <unistd.h>
 
 int main( int argc, char** argv )
 {
-    // init the handler library for the V4l2Camera class
-    V4l2Camera::initAPI();
+    // init the handler library for the MACCamera class
+    #ifdef __APPLE__
+        MACCamera::initAPI();
+    #endif
 
     // check for command line arguments and then bail
     if( argc == 1 ) 
     {
-        V4l2Camera::closeAPI();
+        #ifdef __APPLE__
+            MACCamera::closeAPI();
+        #endif
         return printBasicHelp();
     }
 
@@ -29,7 +41,7 @@ int main( int argc, char** argv )
 
     // show welcome message
     if( !silentMode ) std::cerr << std::endl << "Welcome to " << argv[0] 
-                                << "   ...using V4l2Camera " << V4l2Camera::getVersionString() << " " << V4l2Camera::getCodeName()
+                                << "   ...using UVCCamera " << UVCCamera::getVersionString() << " " << UVCCamera::getCodeName()
                                 << std::endl << std::endl;
     //
     // now process the commands, some depend on others, some can be done in sequence 
@@ -93,20 +105,27 @@ int main( int argc, char** argv )
         }
     }
 
-    // close down the handler library for the V4l2Camera class
-    V4l2Camera::closeAPI();
+    // close down the handler library for the MACCamera class
+    #ifdef __APPLE__
+        MACCamera::closeAPI();
+    #endif
+
     return 0;
 }
 
 // Functional demonstration functions
 void listUSBCameras()
 {
-    std::map<int, V4l2Camera *> camList;
-
     outinfo( "" );
     outinfo( "USB camera discovery starting..." );
 
-    camList = V4l2Camera::discoverCameras();
+    #ifdef __linux__
+        std::map<int, V4l2Camera *> camList;
+        camList = V4l2Camera::discoverCameras();
+    #elif __APPLE__
+        std::map<int, MACCamera *> camList;
+        camList = MACCamera::discoverCameras();
+    #endif
 
     // output the collected information
     outln( "" );
@@ -118,7 +137,7 @@ void listUSBCameras()
         V4l2Camera * tmp = x.second;
 
         outln( "[" + std::to_string(x.first) + "] "
-                + tmp->getFidName() + " : " + tmp->getUserName() + ", " 
+                + tmp->getDevName() + " : " + tmp->getUserName() + ", " 
                 + std::to_string(tmp->getVideoModes().size()) + " video modes, "
                 + std::to_string(tmp->getControls().size()) + " user controls"
             );
@@ -127,18 +146,21 @@ void listUSBCameras()
         delete tmp;
     }
 
-    outln( "" );
-    outln( "---------------------------------------");
-    outln( "Extra info on USB cameras and device IDs :");
-    outln( "" );
-    outln( " You will notice that the USB cameras tend to exist on even numbers,");
-    outln( " when you look at the lower level details the cameras will actually exists on two devices (ex, video0 and video1)" );
-    outln( " Only the even number device will actual produce any results from ioctl queries, no controls or video modes are");
-    outln( " on the odd number devices.");
-    outln( "" );
-    outln( " ...according to Stack Overflow - This was added in kernel 4.16 - the second device provides metadata. ");
-    outln( " ...see unix.stackexchange.com/a/539573/13613 for more details.");
-    outln( " ...looks lke someting to add in future versions of v4l2Camera");
+    #ifdef __linux__
+        outln( "" );
+        outln( "---------------------------------------");
+        outln( "Extra info on USB cameras and device IDs :");
+        outln( "" );
+        outln( " You will notice that the USB cameras tend to exist on even numbers,");
+        outln( " when you look at the lower level details the cameras will actually exists on two devices (ex, video0 and video1)" );
+        outln( " Only the even number device will actual produce any results from ioctl queries, no controls or video modes are");
+        outln( " on the odd number devices.");
+        outln( "" );
+        outln( " ...according to Stack Overflow - This was added in kernel 4.16 - the second device provides metadata. ");
+        outln( " ...see unix.stackexchange.com/a/539573/13613 for more details.");
+        outln( " ...looks lke someting to add in future versions of v4l2Camera");
+    #endif
+
     outln( "" );
     outln( "...discovery complete" );
 }
@@ -146,62 +168,61 @@ void listUSBCameras()
 void listAllDevices()
 {
     #ifdef __linux__
-    outln( "" );
-    outln( "Devices in range /dev/video[0..63]" );
-    outln( "----------------------------------" );
+        outln( "" );
+        outln( "Devices in range /dev/video[0..63]" );
+        outln( "----------------------------------" );
 
-    int numFound = 0;
+        int numFound = 0;
 
-    for( int i=0; i<64; i++ )
-    {
-
-        // build the device name
-        std::string nam = "/dev/video" + std::to_string(i);
-
-        // create the camera object
-        V4l2Camera * tmpC = new V4l2Camera(nam);
-        if( verbose ) tmpC->setLogMode( logToStdOut );
-
-        if( tmpC )
+        for( int i=0; i<64; i++ )
         {
-            if( tmpC->canOpen() ) 
+
+            // build the device name
+            std::string nam = "/dev/video" + std::to_string(i);
+
+            // create the camera object
+            V4l2Camera * tmpC = new V4l2Camera(nam);
+            if( verbose ) tmpC->setLogMode( logging_mode::logToStdOut );
+
+            if( tmpC )
             {
-                outln( nam + " : can be opened" );
-                numFound++;
-            }
-        } else outerr( nam + " : error !!! - failed to create V4l2Camera object for device" );
+                if( tmpC->canOpen() ) 
+                {
+                    outln( nam + " : can be opened" );
+                    numFound++;
+                }
+            } else outerr( nam + " : error !!! - failed to create V4l2Camera object for device" );
 
-        delete tmpC;
-    }
+            delete tmpC;
+        }
 
-    outln( "" );
-    outln( "...found : " + std::to_string(numFound) + " devices that can be opened by user" );
-    outln( "" );
-    outln( "...discovery complete" );
+        outln( "" );
+        outln( "...found : " + std::to_string(numFound) + " devices that can be opened by user" );
+        outln( "" );
+        outln( "...discovery complete" );
 
     #elif __APPLE__
-    outln( "*** Not supported on MACOS" );
-    outln( "" );
+        outln( "*** Not supported on MACOS" );
+        outln( "" );
     #endif
 }
 
 void listVideoModes( std::string deviceID )
 {
-    outln( "" );
-    outln( "------------------------------");
-
     // create the camera object
     #ifdef __linux__
         V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
-        outln( "Video Mode(s) for /dev/video" + deviceID );
     #elif __APPLE__
         std::map<int, V4l2Camera *> camList;
         camList = V4l2Camera::discoverCameras();
         V4l2Camera * tmp = camList[std::stoi(deviceID)];
-        outln( "Video Mode(s) for " + tmp->getUserName() );
     #endif
 
-    if( verbose ) tmp->setLogMode( logToStdOut );
+    outln( "" );
+    outln( "------------------------------");
+    outln( "Video Mode(s) for " + tmp->getDevName() + " : " + tmp->getUserName() );
+
+    if( verbose ) tmp->setLogMode( logging_mode::logToStdOut );
 
     if( tmp )
     {
@@ -218,28 +239,31 @@ void listVideoModes( std::string deviceID )
     }
     delete tmp;
 
-    outln( "");
-    outln( "---------------------------------------");
-    outln( "" );
-    outln( "Extra info on saving video mode frames to a file :");
-    outln(  "");
-    outln( "Motion-JPEG" );
-    outln( "    - single frame JPG images at specified resolution");
-    outln( "    - can be saved as <.jpg> files with single image capture");
-    outln( "    - can be saved to <.mjpg> files as multi-frame video, may not play properly until run thru <ffmpeg> to be cleaned up");
-    outln( "    - this line will fix up the video (v4l2cam uses 30 fps as a default) : ffmpeg -r 30 -i ../test.mjpg ../test2.mp4");
-    outln( "    - in fact this line will do it all in one step : ./v4l2cam -c 7 -d 2 -t 5 | ffmpeg -r 30 -i pipe: ../test3.mp4");
-    outln( "" );
-    outln( "YUYV" );
-    outln( "    - single raw from in YUV 4:2:2 format at specified resolution");
-    outln( "    - should be converted to another format (jpg/png) before attempting to view" );
-    outln( "    - should be converted to another format (jpg) before attempting to write to multi-frame video file" );
-    outln( "" );
-    outln( "H.264 or H.265" );
-    outln( "    - single frame of encoded (h.264 or h.265 video");
-    outln( "    - can be saved (one or more frames) to MP4 file but may not be in correct format without some fixing up by ffmpeg");
-    outln( "    - this line will fix up the video (v4l2cam uses 30 fps as a default) : ffmpeg -r 30 -i ../test.mp4 ../test2.mp4");
-    outln( "    - in fact this line will do it all in one step : ./v4l2cam -c 7 -d 2 -t 5 | ffmpeg -r 30 -i pipe: ../test3.mp4");
+    #ifdef __linux__
+        outln( "");
+        outln( "---------------------------------------");
+        outln( "" );
+        outln( "Extra info on saving video mode frames to a file :");
+        outln(  "");
+        outln( "Motion-JPEG" );
+        outln( "    - single frame JPG images at specified resolution");
+        outln( "    - can be saved as <.jpg> files with single image capture");
+        outln( "    - can be saved to <.mjpg> files as multi-frame video, may not play properly until run thru <ffmpeg> to be cleaned up");
+        outln( "    - this line will fix up the video (v4l2cam uses 30 fps as a default) : ffmpeg -r 30 -i ../test.mjpg ../test2.mp4");
+        outln( "    - in fact this line will do it all in one step : ./v4l2cam -c 7 -d 2 -t 5 | ffmpeg -r 30 -i pipe: ../test3.mp4");
+        outln( "" );
+        outln( "YUYV" );
+        outln( "    - single raw from in YUV 4:2:2 format at specified resolution");
+        outln( "    - should be converted to another format (jpg/png) before attempting to view" );
+        outln( "    - should be converted to another format (jpg) before attempting to write to multi-frame video file" );
+        outln( "" );
+        outln( "H.264 or H.265" );
+        outln( "    - single frame of encoded (h.264 or h.265 video");
+        outln( "    - can be saved (one or more frames) to MP4 file but may not be in correct format without some fixing up by ffmpeg");
+        outln( "    - this line will fix up the video (v4l2cam uses 30 fps as a default) : ffmpeg -r 30 -i ../test.mp4 ../test2.mp4");
+        outln( "    - in fact this line will do it all in one step : ./v4l2cam -c 7 -d 2 -t 5 | ffmpeg -r 30 -i pipe: ../test3.mp4");
+    #endif
+
     outln( "" );
     outln( "...discovery complete" );
 
@@ -250,15 +274,17 @@ void listUserControls( std::string deviceID )
     // create the camera object
     #ifdef __linux__
         V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
-        outln( "Video Mode(s) for /dev/video" + deviceID );
     #elif __APPLE__
         std::map<int, V4l2Camera *> camList;
         camList = V4l2Camera::discoverCameras();
         V4l2Camera * tmp = camList[std::stoi(deviceID)];
-        outln( "Video Mode(s) for " + tmp->getUserName() );
     #endif
 
-    if( verbose ) tmp->setLogMode( logToStdOut );
+    outln( "" );
+    outln( "------------------------------");
+    outln( "Use Control(s) for " + tmp->getDevName() + " : " + tmp->getUserName() );
+
+    if( verbose ) tmp->setLogMode( logging_mode::logToStdOut );
 
     if( tmp )
     {
@@ -304,9 +330,6 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
     if( fileName.length() > 0 ) sendToStdout = false;
     else outerr( "No filename specified, writing output data (image frame) to STDOUT");
 
-    // initiate image (one frame) capture
-    outerr("Using /dev/video" + deviceID + " for image capture");
-
     // open the output file
     if( !sendToStdout ) 
     {
@@ -329,7 +352,10 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
         outln( "Video Mode(s) for " + cam->getUserName() );
     #endif
 
-    if( verbose ) cam->setLogMode( logToStdOut );
+    // initiate image (one frame) capture
+    outerr( "Using " + cam->getDevName() + " : " + cam->getUserName() + " for image capture");
+
+    if( verbose ) cam->setLogMode( logging_mode::logToStdOut );
 
     if( cam && cam->open() )
     {
@@ -350,7 +376,7 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
         {
             outerr( "Set image mode to : " + vm.format_str + " @ " + std::to_string(vm.width) + "x" + std::to_string(vm.height) );
             // initialize the camera
-            if( cam->init( userPtrMode ) )
+            if( cam->init( fetch_mode::userPtrMode ) )
             {
                 // grab a single frame
                 struct image_buffer * inB = cam->fetch(true);
@@ -376,7 +402,7 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
                             {
                                 // re have to re-initialize as we didn't queue up a buffer last time
                                 cam->close();
-                                if( cam->open() && cam->setFrameFormat( vm ) && cam->init( userPtrMode ) )
+                                if( cam->open() && cam->setFrameFormat( vm ) && cam->init( fetch_mode::userPtrMode ) )
                                 {
                                     // free the previous buffers
                                     delete inB->buffer;
@@ -414,14 +440,14 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
                     delete inB->buffer;
                     delete inB;
 
-                } else outerr( "Nothing returned from fetch call for : /dev/video" + deviceID );
-            } else outerr( "Failed to initilize fetch mode for : /dev/video" + deviceID );
-        } else outerr( "Failed to set video mode for : /dev/video" + deviceID );
+                } else outerr( "Nothing returned from fetch call for : /" + cam->getDevName() + " " + cam->getUserName() );
+            } else outerr( "Failed to initilize fetch mode for : " + cam->getDevName() + " " + cam->getUserName() );
+        } else outerr( "Failed to set video mode for : " + cam->getDevName() + " " + cam->getUserName() );
 
         // close the camera
         cam->close();
 
-    } else outerr( "Failed to create/open camera : /dev/video" + deviceID );
+    } else outerr( "Failed to create/open camera : + deviceID" );
 
     // close the file
     if( !sendToStdout ) outFile.close();
@@ -482,7 +508,7 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
         outln( "Video Mode(s) for " + cam->getUserName() );
     #endif
 
-    if( verbose ) cam->setLogMode( logToStdOut );
+    if( verbose ) cam->setLogMode( logging_mode::logToStdOut );
 
     if( cam && cam->open() )
     {
@@ -503,7 +529,7 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
         {
             outerr( "Set image mode to : " + vm.format_str + " @ " + std::to_string(vm.width) + "x" + std::to_string(vm.height) );
             // initialize the camera
-            if( cam->init( userPtrMode ) )
+            if( cam->init( fetch_mode::userPtrMode ) )
             {
                 // set up the fpsVideo timers
                 std::chrono::steady_clock::time_point start;
@@ -587,25 +613,27 @@ int printBasicHelp()
     outln( "-----" );
 
     outln( "-h :            this message" );
-    outln( "-v :            show version of the V4l2Camera sub system");
+    outln( "-v :            show version of the UVCCamera sub system");
     outln( "-V :            operate in verbose mode (lots of information messages from low level functions)");
     outln( "-S :            run totally silent so that this app will not be chatty when used in scripts");
     outln( "-x :            display some sample commands");
     outln( "---" );
-    outln( "-i :            identify all openable devices in /dev/videoX driver space" );
-    outln( "-l :            list all USB cameras in the /dev/videoX driver space" );
+    #ifdef __linux__
+        outln( "-i :            identify all openable devices in /dev/videoX driver space" );
+    #endif
+    outln( "-l :            list all USB cameras in the USB device space" );
     outln( "---" );
     outln( "-d [0..63] :    select camera /dev/video<number> for operation" );
-    outln( "-m :            list all the video modes supported by camera -d [0..63]" );
-    outln( "-u :            list all the user controls supported by camera -d [0..63]" );
+    outln( "-m :            list all the video modes supported by camera -d #" );
+    outln( "-u :            list all the user controls supported by camera -d #" );
     outln( "---" );
     outln( "-t [0..##] :    set user control [0..??] to value specified with -k [##]");
     outln( "-k [0..##] :    used user control number [0..##] for set or retrieve commands");
     outln( "-r :            retrieve value from user control specified by -k [##]");
     outln( "-o file    :    specify filename for output, will send to stdout if not set" );
     outln( "---" );
-    outln( "-g [0..##] :    grab an image from camera -d [0..63], using video mode <number>" );
-    outln( "-c [0..##] :    capture video from camera -d [0..63], using video mode <number>, for time -t [0..##] seconds, default is 10 seconds" );
+    outln( "-g [0..##] :    grab an image from camera -d #, using video mode <number>" );
+    outln( "-c [0..##] :    capture video from camera -d #, using video mode <number>, for time -t [0..##] seconds, default is 10 seconds" );
     outln( "-t [0..##] :    specify a time duration for video capture, default is 10 seconds" );
     outln( "" );
 
@@ -615,30 +643,30 @@ int printBasicHelp()
 void printExamples()
 {
     outln("");
-    outln( "v4l2cam - example usage");
+    outln( "uvccam - example usage");
     outln( "-------------------------");
     outln( "...skipping al the obvious examples");
     outln( "" );
-    outln( "...get video modes for a /dev/video0");
-    outln( "$ ./v4l2cam -m -d 0");
+    outln( "...get video modes for a camera 0");
+    outln( "$ ./uvccam -m -d 0");
     outln( "" );
-    outln( "...list user controls for a /dev/video2");
-    outln( "$ ./v4l2cam -u -d 0");
+    outln( "...list user controls for camera 2");
+    outln( "$ ./uvccam -u -d 0");
     outln( "" );
-    outln( "...grab an image from /dev/video4, using image mode 2, save to <test.jpg>");
-    outln( "$ ./v4l2cam -g 2 -d 4 -o test.jpg");
+    outln( "...grab an image from casmera 4, using image mode 2, save to <test.jpg>");
+    outln( "$ ./uvccam -g 2 -d 4 -o test.jpg");
     outln( "" );
-    outln( "...capture video from /dev/video2, using video mode 1, stream to stdout, pipe to test.mp4");
-    outln( "$ ./v4l2cam -c 1 -d 2 > ./test.mp4");
+    outln( "...capture video from  camera 2, using video mode 1, stream to stdout, pipe to test.mp4");
+    outln( "$ ./uvccam -c 1 -d 2 > ./test.mp4");
     outln( "" );
     outln( "...capture video from device and send directly to ffmpeg for processing");
-    outln( "$ ./v4l2cam -c 7 -d 2 -t 5 | ffmpeg -r 30 -i pipe: ../test3.mp4");
+    outln( "$ ./uvccam -c 7 -d 2 -t 5 | ffmpeg -r 30 -i pipe: ../test3.mp4");
     outln( "" );
     outln( "...get the value from /dev/video2, for user control 9963776 (brightness)");
-    outln( "$ ./v4l2cam -r -k 9963776 -d 2");
+    outln( "$ ./uvccam -r -k 9963776 -d 2");
     outln( "" );
     outln( "...set the value for /dev/video2, for user control 9963776 to 25");
-    outln( "$ ./v4l2cam -t 25 -k 9963776 -d 2");
+    outln( "$ ./uvccam -t 25 -k 9963776 -d 2");
     outln( "" );
 }
 
