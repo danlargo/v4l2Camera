@@ -41,7 +41,7 @@ int main( int argc, char** argv )
 
     // show welcome message
     if( !silentMode ) std::cerr << std::endl << "Welcome to " << argv[0] 
-                                << "   ...using UVCCamera " << UVCCamera::getVersionString() << " " << UVCCamera::getCodeName()
+                                << "   ...using V4l2Camera " << UVCCamera::getVersionString() << " " << UVCCamera::getCodeName()
                                 << std::endl << std::endl;
     //
     // now process the commands, some depend on others, some can be done in sequence 
@@ -609,8 +609,8 @@ void printVersionInfo()
 int printBasicHelp()
 {
     outln( "" );
-    outln( "Usage" );
-    outln( "-----" );
+    outln( "v4l2cam Usage" );
+    outln( "-------------" );
 
     outln( "-h :            this message" );
     outln( "-v :            show version of the UVCCamera sub system");
@@ -621,9 +621,9 @@ int printBasicHelp()
     #ifdef __linux__
         outln( "-i :            identify all openable devices in /dev/videoX driver space" );
     #endif
-    outln( "-l :            list all USB cameras in the USB device space" );
+    outln( "-l :            list all UVC compatible cameras in the USB device space" );
     outln( "---" );
-    outln( "-d [0..63] :    select camera /dev/video<number> for operation" );
+    outln( "-d [0..63] :    select camera # for operation" );
     outln( "-m :            list all the video modes supported by camera -d #" );
     outln( "-u :            list all the user controls supported by camera -d #" );
     outln( "---" );
@@ -643,30 +643,30 @@ int printBasicHelp()
 void printExamples()
 {
     outln("");
-    outln( "uvccam - example usage");
+    outln( "v4l2cam - example usage");
     outln( "-------------------------");
     outln( "...skipping al the obvious examples");
     outln( "" );
     outln( "...get video modes for a camera 0");
-    outln( "$ ./uvccam -m -d 0");
+    outln( "$ ./v4l2cam -m -d 0");
     outln( "" );
     outln( "...list user controls for camera 2");
-    outln( "$ ./uvccam -u -d 0");
+    outln( "$ ./v4l2cam -u -d 0");
     outln( "" );
     outln( "...grab an image from casmera 4, using image mode 2, save to <test.jpg>");
-    outln( "$ ./uvccam -g 2 -d 4 -o test.jpg");
+    outln( "$ ./v4l2cam -g 2 -d 4 -o test.jpg");
     outln( "" );
     outln( "...capture video from  camera 2, using video mode 1, stream to stdout, pipe to test.mp4");
-    outln( "$ ./uvccam -c 1 -d 2 > ./test.mp4");
+    outln( "$ ./v4l2cam -c 1 -d 2 > ./test.mp4");
     outln( "" );
     outln( "...capture video from device and send directly to ffmpeg for processing");
-    outln( "$ ./uvccam -c 7 -d 2 -t 5 | ffmpeg -r 30 -i pipe: ../test3.mp4");
+    outln( "$ ./v4l2cam -c 7 -d 2 -t 5 | ffmpeg -r 30 -i pipe: ../test3.mp4");
     outln( "" );
     outln( "...get the value from /dev/video2, for user control 9963776 (brightness)");
-    outln( "$ ./uvccam -r -k 9963776 -d 2");
+    outln( "$ ./v4l2cam -r -k 9963776 -d 2");
     outln( "" );
     outln( "...set the value for /dev/video2, for user control 9963776 to 25");
-    outln( "$ ./uvccam -t 25 -k 9963776 -d 2");
+    outln( "$ ./v4l2cam -t 25 -k 9963776 -d 2");
     outln( "" );
 }
 

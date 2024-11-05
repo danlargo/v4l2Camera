@@ -17,7 +17,7 @@ all: main
 
 ifeq ($(UNAME_S),Linux)
 main: main.o uvccamera.o v4l2camera.o
-	$(CXX) $(LDFLAGS) -o uvccam main.o uvccamera.o v4l2camera.o $(LDLIBS)
+	$(CXX) $(LDFLAGS) -o v4l2cam main.o uvccamera.o v4l2camera.o $(LDLIBS)
 
 v4l2camera.o: v4l2camera.cpp v4l2camera.h uvccamera.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -c v4l2camera.cpp
@@ -25,7 +25,7 @@ endif
 
 ifeq ($(UNAME_S),Darwin)
 main: main.o uvccamera.o maccamera.o
-	$(CXX) $(LDFLAGS) -o uvccam main.o uvccamera.o v4l2camera.o $(LDLIBS)
+	$(CXX) $(LDFLAGS) -o v4l2cam main.o uvccamera.o v4l2camera.o $(LDLIBS)
 
 maccamera.o: maccamera.cpp maccamera.h uvccamera.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -c maccamera.cpp
@@ -39,4 +39,4 @@ uvccamera.o: uvccamera.cpp uvccamera.h
 
 clean:
 	$(RM) *.o
-	$(RM) uvccam
+	$(RM) v4l2cam
