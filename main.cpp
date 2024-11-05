@@ -9,14 +9,7 @@
 
 #include "defines.h"
 
-#include "uvccamera.h"
-
-#ifdef __linux__
-    #include "v4l2camera.h"
-#elif __APPLE__
-    #include "maccamera.h"
-#endif
-
+#include "maccamera.h"
 
 #include <unistd.h>
 
@@ -120,9 +113,11 @@ void listUSBCameras()
     outinfo( "USB camera discovery starting..." );
 
     #ifdef __linux__
+        V4l2Camera * tmp = nullptr;
         std::map<int, V4l2Camera *> camList;
         camList = V4l2Camera::discoverCameras();
     #elif __APPLE__
+        MACCamera * tmp = nullptr;
         std::map<int, MACCamera *> camList;
         camList = MACCamera::discoverCameras();
     #endif
@@ -134,7 +129,7 @@ void listUSBCameras()
 
     for( auto x : camList )
     {
-        V4l2Camera * tmp = x.second;
+        tmp = x.second;
 
         outln( "[" + std::to_string(x.first) + "] "
                 + tmp->getDevName() + " : " + tmp->getUserName() + ", " 
@@ -213,9 +208,9 @@ void listVideoModes( std::string deviceID )
     #ifdef __linux__
         V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
     #elif __APPLE__
-        std::map<int, V4l2Camera *> camList;
-        camList = V4l2Camera::discoverCameras();
-        V4l2Camera * tmp = camList[std::stoi(deviceID)];
+        std::map<int, MACCamera *> camList;
+        camList = MACCamera::discoverCameras();
+        MACCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
     outln( "" );
@@ -275,14 +270,14 @@ void listUserControls( std::string deviceID )
     #ifdef __linux__
         V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
     #elif __APPLE__
-        std::map<int, V4l2Camera *> camList;
-        camList = V4l2Camera::discoverCameras();
-        V4l2Camera * tmp = camList[std::stoi(deviceID)];
+        std::map<int, MACCamera *> camList;
+        camList = MACCamera::discoverCameras();
+        MACCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
     outln( "" );
     outln( "------------------------------");
-    outln( "Use Control(s) for " + tmp->getDevName() + " : " + tmp->getUserName() );
+    outln( "User Control(s) for " + tmp->getDevName() + " : " + tmp->getUserName() );
 
     if( verbose ) tmp->setLogMode( logging_mode::logToStdOut );
 
@@ -344,12 +339,10 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
     // create the camera object
     #ifdef __linux__
         V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
-        outln( "Video Mode(s) for /dev/video" + deviceID );
     #elif __APPLE__
-        std::map<int, V4l2Camera *> camList;
-        camList = V4l2Camera::discoverCameras();
-        V4l2Camera * cam = camList[std::stoi(deviceID)];
-        outln( "Video Mode(s) for " + cam->getUserName() );
+        std::map<int, MACCamera *> camList;
+        camList = MACCamera::discoverCameras();
+        MACCamera * cam = camList[std::stoi(deviceID)];
     #endif
 
     // initiate image (one frame) capture
@@ -440,7 +433,7 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
                     delete inB->buffer;
                     delete inB;
 
-                } else outerr( "Nothing returned from fetch call for : /" + cam->getDevName() + " " + cam->getUserName() );
+                } else outerr( "Nothing returned from fetch call for : " + cam->getDevName() + " " + cam->getUserName() );
             } else outerr( "Failed to initilize fetch mode for : " + cam->getDevName() + " " + cam->getUserName() );
         } else outerr( "Failed to set video mode for : " + cam->getDevName() + " " + cam->getUserName() );
 
@@ -464,10 +457,18 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
     int fpsVideo = 30;      // let's try to capture 30 FPS
     int framesToCapture;
 
+    #ifdef __linux__
+        V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
+    #elif __APPLE__
+        std::map<int, MACCamera *> camList;
+        camList = MACCamera::discoverCameras();
+        MACCamera * cam = camList[std::stoi(deviceID)];
+    #endif
+
     // check if filename is specified
     if( fileName.length() > 0 ) 
     {
-        outerr("Using /dev/video" + deviceID + " for video capture" );
+        outerr( "Using " + cam->getDevName() + " : " + cam->getUserName() +  " for video capture" );
         sendToStdout = false;
     }
     else outerr( "No filename specified, writing output data (video frames) to STDOUT");
@@ -497,16 +498,6 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
             return;
         }
     }
-
-    #ifdef __linux__
-        V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
-        outln( "Video Mode(s) for /dev/video" + deviceID );
-    #elif __APPLE__
-        std::map<int, V4l2Camera *> camList;
-        camList = V4l2Camera::discoverCameras();
-        V4l2Camera * cam = camList[std::stoi(deviceID)];
-        outln( "Video Mode(s) for " + cam->getUserName() );
-    #endif
 
     if( verbose ) cam->setLogMode( logging_mode::logToStdOut );
 
@@ -580,13 +571,13 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
                     start = std::chrono::steady_clock::now();
 
                 }
-            } else outerr( "Failed to initilize fetch mode for : /dev/video" + deviceID );
-        } else outerr( "Failed to set video mode for : /dev/video" + deviceID );
+            } else outerr( "Failed to initilize fetch mode for : " + cam->getDevName() + " " + cam->getUserName()  );
+        } else outerr( "Failed to set video mode for : " + cam->getDevName() + " " + cam->getUserName()  );
 
         // close the camera
         cam->close();
 
-    } else outerr( "Failed to create/open camera : /dev/video" + deviceID );
+    } else outerr( "Failed to create/open camera " + deviceID );
 
     // close the file
     if( sendToStdout ) std::cout.flush();
@@ -600,9 +591,9 @@ void printVersionInfo()
     outln("");
     outln( "V4l2Camera - version info");
     outln( "-------------------------");
-    outln( "Version     : " + V4l2Camera::getVersionString() );
-    outln( "Code Name   : " + V4l2Camera::getCodeName() );
-    outln( "Last Commit : " + V4l2Camera::getLastMsg() );
+    outln( "Version     : " + UVCCamera::getVersionString() );
+    outln( "Code Name   : " + UVCCamera::getCodeName() );
+    outln( "Last Commit : " + UVCCamera::getLastMsg() );
     outln( "" );
 }
 

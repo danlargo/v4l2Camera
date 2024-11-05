@@ -35,7 +35,7 @@ std::string UVCCamera::getDevName()
 
 std::string UVCCamera::getUserName()
 {
-    return "";
+    return m_userName;
 }
 
 bool UVCCamera::canOpen()

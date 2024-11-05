@@ -25,7 +25,7 @@ endif
 
 ifeq ($(UNAME_S),Darwin)
 main: main.o uvccamera.o maccamera.o
-	$(CXX) $(LDFLAGS) -o v4l2cam main.o uvccamera.o v4l2camera.o $(LDLIBS)
+	$(CXX) $(LDFLAGS) -o v4l2cam main.o uvccamera.o maccamera.o $(LDLIBS)
 
 maccamera.o: maccamera.cpp maccamera.h uvccamera.h
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -c maccamera.cpp
