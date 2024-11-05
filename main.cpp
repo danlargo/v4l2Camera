@@ -9,7 +9,11 @@
 
 #include "defines.h"
 
-#include "maccamera.h"
+#ifdef __linux__
+    #include "v4l2camera.h"
+#elif __APPLE__
+    #include "maccamera.h"
+#endif
 
 #include <unistd.h>
 
