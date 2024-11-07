@@ -56,7 +56,7 @@ std::vector< MACCamera *> MACCamera::discoverCameras()
 
         // create the camera object
         MACCamera * tmpC = new MACCamera(x);
-        tmpC->setLogMode( logging_mode::logToStdErr );
+        tmpC->setLogMode( logging_mode::logOff );
 
         std::string nam = x->productName;
 

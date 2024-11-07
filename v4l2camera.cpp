@@ -74,6 +74,9 @@ void V4l2Camera::log( std::string out, enum msg_type tag )
         if( logging_mode::logToStdErr == m_logMode ) std::cerr << msg << std::endl;
         if( logging_mode::logToStdOut == m_logMode ) std::cout << msg << std::endl;
 
+        // if it is critical, always display it
+        if( msg_type::critical == tag ) std::cerr << msg << std::endl;
+
         // check the length of the log, if greater than logDepth then clean from beginning
         while( m_debugLog.size() > s_logDepth ) m_debugLog.erase( m_debugLog.begin() );
 

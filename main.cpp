@@ -117,9 +117,8 @@ void listUSBCameras()
     outinfo( "USB camera discovery starting..." );
 
     #ifdef __linux__
-        V4l2Camera * tmp = nullptr;
-        std::map<int, V4l2Camera *> camList;
-        camList = V4l2Camera::discoverCameras();
+        std::vector<LinuxCamera *> camList;
+        camList = LinuxCamera::discoverCameras();
     #elif __APPLE__
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
@@ -184,15 +183,17 @@ void listAllDevices()
             std::string nam = "/dev/video" + std::to_string(i);
 
             // create the camera object
-            V4l2Camera * tmpC = new V4l2Camera(nam);
+            V4l2Camera * tmpC = new LinuxCamera(nam);
             if( verbose ) tmpC->setLogMode( logging_mode::logToStdOut );
+            else tmpC->setLogMode( logging_mode::logOff );
 
             if( tmpC )
             {
-                if( tmpC->canOpen() ) 
+                if( tmpC->open() ) 
                 {
                     outln( nam + " : can be opened" );
                     numFound++;
+                    tmpC->close();
                 }
             } else outerr( nam + " : error !!! - failed to create V4l2Camera object for device" );
 
@@ -214,7 +215,9 @@ void listVideoModes( std::string deviceID )
 {
     // create the camera object
     #ifdef __linux__
-        V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
+        std::vector< LinuxCamera *> camList;
+        camList = LinuxCamera::discoverCameras();
+        LinuxCamera * tmp = camList[std::stoi(deviceID)];
     #elif __APPLE__
         std::vector< MACCamera *> camList;
         camList = MACCamera::discoverCameras();
@@ -284,7 +287,9 @@ void listUserControls( std::string deviceID )
 {
     // create the camera object
     #ifdef __linux__
-        V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
+        std::vector< LinuxCamera *> camList;
+        camList = LinuxCamera::discoverCameras();
+        LinuxCamera * tmp = camList[std::stoi(deviceID)];
     #elif __APPLE__
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
@@ -296,6 +301,7 @@ void listUserControls( std::string deviceID )
     outln( "User Control(s) for " + tmp->getDevName() + " : " + tmp->getUserName() );
 
     if( verbose ) tmp->setLogMode( logging_mode::logToStdOut );
+    else tmp->setLogMode( logging_mode::logOff );
 
     if( tmp )
     {
@@ -357,7 +363,9 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
 
     // create the camera object
     #ifdef __linux__
-        V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
+        std::vector< LinuxCamera *> camList;
+        camList = LinuxCamera::discoverCameras();
+        LinuxCamera * cam = camList[std::stoi(deviceID)];
     #elif __APPLE__
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
@@ -368,6 +376,7 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
     outerr( "Using " + cam->getDevName() + " : " + cam->getUserName() + " for image capture");
 
     if( verbose ) cam->setLogMode( logging_mode::logToStdOut );
+    else cam->setLogMode( logging_mode::logOff );
 
     if( cam && cam->open() )
     {
@@ -457,6 +466,9 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
 
     } else outerr( "Failed to create/open camera : + deviceID" );
 
+    // delete the camera object
+    for( const auto &x : camList ) delete x;
+
     // close the file
     if( !sendToStdout ) outFile.close();
     else std::cout.flush();
@@ -473,7 +485,9 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
     int framesToCapture;
 
     #ifdef __linux__
-        V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
+        std::vector< LinuxCamera *> camList;
+        camList = LinuxCamera::discoverCameras();
+        LinuxCamera * cam = camList[std::stoi(deviceID)];    
     #elif __APPLE__
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
@@ -515,13 +529,10 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
     }
 
     if( verbose ) cam->setLogMode( logging_mode::logToStdOut );
+    else cam->setLogMode( logging_mode::logOff );
 
     if( cam && cam->open() )
     {
-        // find all the video modes
-        cam->enumCapabilities();
-        cam->enumVideoModes();
-
         // grab the requested video mode
         struct video_mode vm;
         try { vm = cam->getOneVM( std::stoi(videoMode) ); }
@@ -593,6 +604,9 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
         cam->close();
 
     } else outerr( "Failed to create/open camera " + deviceID );
+
+    // delete the camera object
+    for( const auto &x : camList ) delete x;
 
     // close the file
     if( sendToStdout ) std::cout.flush();

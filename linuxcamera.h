@@ -3,9 +3,7 @@
 
 #include "v4l2camera.h"
 
-#ifdef __linux__
-    #include <linux/videodev2.h>
-#endif
+#include <linux/videodev2.h>
     
 #include <map>
 #include <vector>
@@ -22,27 +20,31 @@ public:
     LinuxCamera( std::string );
     virtual ~LinuxCamera();
 
-    static std::map<int, LinuxCamera *>  discoverCameras();
+    static std::vector<LinuxCamera *>  discoverCameras();
     static std::vector<std::string> buildCamList();
 
     // Methods that should be overridden in sublcass
-    virtual std::string cntrlTypeToString(int type) override;
-    virtual std::string getDevName() override;
-    virtual bool canFetch() override;
-    virtual bool canRead() override;
-    virtual bool enumControls() override;
-    virtual bool enumVideoModes() override;
-    virtual bool enumCapabilities() override;
-    virtual int setValue( int id, int val, bool openOnDemand = false ) override;
-    virtual int getValue( int id, bool openOnDemand = false ) override;
-    virtual bool isOpen() override;
-    virtual bool canOpen() override;
-    virtual std::string getCameraType() override;
-    virtual bool open() override;
-    virtual bool setFrameFormat( struct video_mode ) override;
-    virtual bool init( enum fetch_mode ) override;
-    virtual void close() override;
-    virtual struct image_buffer * fetch( bool lastOne ) override;
+    virtual std::string getDevName();
+    virtual bool enumCapabilities();
+    virtual bool canFetch();
+    virtual bool canRead();
+
+    virtual bool enumControls();
+    virtual std::string cntrlTypeToString(int type);
+    virtual int setValue( int id, int val, bool openOnDemand = false );
+    virtual int getValue( int id, bool openOnDemand = false );
+
+    virtual bool enumVideoModes();
+    virtual bool setFrameFormat( struct video_mode );
+
+    virtual bool isOpen();
+    virtual std::string getCameraType();
+
+    virtual bool open();
+    virtual bool init( enum fetch_mode );
+    virtual void close();
+
+    virtual struct image_buffer * fetch( bool lastOne );
 
 };
 
