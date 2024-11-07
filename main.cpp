@@ -10,7 +10,7 @@
 #include "defines.h"
 
 #ifdef __linux__
-    #include "v4l2camera.h"
+    #include "linuxcamera.h"
 #elif __APPLE__
     #include "maccamera.h"
 #endif
@@ -19,8 +19,8 @@
 
 int main( int argc, char** argv )
 {
-    // init the handler library for the MACCamera class
     #ifdef __APPLE__
+        // init the handler library for the MACCamera class
         MACCamera::initAPI();
     #endif
 
@@ -38,7 +38,7 @@ int main( int argc, char** argv )
 
     // show welcome message
     if( !silentMode ) std::cerr << std::endl << "Welcome to " << argv[0] 
-                                << "   ...using V4l2Camera " << UVCCamera::getVersionString() << " " << UVCCamera::getCodeName()
+                                << "   ...using V4l2Camera " << V4l2Camera::getVersionString() << " " << V4l2Camera::getCodeName()
                                 << std::endl << std::endl;
     //
     // now process the commands, some depend on others, some can be done in sequence 
@@ -121,8 +121,7 @@ void listUSBCameras()
         std::map<int, V4l2Camera *> camList;
         camList = V4l2Camera::discoverCameras();
     #elif __APPLE__
-        MACCamera * tmp = nullptr;
-        std::map<int, MACCamera *> camList;
+        std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
     #endif
 
@@ -131,19 +130,24 @@ void listUSBCameras()
     outln( "Detected " + std::to_string(camList.size()) + " USB camera(s)" );
     outln( "" );
 
-    for( auto x : camList )
+    for( int i=0;i<camList.size();i++ )
     {
-        tmp = x.second;
+        if( verbose ) camList[i]->setLogMode( logging_mode::logToStdOut );
+        else camList[i]->setLogMode( logging_mode::logOff );
 
-        outln( "[" + std::to_string(x.first) + "] "
-                + tmp->getDevName() + " : " + tmp->getUserName() + ", " 
-                + std::to_string(tmp->getVideoModes().size()) + " video modes, "
-                + std::to_string(tmp->getControls().size()) + " user controls"
-            );
-
-        // delete the camera now that we are done with it
-        delete tmp;
+        if( camList[i]->open() )
+        {
+            outln( "[" + std::to_string(i) + "] "
+                    + camList[i]->getDevName() + " : " + camList[i]->getUserName() + ", " 
+                    + std::to_string(camList[i]->getVideoModes().size()) + " video modes, "
+                    + std::to_string(camList[i]->getControls().size()) + " user controls"
+                );
+        }
+        // close and delete he camera now that we are done with it
+        camList[i]->close();
     }
+    // delete all the cameras
+    for( const auto &x : camList ) delete x;
 
     #ifdef __linux__
         outln( "" );
@@ -212,32 +216,40 @@ void listVideoModes( std::string deviceID )
     #ifdef __linux__
         V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
     #elif __APPLE__
-        std::map<int, MACCamera *> camList;
+        std::vector< MACCamera *> camList;
         camList = MACCamera::discoverCameras();
         MACCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
     outln( "" );
     outln( "------------------------------");
-    outln( "Video Mode(s) for " + tmp->getDevName() + " : " + tmp->getUserName() );
+    outln( "Video Mode(s) for camera [" + deviceID + "] " + tmp->getDevName() + " : " + tmp->getUserName() );
 
     if( verbose ) tmp->setLogMode( logging_mode::logToStdOut );
+    else tmp->setLogMode( logging_mode::logOff );
 
     if( tmp )
     {
-        if( tmp->open() && tmp->enumVideoModes() )
+        if( tmp->open() )
         {
+            std::vector<video_mode> modes = tmp->getVideoModes();
+            outln( "" );
+            outln( "...Found " + std::to_string(modes.size()) + " video modes, details following..." );
+            outln( "" );
+
+            int offset = 0;
             for( auto x : tmp->getVideoModes() )
             {
-                struct video_mode vm = x.second;
-                outln( std::to_string(x.first) + " - " + vm.format_str + " : " + std::to_string(vm.width) + " x " + std::to_string(vm.height) );
+                struct video_mode vm = x;
+                outln( std::to_string(offset++) + " - " + vm.format_str + " : " + std::to_string(vm.width) + " x " + std::to_string(vm.height) );
             }
-            outln( "" );
-            outln( "..." + std::to_string(tmp->getVideoModes().size()) + " video modes supported" );
+
+            tmp->close();
         }
     }
-    delete tmp;
-
+    // delete all the camera object now that we are done with them
+    for( const auto &x : camList ) delete x;
+    
     #ifdef __linux__
         outln( "");
         outln( "---------------------------------------");
@@ -274,7 +286,7 @@ void listUserControls( std::string deviceID )
     #ifdef __linux__
         V4l2Camera * tmp = new V4l2Camera( "/dev/video" + deviceID );
     #elif __APPLE__
-        std::map<int, MACCamera *> camList;
+        std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
         MACCamera * tmp = camList[std::stoi(deviceID)];
     #endif
@@ -287,7 +299,7 @@ void listUserControls( std::string deviceID )
 
     if( tmp )
     {
-        if( tmp->open() && tmp->enumControls() )
+        if( tmp->open() )
         {
             for( const auto &x : tmp->getControls() )
             {
@@ -311,9 +323,12 @@ void listUserControls( std::string deviceID )
             }
             outln( "" );
             outln( "..." + std::to_string(tmp->getControls().size()) + " user controls supported" );
+
+            tmp->close();
         }
     }
-    delete tmp;
+    // delete all the camera object now that we are done with them
+    for( const auto &x : camList ) delete x;
 
     outln( "");
     outln( "...discovery complete" );
@@ -344,7 +359,7 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
     #ifdef __linux__
         V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
     #elif __APPLE__
-        std::map<int, MACCamera *> camList;
+        std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
         MACCamera * cam = camList[std::stoi(deviceID)];
     #endif
@@ -356,10 +371,6 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
 
     if( cam && cam->open() )
     {
-        // find all the video modes
-        cam->enumCapabilities();
-        cam->enumVideoModes();
-
         // grab the requested video mode
         struct video_mode vm;
         try { vm = cam->getOneVM( std::stoi(videoMode) ); }
@@ -379,7 +390,7 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
                 struct image_buffer * inB = cam->fetch(true);
                 if( inB && inB->buffer )
                 {
-                    // check for invalid JPG file (if MOtion-JPEG selected)
+                    // check for invalid JPG file (if Motion-JPEG selected)
                     if( "Motion-JPEG" == vm.format_str )
                     {
                         // check the header, should be 0xFF 0xD8 0xFF 
@@ -464,7 +475,7 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
     #ifdef __linux__
         V4l2Camera * cam = new V4l2Camera( "/dev/video" + deviceID );
     #elif __APPLE__
-        std::map<int, MACCamera *> camList;
+        std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
         MACCamera * cam = camList[std::stoi(deviceID)];
     #endif
@@ -595,9 +606,9 @@ void printVersionInfo()
     outln("");
     outln( "V4l2Camera - version info");
     outln( "-------------------------");
-    outln( "Version     : " + UVCCamera::getVersionString() );
-    outln( "Code Name   : " + UVCCamera::getCodeName() );
-    outln( "Last Commit : " + UVCCamera::getLastMsg() );
+    outln( "Version     : " + V4l2Camera::getVersionString() );
+    outln( "Code Name   : " + V4l2Camera::getCodeName() );
+    outln( "Last Commit : " + V4l2Camera::getLastMsg() );
     outln( "" );
 }
 
