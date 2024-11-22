@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+# MAC Shit
+.DS_Store
+
 # Compiled Object files
 *.slo
 *.lo

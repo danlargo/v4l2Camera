@@ -10,9 +10,10 @@
 #include "defines.h"
 
 #ifdef __linux__
-    #include "linuxcamera.h"
+    #include "linux/linuxcamera.h"
 #elif __APPLE__
-    #include "maccamera.h"
+    #include "macos/maccamera.h"
+    #include "macos/v4l2_defs.h"
 #endif
 
 #include <unistd.h>
@@ -131,8 +132,8 @@ void listUSBCameras()
 
     for( int i=0;i<camList.size();i++ )
     {
-        if( verbose ) camList[i]->setLogMode( logging_mode::logToStdOut );
-        else camList[i]->setLogMode( logging_mode::logOff );
+        if( verbose ) camList[i]->setLogMode( v4l2_logging_mode::logToStdOut );
+        else camList[i]->setLogMode( v4l2_logging_mode::logOff );
 
         if( camList[i]->open() )
         {
@@ -184,8 +185,8 @@ void listAllDevices()
 
             // create the camera object
             V4l2Camera * tmpC = new LinuxCamera(nam);
-            if( verbose ) tmpC->setLogMode( logging_mode::logToStdOut );
-            else tmpC->setLogMode( logging_mode::logOff );
+            if( verbose ) tmpC->setLogMode( v4l2_logging_mode::logToStdOut );
+            else tmpC->setLogMode( v4l2_logging_mode::logOff );
 
             if( tmpC )
             {
@@ -228,14 +229,14 @@ void listVideoModes( std::string deviceID )
     outln( "------------------------------");
     outln( "Video Mode(s) for camera [" + deviceID + "] " + tmp->getDevName() + " : " + tmp->getUserName() );
 
-    if( verbose ) tmp->setLogMode( logging_mode::logToStdOut );
-    else tmp->setLogMode( logging_mode::logOff );
+    if( verbose ) tmp->setLogMode( v4l2_logging_mode::logToStdOut );
+    else tmp->setLogMode( v4l2_logging_mode::logOff );
 
     if( tmp )
     {
         if( tmp->open() )
         {
-            std::vector<video_mode> modes = tmp->getVideoModes();
+            std::vector<v4l2_video_mode> modes = tmp->getVideoModes();
             outln( "" );
             outln( "...Found " + std::to_string(modes.size()) + " video modes, details following..." );
             outln( "" );
@@ -243,7 +244,7 @@ void listVideoModes( std::string deviceID )
             int offset = 0;
             for( auto x : tmp->getVideoModes() )
             {
-                struct video_mode vm = x;
+                struct v4l2_video_mode vm = x;
                 outln( std::to_string(offset++) + " - " + vm.format_str + " : " + std::to_string(vm.width) + " x " + std::to_string(vm.height) );
             }
 
@@ -300,8 +301,8 @@ void listUserControls( std::string deviceID )
     outln( "------------------------------");
     outln( "User Control(s) for " + tmp->getDevName() + " : " + tmp->getUserName() );
 
-    if( verbose ) tmp->setLogMode( logging_mode::logToStdOut );
-    else tmp->setLogMode( logging_mode::logOff );
+    if( verbose ) tmp->setLogMode( v4l2_logging_mode::logToStdOut );
+    else tmp->setLogMode( v4l2_logging_mode::logOff );
 
     if( tmp )
     {
@@ -309,7 +310,7 @@ void listUserControls( std::string deviceID )
         {
             for( const auto &x : tmp->getControls() )
             {
-                struct user_control ct = x.second;
+                struct v4l2_control ct = x.second;
                 outln( std::to_string(x.first) + "\t[" 
                                 + ct.typeStr + "] "
                                 + "\tmin = " + std::to_string(ct.min)
@@ -318,14 +319,17 @@ void listUserControls( std::string deviceID )
                                 + "\t:" + ct.name
 
                                 );
-                #ifdef __linux__
+                #ifdef __APPLE__
+                    if( ct.type == v4l2_control_type::v4l2_menu )
+                    {
+                #elif __linux__
                     if( ct.type == V4L2_CTRL_TYPE_MENU )
                     {
+                #endif
                         std::string menStr = "     menu items are :";
                         for( const auto &y : ct.menuItems ) menStr += " [" + std::to_string(y.first) + "]" + y.second;
                         outln( menStr );
                     }
-                #endif
             }
             outln( "" );
             outln( "..." + std::to_string(tmp->getControls().size()) + " user controls supported" );
@@ -375,13 +379,13 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
     // initiate image (one frame) capture
     outerr( "Using " + cam->getDevName() + " : " + cam->getUserName() + " for image capture");
 
-    if( verbose ) cam->setLogMode( logging_mode::logToStdOut );
-    else cam->setLogMode( logging_mode::logOff );
+    if( verbose ) cam->setLogMode( v4l2_logging_mode::logToStdOut );
+    else cam->setLogMode( v4l2_logging_mode::logOff );
 
     if( cam && cam->open() )
     {
         // grab the requested video mode
-        struct video_mode vm;
+        struct v4l2_video_mode vm;
         try { vm = cam->getOneVM( std::stoi(videoMode) ); }
         catch(const std::exception& e) 
         { 
@@ -393,10 +397,10 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
         {
             outerr( "Set image mode to : " + vm.format_str + " @ " + std::to_string(vm.width) + "x" + std::to_string(vm.height) );
             // initialize the camera
-            if( cam->init( fetch_mode::userPtrMode ) )
+            if( cam->init( v4l2_fetch_mode::userPtrMode ) )
             {
                 // grab a single frame
-                struct image_buffer * inB = cam->fetch(true);
+                struct v4l2_image_buffer * inB = cam->fetch(true);
                 if( inB && inB->buffer )
                 {
                     // check for invalid JPG file (if Motion-JPEG selected)
@@ -419,13 +423,13 @@ void grabImage( std::string deviceID, std::string videoMode, std::string fileNam
                             {
                                 // re have to re-initialize as we didn't queue up a buffer last time
                                 cam->close();
-                                if( cam->open() && cam->setFrameFormat( vm ) && cam->init( fetch_mode::userPtrMode ) )
+                                if( cam->open() && cam->setFrameFormat( vm ) && cam->init( v4l2_fetch_mode::userPtrMode ) )
                                 {
                                     // free the previous buffers
                                     delete inB->buffer;
                                     delete inB;
 
-                                    struct image_buffer * inB = cam->fetch(true);
+                                    struct v4l2_image_buffer * inB = cam->fetch(true);
                                     if( inB && inB->buffer )
                                     {
                                         if( (inB->buffer[0] == 0xff) && (inB->buffer[1] == 0xd8) && ((int)inB->buffer[2] == 0xff) ) 
@@ -528,13 +532,13 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
         }
     }
 
-    if( verbose ) cam->setLogMode( logging_mode::logToStdOut );
-    else cam->setLogMode( logging_mode::logOff );
+    if( verbose ) cam->setLogMode( v4l2_logging_mode::logToStdOut );
+    else cam->setLogMode( v4l2_logging_mode::logOff );
 
     if( cam && cam->open() )
     {
         // grab the requested video mode
-        struct video_mode vm;
+        struct v4l2_video_mode vm;
         try { vm = cam->getOneVM( std::stoi(videoMode) ); }
         catch(const std::exception& e) 
         { 
@@ -546,7 +550,7 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
         {
             outerr( "Set image mode to : " + vm.format_str + " @ " + std::to_string(vm.width) + "x" + std::to_string(vm.height) );
             // initialize the camera
-            if( cam->init( fetch_mode::userPtrMode ) )
+            if( cam->init( v4l2_fetch_mode::userPtrMode ) )
             {
                 // set up the fpsVideo timers
                 std::chrono::steady_clock::time_point start;
@@ -559,7 +563,7 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
                 while( framesToCapture > 0 )
                 {
                     bool goodFrame = false;
-                    struct image_buffer * inB = cam->fetch(framesToCapture == 1);
+                    struct v4l2_image_buffer * inB = cam->fetch(framesToCapture == 1);
 
                     // check the return buffers
                     if( inB && inB->buffer )

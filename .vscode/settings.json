@@ -72,6 +72,7 @@
         "ratio": "cpp",
         "stack": "cpp",
         "variant": "cpp",
-        "__config": "cpp"
+        "__config": "cpp",
+        "*.supports-builtin-modules": "cpp"
     }
 }

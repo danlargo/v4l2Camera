@@ -4,12 +4,11 @@
 #include <vector>
 
 #include "v4l2camera.h"
-#include "v4l2_defs.h"
 
 V4l2Camera::V4l2Camera()
 {
     // default logging, keep internal buffer, 500 entries deep
-    m_logMode = logging_mode::logInternal;
+    m_logMode = v4l2_logging_mode::logInternal;
     clearLog();
 
     // initiallize the return buffer
@@ -19,6 +18,7 @@ V4l2Camera::V4l2Camera()
     m_userName = "unknown";
     m_modes.clear();
     m_controls.clear();
+    m_cameraType = "unknown";
 }
 
 V4l2Camera::~V4l2Camera()
@@ -28,7 +28,7 @@ V4l2Camera::~V4l2Camera()
 
 std::string V4l2Camera::getCameraType()
 {
-    return "v4l2 camera";
+    return m_cameraType;
 }
 
 
@@ -54,15 +54,15 @@ bool V4l2Camera::canRead()
 }
 
 
-void V4l2Camera::setLogMode( enum logging_mode newMode )
+void V4l2Camera::setLogMode( enum v4l2_logging_mode newMode )
 {
     m_logMode = newMode;
 }
 
 
-void V4l2Camera::log( std::string out, enum msg_type tag )
+void V4l2Camera::log( std::string out, enum v4l2_msg_type tag )
 {
-    if( logging_mode::logOff != m_logMode )
+    if( v4l2_logging_mode::logOff != m_logMode )
     {
         // build the log message
         std::string msg = "[" + this->getTagStr(tag) + "] " + this->getDevName() +  " : " + out;
@@ -71,11 +71,11 @@ void V4l2Camera::log( std::string out, enum msg_type tag )
         m_debugLog.push_back( msg );
 
         // check if we should do anything else with it
-        if( logging_mode::logToStdErr == m_logMode ) std::cerr << msg << std::endl;
-        if( logging_mode::logToStdOut == m_logMode ) std::cout << msg << std::endl;
+        if( v4l2_logging_mode::logToStdErr == m_logMode ) std::cerr << msg << std::endl;
+        if( v4l2_logging_mode::logToStdOut == m_logMode ) std::cout << msg << std::endl;
 
         // if it is critical, always display it
-        if( msg_type::critical == tag ) std::cerr << msg << std::endl;
+        if( v4l2_msg_type::critical == tag ) std::cerr << msg << std::endl;
 
         // check the length of the log, if greater than logDepth then clean from beginning
         while( m_debugLog.size() > s_logDepth ) m_debugLog.erase( m_debugLog.begin() );
@@ -84,7 +84,25 @@ void V4l2Camera::log( std::string out, enum msg_type tag )
 }
 
 
-std::string V4l2Camera::getTagStr( enum msg_type tag )
+std::vector<std::string> V4l2Camera::getLogMsgs( int count )
+{
+    std::vector<std::string> ret;
+
+    // grab count messages off the top off the stack
+    for( int i=0;i<count;i++ )
+    {
+        if( m_debugLog.size() > 0 )
+        {
+            ret.push_back( m_debugLog[0] );
+            m_debugLog.erase( m_debugLog.begin() );        
+        }
+    }
+
+    return ret;
+}
+
+
+std::string V4l2Camera::getTagStr( enum v4l2_msg_type tag )
 {
     // \x1b[31m - Red
     // \x1b[32m - Green
@@ -93,16 +111,16 @@ std::string V4l2Camera::getTagStr( enum msg_type tag )
 
     switch( tag )
     {
-        case msg_type::info:
+        case v4l2_msg_type::info:
             return "\x1b[1;34mINFO\x1b[0m";
             break;
-        case msg_type::warning:
+        case v4l2_msg_type::warning:
             return "\x1b[33mWARN\x1b[0m";
             break;
-        case msg_type::error:
+        case v4l2_msg_type::error:
             return "\x1b[1;31mERR \x1b[0m";
             break;
-        case msg_type::critical:
+        case v4l2_msg_type::critical:
             return "\x1b[0;31mCRIT\x1b[0m";
             break;
         default:
@@ -161,7 +179,7 @@ void V4l2Camera::close()
 }
 
 
-bool V4l2Camera::setFrameFormat( struct video_mode vm )
+bool V4l2Camera::setFrameFormat( struct v4l2_video_mode vm )
 {
     return false;
 }
@@ -178,27 +196,27 @@ bool V4l2Camera::setFrameFormat( std::string mode, int width, int height )
         }
     }
 
-    log( "Requested mode not found", msg_type::error);
+    log( "Requested mode not found", v4l2_msg_type::error);
 
     return false;
 }
 
 
-bool V4l2Camera::init( enum fetch_mode newMode )
+bool V4l2Camera::init( enum v4l2_fetch_mode newMode )
 {
     return false;
 }
 
 
-struct image_buffer * V4l2Camera::fetch( bool lastOne )
+struct v4l2_image_buffer * V4l2Camera::fetch( bool lastOne )
 {
-    struct image_buffer * retBuffer = nullptr;
+    struct v4l2_image_buffer * retBuffer = nullptr;
 
     return retBuffer;
 }
 
 
-struct video_mode V4l2Camera::getOneVM( int index )
+struct v4l2_video_mode V4l2Camera::getOneVM( int index )
 {
     // check if it exists
     if( index >= m_modes.size() ) throw std::runtime_error("Video Mode does not exist");
@@ -213,7 +231,7 @@ bool V4l2Camera::enumVideoModes()
     return false;
 }
 
-struct user_control V4l2Camera::getOneCntrl( int index )
+struct v4l2_control V4l2Camera::getOneCntrl( int index )
 {
     // check if it exists
     if( m_controls.find(index) == this->m_controls.end() ) throw std::runtime_error("Control does not exist");
@@ -231,6 +249,56 @@ bool V4l2Camera::enumControls()
 std::string V4l2Camera::cntrlTypeToString( int type )
 {
     std::string ret = "unknown";
+
+    return ret;
+}
+
+// FourCC conversion helper methods
+//
+void V4l2Camera::fourcc_int_to_charArray( unsigned int fourcc, char * ret )
+{
+    ret[0] = (char)(fourcc & 0xFF);
+    ret[1] = (char)((fourcc >> 8) & 0xFF);
+    ret[2] = (char)((fourcc >> 16) & 0xFF);
+    ret[3] = (char)((fourcc >> 24) & 0xFF);
+    ret[4] = '\0';
+}
+
+
+unsigned int V4l2Camera::fourcc_charArray_to_int( unsigned char * fourcc )
+{
+    return (unsigned int)fourcc[3]<<24 | (unsigned int)fourcc[2]<<16 | (unsigned int)fourcc[1]<<8 | (unsigned int)fourcc[0];
+}
+
+
+unsigned int V4l2Camera::fourcc_intArray_to_int( int * fourcc )
+{
+    return fourcc[3]<<24 | fourcc[2]<<16 | fourcc[1]<<8 | fourcc[0];
+}
+
+
+std::string V4l2Camera::fourcc_int_to_descriptor( unsigned int fourcc )
+{
+    char in[5];
+    V4l2Camera::fourcc_int_to_charArray(fourcc, in);
+    std::string cmp = in;
+
+    std::string ret = "unknown format [" + cmp + "]";
+
+    if( cmp == "MJPG" ) return "Motion-JPEG [MJPG]";
+    if( cmp == "H264" ) return "H.264 Video [H264]";
+    if( cmp == "H265" ) return "H.265 Video [H265]";
+    if( cmp == "YUYV" ) return "YUYV 4:2:2 [YUYV]";
+    if( cmp == "YVYU" ) return "YVYU 4:2:2 [YVYU]";
+    if (cmp == "YUY2" ) return "YUYV 4:2:2 [YUY2]";
+    if( cmp == "YU12" ) return "Planar YUV 4:2:0 [YU12]";
+    if( cmp == "I420" ) return "Planar YUV 4:2:0 [I420]";
+    if( cmp == "NV12" ) return "Interleaved Y/UV 4:2:0 [NV12]";
+    if( cmp == "NV21" ) return "Y/UV 4:2:0 [NV21]";
+    if( cmp == "Y16 " ) return "16-bit Greyscale [Y16 ]";
+    if( cmp == "Y8  " ) return "8-bit Greyscale [Y8  ]";
+    if( cmp == "Y800" ) return "8-bit Greyscale [Y800]";
+    if( cmp == "GREY" ) return "8-bit Greyscale [GREY]";
 
     return ret;
 }

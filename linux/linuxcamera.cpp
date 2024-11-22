@@ -43,7 +43,7 @@ std::vector<LinuxCamera *> LinuxCamera::discoverCameras()
 
         // create the camera object
         LinuxCamera * tmpC = new LinuxCamera(x);
-        tmpC->setLogMode( logging_mode::logOff );
+        tmpC->setLogMode( v4l2_logging_mode::logOff );
 
         std::string nam = x;
 
@@ -295,7 +295,7 @@ void LinuxCamera::close()
 }
 
 
-bool LinuxCamera::setFrameFormat( struct video_mode vm )
+bool LinuxCamera::setFrameFormat( struct v4l2_video_mode vm )
 {
     bool ret = false;
 
@@ -323,7 +323,7 @@ bool LinuxCamera::setFrameFormat( struct video_mode vm )
 }
 
 
-bool LinuxCamera::init( enum fetch_mode newMode )
+bool LinuxCamera::init( enum v4l2_fetch_mode newMode )
 {
     bool ret = false;
 
@@ -354,7 +354,7 @@ bool LinuxCamera::init( enum fetch_mode newMode )
                     log( "ioctl(VIDIOC_REQBUF) success", info );
 
                     // queuing up this->numBuffers fetch buffers
-                    m_frameBuffer = new struct image_buffer;
+                    m_frameBuffer = new struct v4l2_image_buffer;
                     m_frameBuffer->length =  m_currentMode.size;
                     m_frameBuffer->buffer = new unsigned char[this->m_currentMode.size];
 
@@ -399,9 +399,9 @@ bool LinuxCamera::init( enum fetch_mode newMode )
 }
 
 
-struct image_buffer * LinuxCamera::fetch( bool lastOne )
+struct v4l2_image_buffer * LinuxCamera::fetch( bool lastOne )
 {
-    struct image_buffer * retBuffer = nullptr;
+    struct v4l2_image_buffer * retBuffer = nullptr;
 
     if( !isOpen() ) log( "Unable to call fetch() as no device is open", warning );
     {
@@ -423,7 +423,7 @@ struct image_buffer * LinuxCamera::fetch( bool lastOne )
 
                 else
                 {
-                    retBuffer = new struct image_buffer;
+                    retBuffer = new struct v4l2_image_buffer;
                     // this should have de-queued into the previous buffer we allocated
                     retBuffer->buffer = m_frameBuffer->buffer;
                     retBuffer->length = buf.bytesused;
@@ -432,7 +432,7 @@ struct image_buffer * LinuxCamera::fetch( bool lastOne )
                     if( !lastOne )
                     {
                         // aloocating for this->numBuffers fetch buffers
-                        m_frameBuffer = new struct image_buffer;
+                        m_frameBuffer = new struct v4l2_image_buffer;
                         m_frameBuffer->length =  m_currentMode.size;
                         m_frameBuffer->buffer = new unsigned char[this->m_currentMode.size];
 
@@ -498,7 +498,7 @@ bool LinuxCamera::enumVideoModes()
                 log( "Found : " + std::to_string(tmpS.discrete.width) + " x " + std::to_string(tmpS.discrete.height), info );
 
                 // save all the info
-                struct video_mode tmpVM;
+                struct v4l2_video_mode tmpVM;
                 tmpVM.fourcc = tmpF.pixelformat;
                 tmpVM.format_str = (char*)(tmpF.description);
                 tmpVM.size = tmpS.discrete.width * 4 * tmpS.discrete.height;

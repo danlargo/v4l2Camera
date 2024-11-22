@@ -35,16 +35,16 @@ public:
     virtual int getValue( int id, bool openOnDemand = false );
 
     virtual bool enumVideoModes();
-    virtual bool setFrameFormat( struct video_mode );
+    virtual bool setFrameFormat( struct v4l2_video_mode );
 
     virtual bool isOpen();
     virtual std::string getCameraType();
 
     virtual bool open();
-    virtual bool init( enum fetch_mode );
+    virtual bool init( enum v4l2_fetch_mode );
     virtual void close();
 
-    virtual struct image_buffer * fetch( bool lastOne );
+    virtual struct v4l2_image_buffer * fetch( bool lastOne );
 
 };
 

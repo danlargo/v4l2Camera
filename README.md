@@ -4,7 +4,7 @@ Low level camera control using v4l2 ioctl interface.
 
 Designed to run on linux based systems. Developed on a Pi5 and an Intel LInux PC, so it is sure to compile on a Debian based system if not all Linux variants.
 
-Developed with only basic interface requirements, should compile in most systems.
+Developed with only basic user interface requirements, should compile in most systems.
 
 Dependent on the STD C++ namespace support.
 
