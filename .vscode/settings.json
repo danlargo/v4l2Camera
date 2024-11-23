@@ -73,6 +73,9 @@
         "stack": "cpp",
         "variant": "cpp",
         "__config": "cpp",
-        "*.supports-builtin-modules": "cpp"
+        "*.supports-builtin-modules": "cpp",
+        "chrono": "cpp",
+        "format": "cpp",
+        "span": "cpp"
     }
 }

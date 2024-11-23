@@ -1,7 +1,7 @@
 #ifndef MACCAMERA_H
 #define MACCAMERA_H
 
-#include "../v4l2camera.h"
+#include "../base/v4l2camera.h"
 #include "libuvc/libuvc.h"
 
 struct uvc_device

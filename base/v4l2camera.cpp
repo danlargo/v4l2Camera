@@ -8,7 +8,7 @@
 V4l2Camera::V4l2Camera()
 {
     // default logging, keep internal buffer, 500 entries deep
-    m_logMode = v4l2_logging_mode::logInternal;
+    m_logMode = v4l2cam_logging_mode::logInternal;
     clearLog();
 
     // initiallize the return buffer
@@ -19,6 +19,9 @@ V4l2Camera::V4l2Camera()
     m_modes.clear();
     m_controls.clear();
     m_cameraType = "unknown";
+
+    // force to unhealthy state
+    m_healthCounter = s_healthCountLimit;
 }
 
 V4l2Camera::~V4l2Camera()
@@ -54,15 +57,15 @@ bool V4l2Camera::canRead()
 }
 
 
-void V4l2Camera::setLogMode( enum v4l2_logging_mode newMode )
+void V4l2Camera::setLogMode( enum v4l2cam_logging_mode newMode )
 {
     m_logMode = newMode;
 }
 
 
-void V4l2Camera::log( std::string out, enum v4l2_msg_type tag )
+void V4l2Camera::log( std::string out, enum v4l2cam_msg_type tag )
 {
-    if( v4l2_logging_mode::logOff != m_logMode )
+    if( v4l2cam_logging_mode::logOff != m_logMode )
     {
         // build the log message
         std::string msg = "[" + this->getTagStr(tag) + "] " + this->getDevName() +  " : " + out;
@@ -71,11 +74,11 @@ void V4l2Camera::log( std::string out, enum v4l2_msg_type tag )
         m_debugLog.push_back( msg );
 
         // check if we should do anything else with it
-        if( v4l2_logging_mode::logToStdErr == m_logMode ) std::cerr << msg << std::endl;
-        if( v4l2_logging_mode::logToStdOut == m_logMode ) std::cout << msg << std::endl;
+        if( v4l2cam_logging_mode::logToStdErr == m_logMode ) std::cerr << msg << std::endl;
+        if( v4l2cam_logging_mode::logToStdOut == m_logMode ) std::cout << msg << std::endl;
 
         // if it is critical, always display it
-        if( v4l2_msg_type::critical == tag ) std::cerr << msg << std::endl;
+        if( v4l2cam_msg_type::critical == tag ) std::cerr << msg << std::endl;
 
         // check the length of the log, if greater than logDepth then clean from beginning
         while( m_debugLog.size() > s_logDepth ) m_debugLog.erase( m_debugLog.begin() );
@@ -102,7 +105,7 @@ std::vector<std::string> V4l2Camera::getLogMsgs( int count )
 }
 
 
-std::string V4l2Camera::getTagStr( enum v4l2_msg_type tag )
+std::string V4l2Camera::getTagStr( enum v4l2cam_msg_type tag )
 {
     // \x1b[31m - Red
     // \x1b[32m - Green
@@ -111,16 +114,16 @@ std::string V4l2Camera::getTagStr( enum v4l2_msg_type tag )
 
     switch( tag )
     {
-        case v4l2_msg_type::info:
+        case v4l2cam_msg_type::info:
             return "\x1b[1;34mINFO\x1b[0m";
             break;
-        case v4l2_msg_type::warning:
+        case v4l2cam_msg_type::warning:
             return "\x1b[33mWARN\x1b[0m";
             break;
-        case v4l2_msg_type::error:
+        case v4l2cam_msg_type::error:
             return "\x1b[1;31mERR \x1b[0m";
             break;
-        case v4l2_msg_type::critical:
+        case v4l2cam_msg_type::critical:
             return "\x1b[0;31mCRIT\x1b[0m";
             break;
         default:
@@ -159,6 +162,19 @@ bool V4l2Camera::isOpen()
     return false;
 }
 
+bool V4l2Camera::isHealthy()
+{
+    // general operation, interntion anyway
+    //
+    // incremenet m_healthCounter is call fails, set to zero if call is successful
+    // - allows for a coiuple of failed calls before declaring the camera unhealthy
+    //
+    // - in base class m_healthCounter is set to s_healthCountLimit in constructor, base class is always UN healthy
+
+    // default subclass implementation
+    return (m_healthCounter < s_healthCountLimit);
+}
+
 
 bool V4l2Camera::enumCapabilities()
 {
@@ -179,7 +195,7 @@ void V4l2Camera::close()
 }
 
 
-bool V4l2Camera::setFrameFormat( struct v4l2_video_mode vm )
+bool V4l2Camera::setFrameFormat( struct v4l2cam_video_mode vm )
 {
     return false;
 }
@@ -196,27 +212,27 @@ bool V4l2Camera::setFrameFormat( std::string mode, int width, int height )
         }
     }
 
-    log( "Requested mode not found", v4l2_msg_type::error);
+    log( "Requested mode not found", v4l2cam_msg_type::error);
 
     return false;
 }
 
 
-bool V4l2Camera::init( enum v4l2_fetch_mode newMode )
+bool V4l2Camera::init( enum v4l2cam_fetch_mode newMode )
 {
     return false;
 }
 
 
-struct v4l2_image_buffer * V4l2Camera::fetch( bool lastOne )
+struct v4l2cam_image_buffer * V4l2Camera::fetch( bool lastOne )
 {
-    struct v4l2_image_buffer * retBuffer = nullptr;
+    struct v4l2cam_image_buffer * retBuffer = nullptr;
 
     return retBuffer;
 }
 
 
-struct v4l2_video_mode V4l2Camera::getOneVM( int index )
+struct v4l2cam_video_mode V4l2Camera::getOneVM( int index )
 {
     // check if it exists
     if( index >= m_modes.size() ) throw std::runtime_error("Video Mode does not exist");
@@ -231,7 +247,7 @@ bool V4l2Camera::enumVideoModes()
     return false;
 }
 
-struct v4l2_control V4l2Camera::getOneCntrl( int index )
+struct v4l2cam_control V4l2Camera::getOneCntrl( int index )
 {
     // check if it exists
     if( m_controls.find(index) == this->m_controls.end() ) throw std::runtime_error("Control does not exist");

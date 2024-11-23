@@ -15,7 +15,9 @@
 // v0.3.100 : adding support for MacOS, using libusb instead of video4linux2
 // v0.3.101 : creating super-class V4L2Camera and sub-classes LinuxCamera and MACCamera
 // v0.3.102 : enumerate UVC cameras, via libusb on MACOS
-// v0.3.103 : added getVideoMode support on MACOS, and fixed up soem refactoring on Linux side
+// v0.3.103 : added getVideoMode support on MACOS, and fixed up some refactoring on Linux side
+// v0.3.104 : restructured folder hierarchy, started adding control support on MACOS
+// v0.3.105 : restructured build folders, create library for export and linking to other apps, added isHealthy() to measure I/F health
 
 #include <map>
 #include <vector>
@@ -26,10 +28,11 @@
 
 // v4l2_control - structure to hold a single camera control
 //
-struct v4l2_control
+struct v4l2cam_control
 {
     std::string name;
     int type;
+    int id;
     std::string typeStr;
     int min;
     int max;
@@ -40,7 +43,7 @@ struct v4l2_control
 
 // v4l2_video_mode - structure to hold a single video mode
 //
-struct v4l2_video_mode
+struct v4l2cam_video_mode
 {
     unsigned int fourcc;
     std::string format_str;
@@ -51,7 +54,7 @@ struct v4l2_video_mode
 
 // v4l2_image_buffer - structure to hold a single image buffer
 //
-struct v4l2_image_buffer
+struct v4l2cam_image_buffer
 {
     int length;
     int width;
@@ -61,21 +64,21 @@ struct v4l2_image_buffer
 
 // Image Fetch Mode, only userPtrMode is supported
 //
-enum v4l2_fetch_mode
+enum v4l2cam_fetch_mode
 {
     notset, readMode, userPtrMode, mMapMode
 };
 
 // Logging control - indicates where information messages are displayed
 //
-enum v4l2_logging_mode
+enum v4l2cam_logging_mode
 {
     logOff, logInternal, logToStdErr, logToStdOut
 };
 
 // Logging message type - indicates the severity of the message
 //
-enum v4l2_msg_type
+enum v4l2cam_msg_type
 {
     info, warning, error, critical
 };
@@ -89,7 +92,7 @@ private:
     //
     static const int s_majorVersion = 0;
     static const int s_minorVersion = 3;
-    static const int s_revision = 103;
+    static const int s_revision = 105;
     inline static const std::string s_codeName = "Andrea";
     inline static const std::string s_lastCommitMsg = "[danlargo] added getVideoMode support on MACOS, and fixed up soem refactoring on Linux side";
 
@@ -114,33 +117,36 @@ public:
     static std::string getCodeName() { return "(" + s_codeName +")"; }
     static std::string getLastMsg() { return s_lastCommitMsg; }
 
+    // health tracker info
+    static const int s_healthCountLimit = 10;
 
     // Common class variables for all sub-classes
     //
     // defines camera capabilities
     //
-    std::map<int, struct v4l2_control> m_controls;
-    std::vector<struct v4l2_video_mode> m_modes;
+    std::map<int, struct v4l2cam_control> m_controls;
+    std::vector<struct v4l2cam_video_mode> m_modes;
     unsigned int m_capabilities;
     std::string m_userName;
     std::string m_cameraType;
 
     // Operational variables
     //
-    struct v4l2_image_buffer * m_frameBuffer;
-    struct v4l2_video_mode m_currentMode;
-    enum v4l2_fetch_mode m_bufferMode;
+    struct v4l2cam_image_buffer * m_frameBuffer;
+    struct v4l2cam_video_mode m_currentMode;
+    enum v4l2cam_fetch_mode m_bufferMode;
+    int m_healthCounter;
 
 
     // Logging control
     //
-    enum v4l2_logging_mode m_logMode;
+    enum v4l2cam_logging_mode m_logMode;
     std::vector<std::string> m_debugLog;
-    void log( std::string msg, enum v4l2_msg_type tag = v4l2_msg_type::info );
-    void setLogMode( enum v4l2_logging_mode );
+    void log( std::string msg, enum v4l2cam_msg_type tag = v4l2cam_msg_type::info );
+    void setLogMode( enum v4l2cam_logging_mode );
     void clearLog();
     std::vector<std::string>getLogMsgs( int num );
-    std::string getTagStr( enum v4l2_msg_type );
+    std::string getTagStr( enum v4l2cam_msg_type );
 
 
     // Camera capabilities getters
@@ -148,11 +154,11 @@ public:
     std::string getUserName();
     std::string getCameraType();
 
-    std::map<int, struct v4l2_control> getControls() { return this->m_controls; };
-    struct v4l2_control getOneCntrl( int index );
+    std::map<int, struct v4l2cam_control> getControls() { return this->m_controls; };
+    struct v4l2cam_control getOneCntrl( int index );
 
-    std::vector<struct v4l2_video_mode> getVideoModes() { return this->m_modes; };
-    struct v4l2_video_mode getOneVM( int index );
+    std::vector<struct v4l2cam_video_mode> getVideoModes() { return this->m_modes; };
+    struct v4l2cam_video_mode getOneVM( int index );
 
     bool checkCapabilities( unsigned int val );
 
@@ -166,7 +172,7 @@ public:
     // Device access methods
     //
     virtual bool open();
-    virtual bool init( enum v4l2_fetch_mode );
+    virtual bool init( enum v4l2cam_fetch_mode );
     virtual void close();
 
 
@@ -176,6 +182,7 @@ public:
     virtual bool enumControls();
     virtual bool enumVideoModes();
     virtual bool isOpen();
+    virtual bool isHealthy();
 
     // Check and change camera settings
     //
@@ -187,8 +194,8 @@ public:
 
     // Image fetch methods
     //
-    virtual bool setFrameFormat( struct v4l2_video_mode );
-    virtual struct v4l2_image_buffer * fetch( bool lastOne );
+    virtual bool setFrameFormat( struct v4l2cam_video_mode );
+    virtual struct v4l2cam_image_buffer * fetch( bool lastOne );
 
     // FourCC conversion methods
     //

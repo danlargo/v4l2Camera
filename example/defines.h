@@ -1,4 +1,5 @@
 #include <string>
+#include <map>
 
 // v4l2cam - demo app for V4l2Camera class
 //
@@ -7,9 +8,9 @@ const std::string appName = "v4l2cam";
 // Logging control
 //
 // encourage the low level objects to spew out information
-bool verbose = false;
+extern bool verbose;
 // run totally silent so that v4l2cam can be used in scripts
-bool silentMode = false;
+extern bool silentMode;
 
 // Control how message is displayed
 //
@@ -23,7 +24,7 @@ void listUSBCameras();
 void listAllDevices();
 void listVideoModes( std::string deviceID );
 void listUserControls( std::string deviceID );
-void grabImage( std::string deviceID, std::string videoMode, std::string fileName = "" );
+void captureImage( std::string deviceID, std::string videoMode, std::string fileName = "" );
 void captureVideo( std::string deviceID, std::string videoMode, std::string timeInSeconds = "10", std::string fileName = "");
 
 // Helper functions

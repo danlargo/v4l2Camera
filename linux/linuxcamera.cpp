@@ -20,6 +20,10 @@ LinuxCamera::LinuxCamera( std::string device_name )
     m_capabilities = 0;
     m_fid = -1;
     m_bufferMode = notset;
+
+    m_cameraType = "generic";
+
+    m_healthCounter = 0;
 }
 
 
@@ -43,7 +47,7 @@ std::vector<LinuxCamera *> LinuxCamera::discoverCameras()
 
         // create the camera object
         LinuxCamera * tmpC = new LinuxCamera(x);
-        tmpC->setLogMode( v4l2_logging_mode::logOff );
+        tmpC->setLogMode( v4l2cam_logging_mode::logOff );
 
         std::string nam = x;
 
@@ -95,11 +99,6 @@ std::vector<std::string> LinuxCamera::buildCamList()
 }
 
 
-std::string LinuxCamera::getCameraType()
-{
-    return "generic";
-}
-
 std::string LinuxCamera::getDevName()
 {
     return m_devName;
@@ -148,8 +147,16 @@ int LinuxCamera::setValue( int id, int newVal, bool openOnDemand )
     outQuery.value = newVal;
     ret = ioctl(m_fid, VIDIOC_S_CTRL, &outQuery );
 
-    if( -1 == ret ) log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
-    else log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] = " + std::to_string(newVal), info );
+    if( -1 == ret ) 
+    {
+        log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
+        m_healthCounter++;
+    }
+    else 
+    {
+        log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] = " + std::to_string(newVal), info );
+        m_healthCounter = 0;
+    }
 
     if( closeOnExit )
     {
@@ -190,11 +197,16 @@ int LinuxCamera::getValue( int id, bool openOnDemand )
     // get the actual value
     memset( &outQuery, 0, sizeof(struct v4l2_control));
     outQuery.id = id;
-    if( -1 == ioctl(m_fid, VIDIOC_G_CTRL, &outQuery ) ) log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
+    if( -1 == ioctl(m_fid, VIDIOC_G_CTRL, &outQuery ) ) 
+    {
+        log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
+        m_healthCounter++;
+    }
     else
     {
         ret = outQuery.value;
         log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) +"] = " + std::to_string(ret), info );
+        m_healthCounter = 0;
     }
 
     // close it if we opened on demand
@@ -214,8 +226,11 @@ bool LinuxCamera::open()
 
     m_fid = ::open(m_devName.c_str(), O_RDWR);
 
-    if( -1 == m_fid ) log( "::open(" + m_devName + ") failed : " + std::string(strerror(errno)), error );
-
+    if( -1 == m_fid ) 
+    {
+        log( "::open(" + m_devName + ") failed : " + std::string(strerror(errno)), error );
+        m_healthCounter = s_healthCountLimit;
+    }
     else
     {
         // set the fetch mode to USERPtr as a default
@@ -224,6 +239,7 @@ bool LinuxCamera::open()
         // indicate we are open ok
         ret = true;
         log( "::open(" + m_devName + ") success, FID = " + std::to_string(m_fid), info );
+        m_healthCounter = 0;
     }
 
     return ret;
@@ -246,8 +262,11 @@ bool LinuxCamera::enumCapabilities()
     {
         struct v4l2_capability tmpV;
 
-        if( -1 == ioctl(m_fid, VIDIOC_QUERYCAP, &tmpV) ) log( "ioctl(VIDIOC_QUERYCAP) failed :  " + std::string(strerror(errno)), error );
-
+        if( -1 == ioctl(m_fid, VIDIOC_QUERYCAP, &tmpV) ) 
+        {
+            log( "ioctl(VIDIOC_QUERYCAP) failed :  " + std::string(strerror(errno)), error );
+            m_healthCounter++;
+        }
         else
         {
             // grab the device name
@@ -261,6 +280,8 @@ bool LinuxCamera::enumCapabilities()
             log( "ioctl(VIDIOC_QUERYCAP) " + m_devName + " success, vector = " + std::to_string(m_capabilities), info );
 
             ret = true;
+
+            m_healthCounter = 0;
         }
     }
 
@@ -282,8 +303,16 @@ void LinuxCamera::close()
 
         case userPtrMode:
             type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            if( -1 == ioctl( m_fid, VIDIOC_STREAMOFF, &type) ) log( "ioctl(VIDIOC_STREAMOFF) failed : " + std::string(strerror(errno)), error );
-            else log( "VIDIOC_STREAMOFF success (streaming off) for " + m_devName, info );
+            if( -1 == ioctl( m_fid, VIDIOC_STREAMOFF, &type) ) 
+            {
+                log( "ioctl(VIDIOC_STREAMOFF) failed : " + std::string(strerror(errno)), error );
+                m_healthCounter++;
+            }
+            else 
+            {
+                log( "VIDIOC_STREAMOFF success (streaming off) for " + m_devName, info );
+                m_healthCounter = 0;
+            }
             break;
     }
 
@@ -295,7 +324,7 @@ void LinuxCamera::close()
 }
 
 
-bool LinuxCamera::setFrameFormat( struct v4l2_video_mode vm )
+bool LinuxCamera::setFrameFormat( struct v4l2cam_video_mode vm )
 {
     bool ret = false;
 
@@ -308,7 +337,12 @@ bool LinuxCamera::setFrameFormat( struct v4l2_video_mode vm )
         fmt.fmt.pix.width       = vm.width;
         fmt.fmt.pix.height      = vm.height;
 
-        if( -1 == ioctl(m_fid, VIDIOC_S_FMT, &fmt) ) log( "ioctl(VIDIOC_S_FMT) failed : " + std::string(strerror(errno)), error );
+        if( -1 == ioctl(m_fid, VIDIOC_S_FMT, &fmt) ) 
+        {
+            log( "ioctl(VIDIOC_S_FMT) failed : " + std::string(strerror(errno)), error );
+            m_healthCounter++;
+        }
+        else
         {
             m_currentMode = vm;
             ret = true;
@@ -316,6 +350,7 @@ bool LinuxCamera::setFrameFormat( struct v4l2_video_mode vm )
                     + vm.format_str + " at [" 
                     + std::to_string(vm.width) + " x " 
                     + std::to_string(vm.height) + "]", info );
+                    m_healthCounter = 0;
         }
     }
     
@@ -323,7 +358,7 @@ bool LinuxCamera::setFrameFormat( struct v4l2_video_mode vm )
 }
 
 
-bool LinuxCamera::init( enum v4l2_fetch_mode newMode )
+bool LinuxCamera::init( enum v4l2cam_fetch_mode newMode )
 {
     bool ret = false;
 
@@ -347,14 +382,17 @@ bool LinuxCamera::init( enum v4l2_fetch_mode newMode )
                 req.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 req.memory = V4L2_MEMORY_USERPTR;
 
-                if( -1 == ioctl(m_fid, VIDIOC_REQBUFS, &req) ) log( "ioctl(VIDIOC_REQBUF) failed : " + std::string(strerror(errno)), error );
-
+                if( -1 == ioctl(m_fid, VIDIOC_REQBUFS, &req) ) 
+                {
+                    log( "ioctl(VIDIOC_REQBUF) failed : " + std::string(strerror(errno)), error );
+                    m_healthCounter++;
+                }
                 else
                 {
                     log( "ioctl(VIDIOC_REQBUF) success", info );
 
                     // queuing up this->numBuffers fetch buffers
-                    m_frameBuffer = new struct v4l2_image_buffer;
+                    m_frameBuffer = new struct v4l2cam_image_buffer;
                     m_frameBuffer->length =  m_currentMode.size;
                     m_frameBuffer->buffer = new unsigned char[this->m_currentMode.size];
 
@@ -368,8 +406,11 @@ bool LinuxCamera::init( enum v4l2_fetch_mode newMode )
                     buf.m.userptr = (unsigned long)(m_frameBuffer->buffer);
                     buf.length = m_frameBuffer->length;
 
-                    if( -1 == ioctl(m_fid, VIDIOC_QBUF, &buf) ) log( "ioctl(VIDIOC_QBUF) failed : " + std::string(strerror(errno)), error );
-
+                    if( -1 == ioctl(m_fid, VIDIOC_QBUF, &buf) ) 
+                    {
+                        log( "ioctl(VIDIOC_QBUF) failed : " + std::string(strerror(errno)), error );
+                        m_healthCounter++;
+                    }
                     else
                     {
                         log( "ioctl(VIDIOC_QBUF) Q'd 1 buffer", info );
@@ -377,12 +418,16 @@ bool LinuxCamera::init( enum v4l2_fetch_mode newMode )
                         // turn streaming on
                         enum v4l2_buf_type type;
                         type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                        if( -1 == ioctl(m_fid, VIDIOC_STREAMON, &type) ) log( "ioctl(VIDIOC_STREAMON) failed : " + std::string(strerror(errno)), error );
-
+                        if( -1 == ioctl(m_fid, VIDIOC_STREAMON, &type) ) 
+                        {
+                            log( "ioctl(VIDIOC_STREAMON) failed : " + std::string(strerror(errno)), error );
+                            m_healthCounter++;
+                        }
                         else
                         {
                             log( "ioctl(VIDIOC_STREAMON) success", info );
                             ret = true;
+                            m_healthCounter = 0;
                         }
                     }
                 }
@@ -399,9 +444,9 @@ bool LinuxCamera::init( enum v4l2_fetch_mode newMode )
 }
 
 
-struct v4l2_image_buffer * LinuxCamera::fetch( bool lastOne )
+struct v4l2cam_image_buffer * LinuxCamera::fetch( bool lastOne )
 {
-    struct v4l2_image_buffer * retBuffer = nullptr;
+    struct v4l2cam_image_buffer * retBuffer = nullptr;
 
     if( !isOpen() ) log( "Unable to call fetch() as no device is open", warning );
     {
@@ -419,11 +464,14 @@ struct v4l2_image_buffer * LinuxCamera::fetch( bool lastOne )
                 buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 buf.memory = V4L2_MEMORY_USERPTR;
 
-                if( -1 == ioctl(m_fid, VIDIOC_DQBUF, &buf) ) log( "ioctl(VIDIOC_DQBUF) failed : " + std::string(strerror(errno)), error );
-
+                if( -1 == ioctl(m_fid, VIDIOC_DQBUF, &buf) ) 
+                {
+                    log( "ioctl(VIDIOC_DQBUF) failed : " + std::string(strerror(errno)), error );
+                    m_healthCounter++;
+                }
                 else
                 {
-                    retBuffer = new struct v4l2_image_buffer;
+                    retBuffer = new struct v4l2cam_image_buffer;
                     // this should have de-queued into the previous buffer we allocated
                     retBuffer->buffer = m_frameBuffer->buffer;
                     retBuffer->length = buf.bytesused;
@@ -432,7 +480,7 @@ struct v4l2_image_buffer * LinuxCamera::fetch( bool lastOne )
                     if( !lastOne )
                     {
                         // aloocating for this->numBuffers fetch buffers
-                        m_frameBuffer = new struct v4l2_image_buffer;
+                        m_frameBuffer = new struct v4l2cam_image_buffer;
                         m_frameBuffer->length =  m_currentMode.size;
                         m_frameBuffer->buffer = new unsigned char[this->m_currentMode.size];
 
@@ -446,8 +494,13 @@ struct v4l2_image_buffer * LinuxCamera::fetch( bool lastOne )
                         buf.m.userptr = (unsigned long)(this->m_frameBuffer->buffer);
                         buf.length = m_frameBuffer->length;
 
-                        if( -1 == ioctl(m_fid, VIDIOC_QBUF, &buf) ) log( "ioctl(VIDIOC_QBUF) failed : " + std::string(strerror(errno) ), error );
-                    }
+                        if( -1 == ioctl(m_fid, VIDIOC_QBUF, &buf) ) 
+                        {
+                            log( "ioctl(VIDIOC_QBUF) failed : " + std::string(strerror(errno) ), error );
+                            m_healthCounter++;
+
+                        }else m_healthCounter = 0;
+                    } else m_healthCounter = 0;
                 }
                 break;
 
@@ -498,7 +551,7 @@ bool LinuxCamera::enumVideoModes()
                 log( "Found : " + std::to_string(tmpS.discrete.width) + " x " + std::to_string(tmpS.discrete.height), info );
 
                 // save all the info
-                struct v4l2_video_mode tmpVM;
+                struct v4l2cam_video_mode tmpVM;
                 tmpVM.fourcc = tmpF.pixelformat;
                 tmpVM.format_str = (char*)(tmpF.description);
                 tmpVM.size = tmpS.discrete.width * 4 * tmpS.discrete.height;
@@ -548,6 +601,7 @@ bool LinuxCamera::enumControls()
                     log( "Found : " + std::string(query_ext_ctrl.name) );
 
                     m_controls[query_ext_ctrl.id].name = (char*)(query_ext_ctrl.name);
+                    m_controls[query_ext_ctrl.id].id = query_ext_ctrl.id;
                     m_controls[query_ext_ctrl.id].value = query_ext_ctrl.default_value;
                     m_controls[query_ext_ctrl.id].type = query_ext_ctrl.type;
                     m_controls[query_ext_ctrl.id].typeStr = cntrlTypeToString(query_ext_ctrl.type);
