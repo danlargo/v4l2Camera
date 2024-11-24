@@ -9,7 +9,7 @@
 #include <fcntl.h>
 
 #include "maccamera.h"
-#include "v4l2_defs.h"
+#include "v4l2cam_defs.h"
 #include "libuvc/libuvc.h"
 
 MACCamera::MACCamera( struct uvc_device * dev )

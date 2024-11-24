@@ -1,7 +1,7 @@
 #ifndef LINUXCAMERA_H
 #define LINUXCAMERA_H
 
-#include "../base/v4l2camera.h"
+#include "../v4l2camera.h"
 
 #include <linux/videodev2.h>
     

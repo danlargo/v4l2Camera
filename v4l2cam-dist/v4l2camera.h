@@ -92,7 +92,7 @@ private:
     //
     static const int s_majorVersion = 0;
     static const int s_minorVersion = 3;
-    static const int s_revision = 103;
+    static const int s_revision = 105;
     inline static const std::string s_codeName = "Andrea";
     inline static const std::string s_lastCommitMsg = "[danlargo] added getVideoMode support on MACOS, and fixed up soem refactoring on Linux side";
 

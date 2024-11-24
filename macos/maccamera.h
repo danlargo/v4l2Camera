@@ -1,7 +1,8 @@
 #ifndef MACCAMERA_H
 #define MACCAMERA_H
 
-#include "../base/v4l2camera.h"
+#include "../v4l2camera.h"
+
 #include "libuvc/libuvc.h"
 
 struct uvc_device
@@ -21,7 +22,7 @@ struct uvc_device
 
 static uvc_context_t * UVC_ctx;
 
-static std::map<int, struct v4l2_control_defs> controlDefs;
+static std::map<int, struct v4l2cam_control_defs> controlDefs;
 
 
 class MACCamera : public V4l2Camera
@@ -53,7 +54,7 @@ public:
     // Device access methods
     //
     virtual bool open();
-    virtual bool init( enum v4l2_fetch_mode );
+    virtual bool init( enum v4l2cam_fetch_mode );
     virtual void close();
 
 
@@ -74,8 +75,8 @@ public:
 
     // Image fetch methods
     //
-    virtual bool setFrameFormat( struct v4l2_video_mode );
-    virtual struct v4l2_image_buffer * fetch( bool lastOne );
+    virtual bool setFrameFormat( struct v4l2cam_video_mode );
+    virtual struct v4l2cam_image_buffer * fetch( bool lastOne );
 
 };
 

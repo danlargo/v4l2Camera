@@ -1,10 +1,13 @@
-#ifndef V4L2_DEFS_H
-#define V4L2_DEFS_H
+#ifndef V4L2CAM_DEFS_H
+#define V4L2CAM_DEFS_H
 
-enum v4l2_control_unit { v4l2_terminal_unit, v4l2_processing_unit };
-enum v4l2_control_type { v4l2_integer, v4l2_boolean, v4l2_menu };
+#include <string>
+#include <map>
 
-struct v4l2_control_defs {
+enum v4l2cam_control_unit { v4l2_terminal_unit, v4l2_processing_unit };
+enum v4l2cam_control_type { v4l2_integer, v4l2_boolean, v4l2_menu };
+
+struct v4l2cam_control_defs {
     int ctrl_id;
     int ctrl_type;
     int unit;
@@ -13,4 +16,4 @@ struct v4l2_control_defs {
     std::map<int, std::string> menuItems;
 };
 
-#endif // V4L2_DEFS_H
+#endif // V4L2CAM_DEFS_H
