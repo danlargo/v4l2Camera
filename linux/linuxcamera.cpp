@@ -1,7 +1,5 @@
 #include <cstring>
-#include <string>
 #include <iostream>
-#include <vector>
 
 // using ioctl for low level device enumeration and control
 #include <sys/ioctl.h>

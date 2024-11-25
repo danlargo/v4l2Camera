@@ -5,7 +5,6 @@
 
 #include <linux/videodev2.h>
     
-#include <map>
 #include <vector>
 #include <string>
 
