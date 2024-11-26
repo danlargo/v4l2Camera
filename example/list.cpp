@@ -129,7 +129,7 @@ void listVideoModes( std::string deviceID )
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
         camList = LinuxCamera::discoverCameras();
-        LInuxCamera * tmp = nullptr;
+        LinuxCamera * tmp = nullptr;
         if( (camList.size() > 0) && (std::stoi(deviceID) < camList.size()) ) tmp = camList[std::stoi(deviceID)];
         else 
         {

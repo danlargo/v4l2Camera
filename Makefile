@@ -34,6 +34,10 @@ else
 			STATIC_LIBS=v4l2cam-dist/libv4l2cam-linux-arm64.a
 		endif
 
+		ifeq ($(UNAME_M),aarch64)
+			STATIC_LIBS=v4l2cam-dist/libv4l2cam-linux-aarch64.a
+		endif
+
 	endif
 endif
 
@@ -42,7 +46,7 @@ LDFLAGS=-g
 #
 # V4l2 build targets
 #
-all: clean example dist
+all: example dist
 
 #
 #
@@ -63,6 +67,12 @@ ifeq ($(UNAME_M),x86_64)
 dist: linuxcamera.o v4l2camera.o
 	ar rcs build/libv4l2cam-linux-arm64.a build/linuxcamera.o build/v4l2camera.o
 	mv build/libv4l2cam-linux-arm64.a v4l2cam-dist
+endif
+
+ifeq ($(UNAME_M),aarch64)
+dist: linuxcamera.o v4l2camera.o
+	ar rcs build/libv4l2cam-linux-aarch64.a build/linuxcamera.o build/v4l2camera.o
+	mv build/libv4l2cam-linux-aarch64.a v4l2cam-dist
 endif
 
 	cp linux/linuxcamera.h v4l2cam-dist/linux
@@ -118,11 +128,16 @@ ifeq ($(UNAME_M),x86_64)
 	$(RM) v4l2cam-dist/*-linux-arm64.a
 endif
 
+ifeq ($(UNAME_M),aarch64)
+	$(RM) v4l2cam-dist/*-linux-aarch64.a
+endif
+
 	$(RM) v4l2cam-dist/linux/linuxcamera.h
 	$(RM) v4l2cam-dist/v4l2camera.h
 endif
 
 ifeq ($(UNAME_S),Darwin)
+	$(RM) v4l2cam-dist/*-linux-macos.a
 	$(RM) v4l2cam-dist/macos/maccamera.h
 	$(RM) v4l2cam-dist/v4l2camera.h
 endif
