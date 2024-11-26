@@ -12,11 +12,23 @@
     #include "../linux/linuxcamera.h"
 #elif __APPLE__
     #include "../macos/maccamera.h"
-    #include "../macos/v4l2_defs.h"
+    #include "../macos/v4l2cam_defs.h"
 #endif
 
 #include <unistd.h>
 
+void printSudoHint( int numCameras )
+{
+    #ifdef __APPLE__
+    if(  numCameras == 0 )
+    {
+        outln( "Hint : v4l2cam, must be run as root on MACOS to access USB cameras" );
+        outln( "...it is not possible to ask for Camera permissions from a command line app on MACOS");
+        outln( "...see Readme file for instructions on adding V4l2Camera to GUI app on MACOS" );
+    }
+    #endif
+
+}
 // Basic Helper Functions
 void printVersionInfo()
 {

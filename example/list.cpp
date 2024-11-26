@@ -12,11 +12,10 @@
     #include "../linux/linuxcamera.h"
 #elif __APPLE__
     #include "../macos/maccamera.h"
-    #include "../macos/v4l2_defs.h"
+    #include "../macos/v4l2cam_defs.h"
 #endif
 
 #include <unistd.h>
-
 
 // Functional demonstration functions
 void listUSBCameras()
@@ -36,22 +35,27 @@ void listUSBCameras()
     outln( "" );
     outln( "Detected " + std::to_string(camList.size()) + " USB camera(s)" );
     outln( "" );
+    printSudoHint( camList.size() );
 
-    for( int i=0;i<camList.size();i++ )
+    int camIndex = 0;
+    for( const auto &x: camList )
     {
-        if( verbose ) camList[i]->setLogMode( v4l2cam_logging_mode::logToStdOut );
-        else camList[i]->setLogMode( v4l2cam_logging_mode::logOff );
+        if( verbose ) x->setLogMode( v4l2cam_logging_mode::logToStdOut );
+        else x->setLogMode( v4l2cam_logging_mode::logOff );
 
-        if( camList[i]->open() )
+        if( x )
         {
-            outln( "[" + std::to_string(i) + "] "
-                    + camList[i]->getDevName() + " : " + camList[i]->getUserName() + ", " 
-                    + std::to_string(camList[i]->getVideoModes().size()) + " video modes, "
-                    + std::to_string(camList[i]->getControls().size()) + " user controls"
-                );
-        }
-        // close and delete he camera now that we are done with it
-        camList[i]->close();
+            if( x->open() )
+            {
+                outln( "[" + std::to_string(camIndex++) + "] "
+                        + x->getDevName() + " : " + x->getUserName() + ", " 
+                        + std::to_string(x->getVideoModes().size()) + " video modes, "
+                        + std::to_string(x->getControls().size()) + " user controls"
+                    );
+            }
+            // close and delete he camera now that we are done with it
+            x->close();
+        } else outerr( "Invalid V4l2Camera pointer in list" );
     }
     // delete all the cameras
     for( const auto &x : camList ) delete x;
@@ -125,11 +129,24 @@ void listVideoModes( std::string deviceID )
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
         camList = LinuxCamera::discoverCameras();
-        LinuxCamera * tmp = camList[std::stoi(deviceID)];
+        LInuxCamera * tmp = nullptr;
+        if( (camList.size() > 0) && (std::stoi(deviceID) < camList.size()) ) tmp = camList[std::stoi(deviceID)];
+        else 
+        {
+            outerr( "Selected device outside range : numCameras = " + std::to_string(camList.size()) + " yourDeviceID = " + deviceID );
+            return;
+        }
     #elif __APPLE__
         std::vector< MACCamera *> camList;
+        MACCamera * tmp = nullptr;
         camList = MACCamera::discoverCameras();
-        MACCamera * tmp = camList[std::stoi(deviceID)];
+        if( (camList.size() > 0) && (std::stoi(deviceID) < camList.size()) ) tmp = camList[std::stoi(deviceID)];
+        else 
+        {
+            outerr( "Selected device outside range : numCameras = " + std::to_string(camList.size()) + " yourDeviceID = " + deviceID );
+            return;
+        }
+        printSudoHint( camList.size() );
     #endif
 
     outln( "" );
@@ -227,7 +244,7 @@ void listUserControls( std::string deviceID )
 
                                 );
                 #ifdef __APPLE__
-                    if( ct.type == v4l2_control_type::v4l2_menu )
+                    if( ct.type == v4l2cam_control_type::v4l2_menu )
                     {
                 #elif __linux__
                     if( ct.type == V4L2_CTRL_TYPE_MENU )

@@ -19,7 +19,7 @@ LinuxCamera::LinuxCamera( std::string device_name )
     m_fid = -1;
     m_bufferMode = notset;
 
-    m_cameraType = "generic";
+    m_cameraType = "generic Linux UVC";
 
     m_healthCounter = 0;
 }

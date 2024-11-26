@@ -21,7 +21,7 @@ MACCamera::MACCamera( struct uvc_device * dev )
     m_userName = dev->productName;
     m_Handle = nullptr;
 
-    m_cameraType = "MAC USB Camera";
+    m_cameraType = "generic MACOS UVC";
 
 }
 
@@ -29,6 +29,7 @@ MACCamera::MACCamera( struct uvc_device * dev )
 MACCamera::~MACCamera()
 {
     if( m_Handle ) uvc_close( m_Handle );
+
 }
 
 
@@ -57,7 +58,7 @@ std::vector< MACCamera *> MACCamera::discoverCameras()
 
         // create the camera object
         MACCamera * tmpC = new MACCamera(x);
-        tmpC->setLogMode( v4l2_logging_mode::logOff );
+        tmpC->setLogMode( v4l2cam_logging_mode::logOff );
 
         std::string nam = x->productName;
 
@@ -76,6 +77,10 @@ std::vector< MACCamera *> MACCamera::discoverCameras()
                     {
                         // save the camera for use later
                         keep = true;
+
+                        // increase the refernce count
+
+                        // add to list
                         camList.push_back(tmpC);
 
                     } else tmpC->log( nam + " : zero video modes detected", info );
@@ -193,25 +198,30 @@ bool MACCamera::open()
     struct uvc_device * dev = nullptr;
     if( uvc_find_device( UVC_ctx, &dev, m_dev->vid, m_dev->pid, nullptr ) == UVC_SUCCESS )
     {
-        // open the device
-        uvc_error_t err = uvc_open( dev, &m_Handle);
-
-        if( UVC_SUCCESS == err ) ret = true;
-
-        else 
+        // make sure we actually found the device
+        if( dev )
         {
-            log( "Failed to open UVC camera : " + std::string(uvc_strerror(err)),  v4l2_msg_type::critical );
-            m_Handle = nullptr;
+            // open the device
+            uvc_error_t err = uvc_open( dev, &m_Handle);
 
-            // check for special case, access denied on MACOS...console apps CAN NOT request camera persmissions, they must be run as ROOT
-            // sudo ./v4l2cam -l            ... if this lists cameras then you are good to go
-            //
-            #ifdef __APPLE__
-                // this is likely a permisssions issue
-                if(UVC_ERROR_ACCESS == err ) log( "You are running on MACOS, console apps CAN NOT request camera permissions, run as root", v4l2_msg_type::critical ); 
-            #endif
-        }
-    }
+            if( UVC_SUCCESS == err ) ret = true;
+
+            else 
+            {
+                log( "Failed to open UVC camera : " + std::string(uvc_strerror(err)),  v4l2cam_msg_type::critical );
+                m_Handle = nullptr;
+
+                // check for special case, access denied on MACOS...console apps CAN NOT request camera persmissions, they must be run as ROOT
+                // sudo ./v4l2cam -l            ... if this lists cameras then you are good to go
+                //
+                #ifdef __APPLE__
+                    // this is likely a permisssions issue
+                    if(UVC_ERROR_ACCESS == err ) log( "You are running on MACOS, console apps CAN NOT request camera permissions, run as root", v4l2cam_msg_type::critical ); 
+                #endif
+            }
+
+        } else log( "uvc_find_device, returned SUCCESS but pointer is NULL : " + m_dev->productName + "-" + m_dev->manufacturerName, v4l2cam_msg_type::critical );
+    } else log( "Failed to find requested UVC camera : " + dev->productName + "-" + dev->manufacturerName, v4l2cam_msg_type::critical );
 
     return ret;
 }
@@ -251,7 +261,7 @@ void MACCamera::close()
 }
 
 
-bool MACCamera::setFrameFormat( struct v4l2_video_mode vm )
+bool MACCamera::setFrameFormat( struct v4l2cam_video_mode vm )
 {
     // just save the requested mode as we don;t set it until we request the image frame
     m_currentMode = vm;
@@ -260,7 +270,7 @@ bool MACCamera::setFrameFormat( struct v4l2_video_mode vm )
 }
 
 
-bool MACCamera::init( enum v4l2_fetch_mode newMode )
+bool MACCamera::init( enum v4l2cam_fetch_mode newMode )
 {
     bool ret = false;
 
@@ -277,9 +287,9 @@ bool MACCamera::init( enum v4l2_fetch_mode newMode )
     return ret;
 }
 
-struct v4l2_image_buffer * MACCamera::fetch( bool lastOne )
+struct v4l2cam_image_buffer * MACCamera::fetch( bool lastOne )
 {
-    struct v4l2_image_buffer * retBuffer = nullptr;
+    struct v4l2cam_image_buffer * retBuffer = nullptr;
 
     if( !this->isOpen() ) log( "Unable to call fetch() as no device is open", warning );
 
@@ -315,7 +325,7 @@ bool MACCamera::enumVideoModes()
 
             while( frame_desc != nullptr )
             {
-                struct v4l2_video_mode tmpMode;
+                struct v4l2cam_video_mode tmpMode;
 
                 tmpMode.fourcc = V4l2Camera::fourcc_charArray_to_int( (unsigned char*)format_desc->fourccFormat );
                 tmpMode.format_str = V4l2Camera::fourcc_int_to_descriptor( tmpMode.fourcc );
@@ -370,9 +380,9 @@ bool MACCamera::enumControls()
         // Scanning Mode
         if( uvc_get_scanning_mode(m_Handle, &mode, UVC_GET_CUR) == UVC_SUCCESS )
         {
-            struct v4l2_control tmpC;
+            struct v4l2cam_control tmpC;
             tmpC.name = "SCANNING_MODE";
-            tmpC.type = v4l2_control_type::v4l2_boolean;
+            tmpC.type = v4l2cam_control_type::v4l2_boolean;
             tmpC.typeStr = "BOOLEAN";
 
             tmpC.value = mode;
@@ -427,32 +437,32 @@ void MACCamera::buildControlDefList()
     //
     // Terminal Control Requests
     //
-    controlDefs[UVC_CT_SCANNING_MODE_CONTROL] = { UVC_CT_SCANNING_MODE_CONTROL, v4l2_control_type::v4l2_boolean,v4l2_control_unit::v4l2_terminal_unit, "Scanning Mode (Interlaced or Progressive)", 1, {} };
-    controlDefs[UVC_CT_AE_MODE_CONTROL] = { UVC_CT_AE_MODE_CONTROL, v4l2_control_type::v4l2_menu, v4l2_control_unit::v4l2_terminal_unit, "AE_MODE", 1, { {1,"Auto"}, {2,"Manual"}, {4,"Shutter Priority"}, {8,"ApeturePriority"} } };
-    controlDefs[UVC_CT_AE_PRIORITY_CONTROL] = { UVC_CT_AE_PRIORITY_CONTROL, v4l2_control_type::v4l2_menu, v4l2_control_unit::v4l2_terminal_unit, "AE_PRIORITY", 1, { {0,"Static"}, {1,"Dynamic"} } };
-    controlDefs[UVC_CT_EXPOSURE_TIME_ABSOLUTE_CONTROL] = { UVC_CT_EXPOSURE_TIME_ABSOLUTE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_terminal_unit, "Exposure Time Absolute", 4, {} };
-    controlDefs[UVC_CT_EXPOSURE_TIME_RELATIVE_CONTROL] = { UVC_CT_EXPOSURE_TIME_RELATIVE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_terminal_unit, "Exposure Time Relative", 1, {} };
-    controlDefs[UVC_CT_FOCUS_ABSOLUTE_CONTROL] = { UVC_CT_FOCUS_ABSOLUTE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_terminal_unit, "Focus Absolute (mm)", 2, {} };
-    //controlDefs[UVC_CT_FOCUS_RELATIVE_CONTROL] = { UVC_CT_FOCUS_RELATIVE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_unit, "Focus Relative", 1, {} };
-    controlDefs[UVC_CT_FOCUS_RELATIVE_CONTROL] = { UVC_CT_FOCUS_RELATIVE_CONTROL, v4l2_control_type::v4l2_menu, v4l2_control_unit::v4l2_terminal_unit, "Focus Relative", 1, { {0x00, "Full Range"}, {0x01, "Macro"}, {0x02, "People"}, {0x03, "Scene"} } };
-    controlDefs[UVC_CT_FOCUS_AUTO_CONTROL] = { UVC_CT_FOCUS_AUTO_CONTROL, v4l2_control_type::v4l2_boolean, v4l2_control_unit::v4l2_terminal_unit, "Focus Auto (Off or On)", 1, {} };
-    controlDefs[UVC_CT_IRIS_ABSOLUTE_CONTROL] = { UVC_CT_IRIS_ABSOLUTE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_terminal_unit, "Iris Absolute (fStop)", 2, {} };
-    controlDefs[UVC_CT_IRIS_RELATIVE_CONTROL] = { UVC_CT_IRIS_RELATIVE_CONTROL, v4l2_control_type::v4l2_menu, v4l2_control_unit::v4l2_terminal_unit, "Iris Relative", 1, {{0, "Default"}, {1, "Open 1 Step"}, {0xff,"Close 1 Step"} } };
-    controlDefs[UVC_CT_ZOOM_ABSOLUTE_CONTROL] = { UVC_CT_ZOOM_ABSOLUTE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_terminal_unit, "Zoom Absolute", 2, {} };
-    //controlDefs[UVC_CT_ZOOM_RELATIVE_CONTROL] = { UVC_CT_ZOOM_RELATIVE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_unit, "Zoom Relative", 3, {} };
-    //controlDefs[UVC_CT_PANTILT_ABSOLUTE_CONTROL] = { UVC_CT_PANTILT_ABSOLUTE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_unit, "PanTilt Absolute", 8, {} };
-    //controlDefs[UVC_CT_PANTILT_RELATIVE_CONTROL] = { UVC_CT_PANTILT_RELATIVE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_unit, "PanTilt Relative", 4, {} };
-    controlDefs[UVC_CT_ROLL_ABSOLUTE_CONTROL] = { UVC_CT_ROLL_ABSOLUTE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_terminal_unit, "Roll Absolute", 2, {} };
-    //controlDefs[UVC_CT_ROLL_RELATIVE_CONTROL] = { UVC_CT_ROLL_RELATIVE_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_unit, "Roll Relative", 2, {} };
-    controlDefs[UVC_CT_PRIVACY_CONTROL] = { UVC_CT_PRIVACY_CONTROL, v4l2_control_type::v4l2_boolean, v4l2_control_unit::v4l2_terminal_unit, "Privacy Control (Off or On)", 1, {} };
-    //controlDefs[UVC_CT_DIGITAL_WINDOW_CONTROL] = { UVC_CT_DIGITAL_WINDOW_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_unit, "Digital Window", 12, {} };
-    //controlDefs[UVC_CT_REGION_OF_INTEREST_CONTROL] = { UVC_CT_REGION_OF_INTEREST_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_unit, "Region of Interest", 10, {} };
+    controlDefs[UVC_CT_SCANNING_MODE_CONTROL] = { UVC_CT_SCANNING_MODE_CONTROL, v4l2cam_control_type::v4l2_boolean,v4l2cam_control_unit::v4l2_terminal_unit, "Scanning Mode (Interlaced or Progressive)", 1, {} };
+    controlDefs[UVC_CT_AE_MODE_CONTROL] = { UVC_CT_AE_MODE_CONTROL, v4l2cam_control_type::v4l2_menu, v4l2cam_control_unit::v4l2_terminal_unit, "AE_MODE", 1, { {1,"Auto"}, {2,"Manual"}, {4,"Shutter Priority"}, {8,"ApeturePriority"} } };
+    controlDefs[UVC_CT_AE_PRIORITY_CONTROL] = { UVC_CT_AE_PRIORITY_CONTROL, v4l2cam_control_type::v4l2_menu, v4l2cam_control_unit::v4l2_terminal_unit, "AE_PRIORITY", 1, { {0,"Static"}, {1,"Dynamic"} } };
+    controlDefs[UVC_CT_EXPOSURE_TIME_ABSOLUTE_CONTROL] = { UVC_CT_EXPOSURE_TIME_ABSOLUTE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_terminal_unit, "Exposure Time Absolute", 4, {} };
+    controlDefs[UVC_CT_EXPOSURE_TIME_RELATIVE_CONTROL] = { UVC_CT_EXPOSURE_TIME_RELATIVE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_terminal_unit, "Exposure Time Relative", 1, {} };
+    controlDefs[UVC_CT_FOCUS_ABSOLUTE_CONTROL] = { UVC_CT_FOCUS_ABSOLUTE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_terminal_unit, "Focus Absolute (mm)", 2, {} };
+    //controlDefs[UVC_CT_FOCUS_RELATIVE_CONTROL] = { UVC_CT_FOCUS_RELATIVE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_unit, "Focus Relative", 1, {} };
+    controlDefs[UVC_CT_FOCUS_RELATIVE_CONTROL] = { UVC_CT_FOCUS_RELATIVE_CONTROL, v4l2cam_control_type::v4l2_menu, v4l2cam_control_unit::v4l2_terminal_unit, "Focus Relative", 1, { {0x00, "Full Range"}, {0x01, "Macro"}, {0x02, "People"}, {0x03, "Scene"} } };
+    controlDefs[UVC_CT_FOCUS_AUTO_CONTROL] = { UVC_CT_FOCUS_AUTO_CONTROL, v4l2cam_control_type::v4l2_boolean, v4l2cam_control_unit::v4l2_terminal_unit, "Focus Auto (Off or On)", 1, {} };
+    controlDefs[UVC_CT_IRIS_ABSOLUTE_CONTROL] = { UVC_CT_IRIS_ABSOLUTE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_terminal_unit, "Iris Absolute (fStop)", 2, {} };
+    controlDefs[UVC_CT_IRIS_RELATIVE_CONTROL] = { UVC_CT_IRIS_RELATIVE_CONTROL, v4l2cam_control_type::v4l2_menu, v4l2cam_control_unit::v4l2_terminal_unit, "Iris Relative", 1, {{0, "Default"}, {1, "Open 1 Step"}, {0xff,"Close 1 Step"} } };
+    controlDefs[UVC_CT_ZOOM_ABSOLUTE_CONTROL] = { UVC_CT_ZOOM_ABSOLUTE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_terminal_unit, "Zoom Absolute", 2, {} };
+    //controlDefs[UVC_CT_ZOOM_RELATIVE_CONTROL] = { UVC_CT_ZOOM_RELATIVE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_unit, "Zoom Relative", 3, {} };
+    //controlDefs[UVC_CT_PANTILT_ABSOLUTE_CONTROL] = { UVC_CT_PANTILT_ABSOLUTE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_unit, "PanTilt Absolute", 8, {} };
+    //controlDefs[UVC_CT_PANTILT_RELATIVE_CONTROL] = { UVC_CT_PANTILT_RELATIVE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_unit, "PanTilt Relative", 4, {} };
+    controlDefs[UVC_CT_ROLL_ABSOLUTE_CONTROL] = { UVC_CT_ROLL_ABSOLUTE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_terminal_unit, "Roll Absolute", 2, {} };
+    //controlDefs[UVC_CT_ROLL_RELATIVE_CONTROL] = { UVC_CT_ROLL_RELATIVE_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_unit, "Roll Relative", 2, {} };
+    controlDefs[UVC_CT_PRIVACY_CONTROL] = { UVC_CT_PRIVACY_CONTROL, v4l2cam_control_type::v4l2_boolean, v4l2cam_control_unit::v4l2_terminal_unit, "Privacy Control (Off or On)", 1, {} };
+    //controlDefs[UVC_CT_DIGITAL_WINDOW_CONTROL] = { UVC_CT_DIGITAL_WINDOW_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_unit, "Digital Window", 12, {} };
+    //controlDefs[UVC_CT_REGION_OF_INTEREST_CONTROL] = { UVC_CT_REGION_OF_INTEREST_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_unit, "Region of Interest", 10, {} };
 
     // Processing Units Controls
-    controlDefs[UVC_PU_BACKLIGHT_COMPENSATION_CONTROL] = { UVC_PU_BACKLIGHT_COMPENSATION_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_processing_unit, "Backlight Compensation", 2, {} };
-    controlDefs[UVC_PU_BRIGHTNESS_CONTROL] = { UVC_PU_BRIGHTNESS_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_processing_unit, "Brightness", 2, {} };
-    controlDefs[UVC_PU_CONTRAST_CONTROL] = { UVC_PU_CONTRAST_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_processing_unit, "Contrast", 2, {} };
-    controlDefs[UVC_PU_CONTRAST_AUTO_CONTROL] = { UVC_PU_CONTRAST_AUTO_CONTROL, v4l2_control_type::v4l2_boolean, v4l2_control_unit::v4l2_processing_unit, "Contrast Auto (Off or On)", 1, {} };
-    controlDefs[UVC_PU_GAIN_CONTROL] = { UVC_PU_GAIN_CONTROL, v4l2_control_type::v4l2_integer, v4l2_control_unit::v4l2_processing_unit, "Gain", 2, {} };
+    controlDefs[UVC_PU_BACKLIGHT_COMPENSATION_CONTROL] = { UVC_PU_BACKLIGHT_COMPENSATION_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_processing_unit, "Backlight Compensation", 2, {} };
+    controlDefs[UVC_PU_BRIGHTNESS_CONTROL] = { UVC_PU_BRIGHTNESS_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_processing_unit, "Brightness", 2, {} };
+    controlDefs[UVC_PU_CONTRAST_CONTROL] = { UVC_PU_CONTRAST_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_processing_unit, "Contrast", 2, {} };
+    controlDefs[UVC_PU_CONTRAST_AUTO_CONTROL] = { UVC_PU_CONTRAST_AUTO_CONTROL, v4l2cam_control_type::v4l2_boolean, v4l2cam_control_unit::v4l2_processing_unit, "Contrast Auto (Off or On)", 1, {} };
+    controlDefs[UVC_PU_GAIN_CONTROL] = { UVC_PU_GAIN_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_processing_unit, "Gain", 2, {} };
 }
 

@@ -5,6 +5,10 @@
 //
 const std::string appName = "v4l2cam";
 
+// OS specific includes
+//
+void printSudoHint( int numCameras );
+
 // Logging control
 //
 // encourage the low level objects to spew out information
@@ -32,6 +36,7 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
 int printBasicHelp();
 void printVersionInfo();
 void printExamples();
+
 std::map<std::string, std::string> parseCmdLine( int argc, char** argv );
 bool is_number(const std::string& s);
 std::string makeHexString( unsigned char * buf, int len, bool makeCaps );

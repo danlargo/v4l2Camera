@@ -12,7 +12,7 @@
     #include "../linux/linuxcamera.h"
 #elif __APPLE__
     #include "../macos/maccamera.h"
-    #include "../macos/v4l2_defs.h"
+    #include "../macos/v4l2cam_defs.h"
 #endif
 
 #include <unistd.h>

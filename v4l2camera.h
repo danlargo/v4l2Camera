@@ -18,6 +18,7 @@
 // v0.3.103 : added getVideoMode support on MACOS, and fixed up some refactoring on Linux side
 // v0.3.104 : restructured folder hierarchy, started adding control support on MACOS
 // v0.3.105 : restructured build folders, create library for export and linking to other apps, added isHealthy() to measure I/F health
+// v0.3.106 : added support for user controls on MACOS
 
 #include <map>
 #include <vector>
@@ -92,7 +93,7 @@ private:
     //
     static const int s_majorVersion = 0;
     static const int s_minorVersion = 3;
-    static const int s_revision = 105;
+    static const int s_revision = 106;
     inline static const std::string s_codeName = "Andrea";
     inline static const std::string s_lastCommitMsg = "[danlargo] added getVideoMode support on MACOS, and fixed up soem refactoring on Linux side";
 
