@@ -17,9 +17,10 @@ else
 #
 # MACOS specific compile and link flags
 	ifeq ($(UNAME_S),Darwin)
-		CPPFLAGS=-g -std=c++20
-		LDLIBS=-L./macos/libuvc -luvc -L/opt/homebrew/lib -lusb-1.0
+		CPPFLAGS=-g -std=c++20 -I/opt/homebrew/include/libusb-1.0/
+		LDLIBS=-L/opt/homebrew/lib -lusb-1.0
 		STATIC_LIBS=v4l2cam-dist/libv4l2cam-macos.a
+		LDFLAGS=-g
 	endif
 
 #
@@ -29,6 +30,7 @@ else
 
 		CPPFLAGS=-g -std=c++20
 		LDLIBS=
+		LDFLAGS=-g 
 
 		ifeq ($(UNAME_M),x86_64)
 			STATIC_LIBS=v4l2cam-dist/libv4l2cam-linux-arm64.a
@@ -41,7 +43,6 @@ else
 	endif
 endif
 
-LDFLAGS=-g 
 
 #
 # V4l2 build targets

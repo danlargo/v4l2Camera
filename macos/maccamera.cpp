@@ -9,16 +9,14 @@
 #include <fcntl.h>
 
 #include "maccamera.h"
-#include "v4l2cam_defs.h"
-#include "libuvc/libuvc.h"
 
-MACCamera::MACCamera( struct uvc_device * dev )
+MACCamera::MACCamera( struct usb_device * dev )
     : V4l2Camera()
 {
     // save the device information
     m_dev = dev;
-
     m_userName = dev->productName;
+
     m_Handle = nullptr;
 
     m_cameraType = "generic MACOS UVC";
@@ -28,20 +26,20 @@ MACCamera::MACCamera( struct uvc_device * dev )
 
 MACCamera::~MACCamera()
 {
-    if( m_Handle ) uvc_close( m_Handle );
+    if( m_Handle ) libusb_close( m_Handle );
 
 }
 
 
 void MACCamera::initAPI()
 {
-    uvc_init( &UVC_ctx, nullptr );
+    libusb_init( &USB_ctx );
 }
 
 
 void MACCamera::closeAPI()
 {
-    uvc_exit( UVC_ctx );
+    libusb_exit( USB_ctx );
 }
 
 
@@ -50,7 +48,7 @@ std::vector< MACCamera *> MACCamera::discoverCameras()
     std::vector< MACCamera *> camList;
     int count = 0;
 
-    std::vector<struct uvc_device *> devList = MACCamera::buildCamList();
+    std::vector<struct usb_device *> devList = MACCamera::buildCamList();
 
     for( const auto &x : devList )
     {
@@ -72,18 +70,13 @@ std::vector< MACCamera *> MACCamera::discoverCameras()
                     // have it query its own capabilities
                     tmpC->enumControls();
                     tmpC->enumVideoModes();
+                    
+                    // save the camera for use later
+                    keep = true;
 
-                    if( tmpC->getVideoModes().size() > 0 )
-                    {
-                        // save the camera for use later
-                        keep = true;
+                    // add to list
+                    camList.push_back(tmpC);
 
-                        // increase the refernce count
-
-                        // add to list
-                        camList.push_back(tmpC);
-
-                    } else tmpC->log( nam + " : zero video modes detected", info );
                 } else tmpC->log( nam + " : does not support video capture", info  );
             } else tmpC->log( nam + " : unable to query capabilities", info  );
 
@@ -100,42 +93,106 @@ std::vector< MACCamera *> MACCamera::discoverCameras()
 }
 
 
-std::vector<struct uvc_device *> MACCamera::buildCamList()
+std::vector<struct usb_device *> MACCamera::buildCamList()
 {
-    std::vector<struct uvc_device *> ret;
+    std::vector<struct usb_device *> ret;
 
     // grab a simple list of USB devices to start our libusb journey
-    uvc_device **devs;
+    libusb_device **devs;
+    int r;
+    ssize_t cnt;
 
-    //if( uvc_find_devices( UVC_ctx, &devs, 0, 0, nullptr ) == UVC_SUCCESS )
-    if( uvc_get_device_list( UVC_ctx, &devs ) == UVC_SUCCESS )
+    cnt = libusb_get_device_list(NULL, &devs);
+    //std::cerr << "[libusb] Found " << cnt << " usb devices" << std::endl;
+    if (cnt >= 0)
     {
-        uvc_device *dev;
-        int i = 0;
+        libusb_device *dev;
+        int i = 0, j = 0;
+        uint8_t path[8];
 
-        while ((dev = devs[i++]) != NULL) 
-        {
-            struct uvc_device * tmp = new struct uvc_device;
-            struct uvc_device_descriptor * desc;
-            if( uvc_get_device_descriptor(dev, &desc) == UVC_SUCCESS )
+        while ((dev = devs[i++]) != NULL) {
+            struct libusb_device_descriptor desc;
+            libusb_device_handle *hHandle;
+            int r = libusb_get_device_descriptor(dev, &desc);
+            if (r < 0)
             {
-                tmp->bus = uvc_get_bus_number(dev);
-                tmp->address = uvc_get_device_address(dev);
-                tmp->vid = desc->idVendor;
-                tmp->pid = desc->idProduct;
-                if( desc->manufacturer ) tmp->manufacturerName = desc->manufacturer;
-                if( desc->product ) tmp->productName = desc->product;
-                if( desc->serialNumber ) tmp->serialNumber = desc->serialNumber;
+                std::cerr << "[libusb error] Failed to get device descriptor" << std::endl;
+                break;
+            }
 
-                // save this device information
-                ret.push_back( tmp );
+            //std::cerr << "[libusb] " << desc.idVendor << "-" << desc.idProduct << "-" <<
+            //                        std::to_string(libusb_get_bus_number(dev)) << "-" << std::to_string(libusb_get_device_address(dev))
+            //                        << std::endl;
 
-                uvc_free_device_descriptor(desc);
-            
-            } else std:: cerr << "Failed to get device descriptor" << std::endl;
+            int iReturnValue = libusb_open(dev, &hHandle);
+            if (iReturnValue == LIBUSB_SUCCESS)
+            {
+                uint8_t got_interface = 0;
+                struct libusb_config_descriptor *config;
+                const struct libusb_interface *interface;
+                const struct libusb_interface_descriptor *if_desc;
+
+                libusb_get_config_descriptor(dev, 0, &config);
+
+                for (int interface_idx = 0; !got_interface && interface_idx < config->bNumInterfaces; ++interface_idx)
+                {
+                    interface = &config->interface[interface_idx];
+
+                    for (int altsetting_idx = 0; !got_interface && altsetting_idx < interface->num_altsetting; ++altsetting_idx)
+                    {
+                        if_desc = &interface->altsetting[altsetting_idx];
+
+                        // Skip TIS cameras that definitely aren't UVC even though they might look that way
+                        if ( 0x199e == desc.idVendor && desc.idProduct  >= 0x8201 && desc.idProduct <= 0x8208 )
+                        {
+                            std::cerr << "[libusb info] Skipping TIS Camera, whatever that is" << std::endl;
+                            continue;
+                        }
+
+                        // Special case for Imaging Source cameras
+                        /* Video, Streaming */
+                        if ( 0x199e == desc.idVendor && ( 0x8101 == desc.idProduct || 0x8102 == desc.idProduct ) && if_desc->bInterfaceClass == 255 && if_desc->bInterfaceSubClass == 2 ) {
+                            got_interface = 1;
+                        }
+
+                        /* Video, Streaming */
+                        if (if_desc->bInterfaceClass == 14 && if_desc->bInterfaceSubClass == 2) {
+                            got_interface = 1;
+                        }
+                    }
+                }
+
+                libusb_free_config_descriptor(config);
+
+                unsigned char uProductName[255] = {};
+                libusb_get_string_descriptor_ascii(hHandle, desc.iProduct, uProductName, sizeof(uProductName));
+                //std::cerr << "[libusb] " << reinterpret_cast<char*>(uProductName);
+
+                unsigned char uVendorName[255] = {};
+                libusb_get_string_descriptor_ascii(hHandle, desc.idVendor, uVendorName, sizeof(uVendorName));
+                //std::cerr << "[libusb] " << reinterpret_cast<char*>(uVendorName);
+
+                if( got_interface ) 
+                {
+                    // save the data
+                    struct usb_device * tmp = new struct usb_device;
+                    tmp->bus = libusb_get_bus_number(dev);
+                    tmp->address = libusb_get_device_address(dev);
+                    tmp->vid = desc.idVendor;
+                    tmp->pid = desc.idProduct;
+                    tmp->productName = reinterpret_cast<char*>(uProductName);
+                    tmp->manufacturerName = reinterpret_cast<char*>(uVendorName);
+                    ret.push_back(tmp);
+
+                    //std::cerr << " : This is a UVC camera" << std::endl;
+                }
+
+                // close the device handler
+                libusb_close(hHandle);
+            }
         }
-
-        uvc_free_device_list(devs, 1);
+        // we unreference one at a time, not the entire list
+        libusb_free_device_list(devs, 1);
     }
 
     return ret;
@@ -193,35 +250,68 @@ int MACCamera::getValue( int id, bool openOnDemand )
 bool MACCamera::open()
 {
     bool ret = false;
+    libusb_device **devs;
+    int r;
+    ssize_t cnt;
 
-    // find the device
-    struct uvc_device * dev = nullptr;
-    if( uvc_find_device( UVC_ctx, &dev, m_dev->vid, m_dev->pid, nullptr ) == UVC_SUCCESS )
+    // get the complete list each time, open specific device, then free list
+    cnt = libusb_get_device_list(NULL, &devs);
+
+    if (cnt >= 0)
     {
-        // make sure we actually found the device
-        if( dev )
+        libusb_device *dev;
+        int i = 0, j = 0;
+        uint8_t path[8];
+
+        while ((dev = devs[i++]) != NULL) 
         {
-            // open the device
-            uvc_error_t err = uvc_open( dev, &m_Handle);
-
-            if( UVC_SUCCESS == err ) ret = true;
-
-            else 
+            struct libusb_device_descriptor desc;
+            int r = libusb_get_device_descriptor(dev, &desc);
+            if (r < 0)
             {
-                log( "Failed to open UVC camera : " + std::string(uvc_strerror(err)),  v4l2cam_msg_type::critical );
-                m_Handle = nullptr;
-
-                // check for special case, access denied on MACOS...console apps CAN NOT request camera persmissions, they must be run as ROOT
-                // sudo ./v4l2cam -l            ... if this lists cameras then you are good to go
-                //
-                #ifdef __APPLE__
-                    // this is likely a permisssions issue
-                    if(UVC_ERROR_ACCESS == err ) log( "You are running on MACOS, console apps CAN NOT request camera permissions, run as root", v4l2cam_msg_type::critical ); 
-                #endif
+                std::cerr << "[libusb error] Failed to get device descriptors" << std::endl;
+                break;
             }
 
-        } else log( "uvc_find_device, returned SUCCESS but pointer is NULL : " + m_dev->productName + "-" + m_dev->manufacturerName, v4l2cam_msg_type::critical );
-    } else log( "Failed to find requested UVC camera : " + dev->productName + "-" + dev->manufacturerName, v4l2cam_msg_type::critical );
+            // find the one we want
+            if( m_dev->bus ==  libusb_get_bus_number(dev) && 
+                m_dev->address == libusb_get_device_address(dev) &&
+                m_dev->vid == desc.idVendor && m_dev->pid == desc.idProduct )
+            {
+                r = libusb_open(dev, &m_Handle);
+                if (r == LIBUSB_SUCCESS)
+                {
+                    // indicate we are open ok
+                    ret = true;
+                    m_healthCounter = 0;
+                }
+                else
+                {
+                    m_healthCounter = s_healthCountLimit;
+                    log( "Failed to open UVC camera : " + m_dev->productName,  v4l2cam_msg_type::critical );
+                    m_Handle = nullptr;
+
+                    // check for special case, access denied on MACOS...console apps CAN NOT request camera persmissions, they must be run as ROOT
+                    // sudo ./v4l2cam -l            ... if this lists cameras then you are good to go
+                    //
+                    #ifdef __APPLE__
+                        // this is likely a permisssions issue
+                        log( "If you are running on MACOS, console apps CAN NOT request camera permissions, try  running as root", v4l2cam_msg_type::critical ); 
+                    #endif
+
+                    break;
+                }
+            }
+
+        }
+        libusb_free_device_list(devs, 1);
+
+        // make sure we actually opened the device
+        if( !ret )
+        {
+
+        }
+    } else log( "No devices found in system : " + m_dev->productName + "-" + m_dev->manufacturerName, v4l2cam_msg_type::critical );
 
     return ret;
 }
@@ -256,7 +346,7 @@ bool MACCamera::enumCapabilities()
 
 void MACCamera::close()
 {
-    if( m_Handle != nullptr ) uvc_close( m_Handle );
+    if( m_Handle != nullptr ) libusb_close( m_Handle );
     m_Handle = nullptr;
 }
 
@@ -341,7 +431,6 @@ bool MACCamera::enumVideoModes()
             format_desc = format_desc->next;
         }
     }
-
     return ret;
 }
 
@@ -375,23 +464,6 @@ bool MACCamera::enumControls()
         // If Unit = v4l2_terminal then uvc_get_ctrl -> unit = uvc_get_camera_terminal(devh)->bTerminalID
         // If Unit = v4l2_unit then uvc_get_ctrl -> unit = uvc_get_processing_units(devh)->bUnitID
         //
-
-
-        // Scanning Mode
-        if( uvc_get_scanning_mode(m_Handle, &mode, UVC_GET_CUR) == UVC_SUCCESS )
-        {
-            struct v4l2cam_control tmpC;
-            tmpC.name = "SCANNING_MODE";
-            tmpC.type = v4l2cam_control_type::v4l2_boolean;
-            tmpC.typeStr = "BOOLEAN";
-
-            tmpC.value = mode;
-            tmpC.min = 0;
-            tmpC.max = 1;
-            tmpC.step = 1;
-            m_controls[ 0 ] = tmpC;
-        }
-
         
     
         ret = true;
@@ -437,6 +509,7 @@ void MACCamera::buildControlDefList()
     //
     // Terminal Control Requests
     //
+    /*
     controlDefs[UVC_CT_SCANNING_MODE_CONTROL] = { UVC_CT_SCANNING_MODE_CONTROL, v4l2cam_control_type::v4l2_boolean,v4l2cam_control_unit::v4l2_terminal_unit, "Scanning Mode (Interlaced or Progressive)", 1, {} };
     controlDefs[UVC_CT_AE_MODE_CONTROL] = { UVC_CT_AE_MODE_CONTROL, v4l2cam_control_type::v4l2_menu, v4l2cam_control_unit::v4l2_terminal_unit, "AE_MODE", 1, { {1,"Auto"}, {2,"Manual"}, {4,"Shutter Priority"}, {8,"ApeturePriority"} } };
     controlDefs[UVC_CT_AE_PRIORITY_CONTROL] = { UVC_CT_AE_PRIORITY_CONTROL, v4l2cam_control_type::v4l2_menu, v4l2cam_control_unit::v4l2_terminal_unit, "AE_PRIORITY", 1, { {0,"Static"}, {1,"Dynamic"} } };
@@ -464,5 +537,6 @@ void MACCamera::buildControlDefList()
     controlDefs[UVC_PU_CONTRAST_CONTROL] = { UVC_PU_CONTRAST_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_processing_unit, "Contrast", 2, {} };
     controlDefs[UVC_PU_CONTRAST_AUTO_CONTROL] = { UVC_PU_CONTRAST_AUTO_CONTROL, v4l2cam_control_type::v4l2_boolean, v4l2cam_control_unit::v4l2_processing_unit, "Contrast Auto (Off or On)", 1, {} };
     controlDefs[UVC_PU_GAIN_CONTROL] = { UVC_PU_GAIN_CONTROL, v4l2cam_control_type::v4l2_integer, v4l2cam_control_unit::v4l2_processing_unit, "Gain", 2, {} };
+*/
 }
 

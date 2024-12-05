@@ -1,11 +1,12 @@
 #ifndef MACCAMERA_H
 #define MACCAMERA_H
 
+#include "v4l2cam_defs.h"
 #include "../v4l2camera.h"
 
-#include "libuvc/libuvc.h"
+#include "libusb.h"
 
-struct uvc_device
+struct usb_device
 {
     int bus;
     int address;
@@ -20,7 +21,7 @@ struct uvc_device
 #include <vector>
 #include <string>
 
-static uvc_context_t * UVC_ctx;
+static libusb_context * USB_ctx;
 
 static std::map<int, struct v4l2cam_control_defs> controlDefs;
 
@@ -28,13 +29,13 @@ static std::map<int, struct v4l2cam_control_defs> controlDefs;
 class MACCamera : public V4l2Camera
 {
 public:
-    MACCamera( struct uvc_device * dev );
+    MACCamera( struct usb_device * dev );
     virtual ~MACCamera();
 
     // Device access vaariables
     //
-    struct uvc_device * m_dev;
-    struct uvc_device_handle * m_Handle;
+    struct usb_device * m_dev;
+    struct libusb_device_handle * m_Handle;
 
     // libuvc support methods
     //
@@ -45,7 +46,7 @@ public:
     // Camera discovery methods
     //
     static std::vector<MACCamera *>  discoverCameras();
-    static std::vector<struct uvc_device *> buildCamList();
+    static std::vector<struct usb_device *> buildCamList();
 
     // Methods that should be overridden in sublcass
     //
