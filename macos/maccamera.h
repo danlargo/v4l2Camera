@@ -4,32 +4,14 @@
 #include "v4l2cam_defs.h"
 #include "../v4l2camera.h"
 
-#include "libusb.h"
-
-struct usb_device
-{
-    int bus;
-    int address;
-    int vid;
-    int pid;
-    std::string productName;
-    std::string manufacturerName;
-    std::string serialNumber;
-};
-
 #include <map>
 #include <vector>
 #include <string>
 
-static libusb_context * USB_ctx;
-
-static std::map<int, struct v4l2cam_control_defs> controlDefs;
-
-
 class MACCamera : public V4l2Camera
 {
 public:
-    MACCamera( struct usb_device * dev );
+    MACCamera();
     virtual ~MACCamera();
 
     // Device access vaariables
@@ -41,12 +23,10 @@ public:
     //
     static void initAPI();
     static void closeAPI();
-    static void buildControlDefList();
 
     // Camera discovery methods
     //
     static std::vector<MACCamera *>  discoverCameras();
-    static std::vector<struct usb_device *> buildCamList();
 
     // Methods that should be overridden in sublcass
     //

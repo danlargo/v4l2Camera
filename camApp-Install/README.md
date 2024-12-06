@@ -23,18 +23,6 @@ Download [camControl.amd64.deb](./camControl/amd64/camControl.amd64.deb)
 sudo apt-get install ./camControl.amd64.deb
 ```
 
-### ARM64 Install - Generic
-Download [camControl.arm64.deb](./camControl/arm64/camControl.arm64.deb)
-> [!IMPORTANT]
-> sha256checksum : 
-
-- built and tested on Raspbian (Debian GNU/Linux 12 (bookworm)), ARM64 Cortex-A76 CPU @ 2.4Ghz (Pi5)
-- contains binary and desktop config files to install launch icon in Ubuntu/Debian desktop
-
-- installation command :
-```
-sudo apt-get install ./camControl.arm64.deb
-```
 
 ### ARM64 Install - Raspberry Pi
 Download [camControl.raspbian.deb](./camControl/raspbian-arm64/camControl.raspbian.deb)
@@ -46,49 +34,7 @@ Download [camControl.raspbian.deb](./camControl/raspbian-arm64/camControl.raspbi
 
 - installation command :
 ```
-sudo apt-get install ./camControl.raspbian.deb
-```
-
-
-## *tiny4kPanel*
-
-### AMD64 Install
-Download [tiny4kPanel.amd64.deb](./tiny4kPanel/amd64/tiny4kpanel.amd64.deb)
-> [!IMPORTANT]
-> sha256checksum : 4f6d1aaee526e75387a1e28b0f10d12e3c461ecc5d0f8382bfc99984a6e7e0c0
-
-- built and tested on Ubuntu 24.04.1 LTS, Intel(R) Core(TM) i5-7600K CPU @ 3.80Ghz
-- contains binary and desktop config files to install launch icon in Ubuntu/Debian desktop
-
-- installation command :
-```
-sudo apt-get install ./tiny4kpanel.amd64.deb
-```
-
-### ARM64 Install - Generic
-Download [Tiny4kPanel.arm64.deb](./tiny4hPanel/arm64/tiny4kpanel.arm64.deb)
-> [!IMPORTANT]
-> sha256checksum : 
-
-- built and tested on Raspbian (Debian GNU/Linux 12 (bookworm)), ARM64 Cortex-A76 CPU @ 2.4Ghz (Pi5)
-- contains binary and desktop config files to install launch icon in Ubuntu/Debian desktop
-
-- installation command :
-```
-sudo apt-get install ./tiny4kpanel.arm64.deb
-```
-
-### ARM64 Install - Raspberry Pi
-Download [Tiny4kPanel.raspbian.deb](./tiny4kPanel/raspbian-arm64/tiny4kpanel.raspbian.deb)
-> [!IMPORTANT]
-> sha256checksum : 
-
-- built and tested on Raspbian (Debian GNU/Linux 12 (bookworm)), ARM64 Cortex-A76 CPU @ 2.4Ghz (Pi5)
-- contains binary and will install in /home/pi/Desktop, no desktop menu config files (this is the only difference between the two ARM64 installers)
-
-- installation command :
-```
-sudo apt-get install ./tiny4kpanel.raspbian.deb
+sudo apt-get install ./camControl.arm64.deb
 ```
 
 ### Qt5
