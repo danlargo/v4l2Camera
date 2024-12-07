@@ -178,7 +178,7 @@ g++ -g -o main main.o v4l2cam-dist/libv4l2cam-linux-arm64.a
             - this effort proved the most frustrsating as I am using Qt as a cross platform GUI development environment (maybe that is my issue)
             - Qt 6 is not supported on Raspbian, which is where the majority of my development is these days, Qt 5 does not support QCamera
             - QCamera is able to fetch images from USB cameras on MacOS but has zero support for any User Controls
-                - I have a quewstion ticket [here](https://forum.qt.io/topic/159507/qcamera-and-supportedfeatures-does-this-work-on-macos?lang=en-US) into Qt Forum but have received no response
+                - I have a question ticket [here](https://forum.qt.io/topic/159507/qcamera-and-supportedfeatures-does-this-work-on-macos?lang=en-US) into Qt Forum but have received no response
                 - This seems to be an issue that has existed for a while.
     - Everything I am reading is pointing towards having to deal with the AVFoundation api from Apple.
         - All documentation points to XCode and Swift/Objective-C
