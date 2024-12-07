@@ -25,7 +25,7 @@ else
 		LDFLAGS=-g 
 
 		ifeq ($(UNAME_M),x86_64)
-			STATIC_LIBS=v4l2cam-dist/libv4l2cam-linux-arm64.a
+			STATIC_LIBS=v4l2cam-dist/libv4l2cam-linux-amd64.a
 		endif
 
 		ifeq ($(UNAME_M),aarch64)
@@ -49,7 +49,7 @@ endif
 #
 # V4l2 build targets
 #
-all: dist
+all: dist example
 
 #
 #
@@ -81,13 +81,13 @@ else
 ifeq ($(UNAME_S),Linux)
 
 ifeq ($(UNAME_M),x86_64)
-dist: example linuxcamera.o v4l2camera.o
-	ar rcs build/libv4l2cam-linux-arm64.a build/linuxcamera.o build/v4l2camera.o
-	mv build/libv4l2cam-linux-arm64.a v4l2cam-dist
+dist: linuxcamera.o v4l2camera.o
+	ar rcs build/libv4l2cam-linux-amd64.a build/linuxcamera.o build/v4l2camera.o
+	mv build/libv4l2cam-linux-amd64.a v4l2cam-dist
 endif
 
 ifeq ($(UNAME_M),aarch64)
-dist: example linuxcamera.o v4l2camera.o
+dist: linuxcamera.o v4l2camera.o
 	ar rcs build/libv4l2cam-linux-aarch64.a build/linuxcamera.o build/v4l2camera.o
 	mv build/libv4l2cam-linux-aarch64.a v4l2cam-dist
 endif
@@ -143,10 +143,14 @@ clean:
 	$(RRM) build
 	$(MD) build
 
+ifeq ($(OS),Windows_NT)
+
+else
+
 ifeq ($(UNAME_S),Linux)
 
 ifeq ($(UNAME_M),x86_64)
-	$(RM) v4l2cam-dist/*-linux-arm64.a
+	$(RM) v4l2cam-dist/*-linux-amd64.a
 endif
 
 ifeq ($(UNAME_M),aarch64)
@@ -155,4 +159,15 @@ endif
 
 	$(RM) v4l2cam-dist/linux/linuxcamera.h
 	$(RM) v4l2cam-dist/v4l2camera.h
+else
+
+#
+# MACOS dist target
+#
+ifeq ($(UNAME_S),Darwin)
+
+endif
+
+endif
+
 endif
