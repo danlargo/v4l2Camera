@@ -1,7 +1,10 @@
 # Example code and test interface
 
-- main.cpp, will provide overview of basic operation, compiles into v4l2Test
+- main.cpp, provides overview of basic operation
+- compiles into v4l2cam
 
+
+<br/><br/><hr/>
 
 # Command line options
 
@@ -33,6 +36,8 @@ Usage
 ```
 
 
+<br/><br/><hr/>
+
 # Sample usage
 ```
    v4l2cam - example usage
@@ -57,3 +62,14 @@ Usage
    ...set the value for /dev/video2, for user control 9963776 to 25
    $ ./v4l2cam -t 25 -k 9963776 -d 2
 ```
+
+
+<br/><br/><hr/>
+
+# To Do
+- add user control support
+- currently supported in class methods, but not coded into example app
+- trying to decide whether to add image format conversion
+    - app currenly only saves/captures native iamge formats
+    - does NOT create video files correctly
+    - running output file through ffmpeg will repair the output file
