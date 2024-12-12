@@ -1,8 +1,8 @@
 # Overview
 
 - This document supports the camControl application (currently executable on Debian/Ubuntu/Rapbian OSs, with AMD64 or ARM64 processors, coming soon to MacOS and Windows)
-- direct download of binary for AMD64 or ARM64, sha256 checksum provided.
 - No installer was created as there should be no dependencies on shared libraries other than Qt5 (installation/upgrade instructions provided below)
+    - direct download instructions for binary for AMD64 or ARM64, sha256 checksum provided.
 - UVC camera access is based on [Video4Linux](https://www.kernel.org/doc/html/v4.9/media/uapi/v4l/v4l2.html) api and the [V4l2Camera](https://github.com/danlargo/v4l2Camera) open source project
 
 
