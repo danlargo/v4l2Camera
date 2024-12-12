@@ -84,12 +84,14 @@ ifeq ($(UNAME_M),x86_64)
 dist: linuxcamera.o v4l2camera.o
 	ar rcs build/libv4l2cam-linux-amd64.a build/linuxcamera.o build/v4l2camera.o
 	mv build/libv4l2cam-linux-amd64.a v4l2cam-dist
+	sha256sum v4l2cam-dist/libv4l2cam-linux-amd64.a > v4l2cam-dist/libv4l2cam-linux-amd64.sha256sum
 endif
 
 ifeq ($(UNAME_M),aarch64)
 dist: linuxcamera.o v4l2camera.o
 	ar rcs build/libv4l2cam-linux-aarch64.a build/linuxcamera.o build/v4l2camera.o
 	mv build/libv4l2cam-linux-aarch64.a v4l2cam-dist
+	sha256sum v4l2cam-dist/libv4l2cam-linux-aarch64.a > v4l2cam-dist/libv4l2cam-linux-aarch64.sha256sum
 endif
 
 	cp linux/linuxcamera.h v4l2cam-dist/linux
@@ -151,10 +153,12 @@ ifeq ($(UNAME_S),Linux)
 
 ifeq ($(UNAME_M),x86_64)
 	$(RM) v4l2cam-dist/*-linux-amd64.a
+	$(RM) v4l2cam-dist/*-linux-amd64.sha256sum
 endif
 
 ifeq ($(UNAME_M),aarch64)
 	$(RM) v4l2cam-dist/*-linux-aarch64.a
+	$(RM) v4l2cam-dist/*-linux-aarch64.sha256sum
 endif
 
 	$(RM) v4l2cam-dist/linux/linuxcamera.h
