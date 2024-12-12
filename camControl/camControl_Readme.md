@@ -42,7 +42,7 @@ sha256sum -c camControl-amd64.sha256sum
 
 
 # if sha256sum returns OK
-mv camControl-aarch64 camControl
+mv camControl-amd64 camControl
 chmod +x camControl
 
 # run it
