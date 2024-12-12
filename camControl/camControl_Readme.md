@@ -2,7 +2,7 @@
 
 - This document supports the camControl application (currently executable on Debian/Ubuntu/Rapbian OSs, with AMD64 or ARM64 processors, coming soon to MacOS and Windows)
 - direct download of binary for AMD64 or ARM64, sha256 checksum provided.
-- No installer was created as there should be no dependencies on shared libraries other than Qt5 (instructions provided below)
+- No installer was created as there should be no dependencies on shared libraries other than Qt5 (installation/upgrade instructions provided below)
 - UVC camera access is based on [Video4Linux](https://www.kernel.org/doc/html/v4.9/media/uapi/v4l/v4l2.html) api and the [V4l2Camera](https://github.com/danlargo/v4l2Camera) open source project
 
 
@@ -14,11 +14,12 @@
 
 ![Screenshot](./camcontrol-screenshot.png)
 
-- Can fetch and stream Motion-JPEG, YUV 422, YUV 420 and 16-bit grey-scale formats from UVC cameras (built in coversion for everything but Motion-JPEG format)
+- Can fetch and stream Motion-JPEG, YUV 422, YUV 420 and 16-bit grey-scale formats from UVC cameras (built in coversion for most formats but H.264/H.265 format)
+    - if you stumble on a format that is not supported drop me a line and I will add it
 - Can snapshot JPG, PNG and BMP snapshots
-- Can cast Motion-JPEG video streams via HTTP multi-part
-- Can capture AVI-JPEG video files (didn't want any library dependencies on install)
-- CamControl is based on the Qt UI api and has native support for output of JPG, BMP and PNG image formats.
+- Can cast Motion-JPEG video streams via HTTP multi-part streams
+- Can capture AVI-MJPEG video files to file (didn't want any library dependencies on install so no MP4 capure right now)
+- CamControl is based on the Qt UI api and has native support for snapshot of JPG, BMP and PNG image formats.
 
 - [ ] To Do - add raw MJPEG, H.264 and H.265 frame capture to video support with no re-encoding (raw dump to file)
 - [ ] To Do - add RTSP and RTMP casting for Motion-JPEG, H.264 and H.265 image formats.
@@ -39,7 +40,6 @@ cd camControl
 wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-amd64
 wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-amd64.sha256sum
 sha256sum -c camControl-amd64.sha256sum
-
 
 # if sha256sum returns OK
 mv camControl-amd64 camControl
