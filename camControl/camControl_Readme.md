@@ -1,7 +1,8 @@
 # Overview
 
-- This document supports the camControl linux application (installable on Debian/Ubuntu/Rapbian OSs, with AMD64 or ARM64 processors)
-- Installation scripts support any APT-based (apt, apt-get) package management systems.
+- This document supports the camControl application (currently executable on Debian/Ubuntu/Rapbian OSs, with AMD64 or ARM64 processors, coming soon to MacOS and Windows)
+- direct download of binary for AMD64 or ARM64, sha256 checksum provided.
+- No installer was created as there should be no dependencies on shared libraries other than Qt5 (instructions provided below)
 - UVC camera access is based on [Video4Linux](https://www.kernel.org/doc/html/v4.9/media/uapi/v4l/v4l2.html) api and the [V4l2Camera](https://github.com/danlargo/v4l2Camera) open source project
 
 
@@ -11,13 +12,13 @@
 
 - generic UVC camera control app, providing access to all USB accessible controls and image feeds for UVC compatible cameras
 
-![Screenshot](./camcontrol.screenshot.png)
+![Screenshot](./camcontrol-screenshot.png)
 
-- can fetch and stream Motion-JPEG, YUV 422, YUV 420 and 16-bit grey-scale formats from UVC cameras (built in coversion for everything but Motion-JPEG format)
-- can capture JPG, PNG and BMP snapshots
-- can cast Motion-JPEG video streams via HTTP multi-part
-- can capture AVI-JPEG video files (didn't want any library dependencies on install)
-- camControl is based on the Qt UI api and has native support for output of JPG, BMP and PNG image formats.
+- Can fetch and stream Motion-JPEG, YUV 422, YUV 420 and 16-bit grey-scale formats from UVC cameras (built in coversion for everything but Motion-JPEG format)
+- Can snapshot JPG, PNG and BMP snapshots
+- Can cast Motion-JPEG video streams via HTTP multi-part
+- Can capture AVI-JPEG video files (didn't want any library dependencies on install)
+- CamControl is based on the Qt UI api and has native support for output of JPG, BMP and PNG image formats.
 
 - [ ] To Do - add raw MJPEG, H.264 and H.265 frame capture to video support with no re-encoding (raw dump to file)
 - [ ] To Do - add RTSP and RTMP casting for Motion-JPEG, H.264 and H.265 image formats.
@@ -28,35 +29,45 @@
 # Installation Details
 
 ### camControl AMD64 Install
-Download [camControl.amd64.deb](./camControl/amd64/camControl.amd64.deb)
-> [!IMPORTANT]
-> sha256checksum :
-
 - built and tested on Ubuntu 24.04.1 LTS, Intel(R) Core(TM) i5-7600K CPU @ 3.80Ghz
-- contains binary and desktop config files to install launch icon in Ubuntu/Debian desktop
-
-- installation command
+- installation commands
 ```
-sudo apt-get install ./camControl.amd64.deb
+cd ~/Desktop
+mkdir camControl
+cd camControl
+
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-amd64
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-amd64.sha256sum
+sha256sum -c camControl-amd64.sha256sum
+
+
+# if sha256sum returns OK
+mv camControl-aarch64 camControl
+chmod +x camControl
+
+# run it
+./camControl
 
 ```
 
 <br/><br/><hr/>
 
 ### camControl ARM64 Install - Raspberry Pi
-Download [camControl.raspbian.deb](./camControl/raspbian-arm64/camControl.raspbian.deb)
-> [!IMPORTANT]
-> sha256checksum : 
-
 - built and tested on Raspbian (Debian GNU/Linux 12 (bookworm)), ARM64 Cortex-A76 CPU @ 2.4Ghz (Pi5)
-- contains binary and will install in /home/pi/Desktop, no desktop menu config files (this is the only difference between the two ARM64 installers)
-
-- installation command
+- installation commands
 ```
-sudo apt-get install ./camControl.arm64.deb
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-aarch64
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-aarch64.sha256sum
+sha256sum -c camControl-aarch64.sha256sum
+
+# if sha256sum returns OK
+mv camControl-aarch64 camControl
+chmod +x camControl
+
+# run it
+./camControl
 
 ```
-
 
 <br/><br/><hr/>
 
