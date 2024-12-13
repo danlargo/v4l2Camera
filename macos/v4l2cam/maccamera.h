@@ -2,10 +2,6 @@
 #define MACCAMERA_H
 
 #include "v4l2camera.h"
-<<<<<<<< HEAD:v4l2cam-dist/maccamera.h
-#include "v4l2cam_defs.h"
-========
->>>>>>>> 442fbcc732c7adce19aec95983f6a0a1e20242b0:v4l2cam-dist/macos/maccamera.h
 
 #include <map>
 #include <vector>
@@ -17,14 +13,11 @@ public:
     MACCamera();
     virtual ~MACCamera();
 
-<<<<<<<< HEAD:v4l2cam-dist/maccamera.h
-========
     // libuvc support methods
     //
     static void initAPI();
     static void closeAPI();
 
->>>>>>>> 442fbcc732c7adce19aec95983f6a0a1e20242b0:v4l2cam-dist/macos/maccamera.h
     // Camera discovery methods
     //
     static std::vector<MACCamera *>  discoverCameras();

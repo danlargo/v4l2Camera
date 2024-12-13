@@ -1,33 +1,21 @@
-#ifndef MACCAMERA_H
-#define MACCAMERA_H
+#ifndef WINCAMERA_H
+#define WINCAMERA_H
 
 #include "v4l2camera.h"
-<<<<<<<< HEAD:v4l2cam-dist/maccamera.h
-#include "v4l2cam_defs.h"
-========
->>>>>>>> 442fbcc732c7adce19aec95983f6a0a1e20242b0:v4l2cam-dist/macos/maccamera.h
 
 #include <map>
 #include <vector>
 #include <string>
 
-class MACCamera : public V4l2Camera
+class WinCamera : public V4l2Camera
 {
 public:
-    MACCamera();
-    virtual ~MACCamera();
+    WinCamera();
+    virtual ~WinCamera();
 
-<<<<<<<< HEAD:v4l2cam-dist/maccamera.h
-========
-    // libuvc support methods
-    //
-    static void initAPI();
-    static void closeAPI();
-
->>>>>>>> 442fbcc732c7adce19aec95983f6a0a1e20242b0:v4l2cam-dist/macos/maccamera.h
     // Camera discovery methods
     //
-    static std::vector<MACCamera *>  discoverCameras();
+    static std::vector<WinCamera *>  discoverCameras();
 
     // Methods that should be overridden in sublcass
     //
@@ -62,4 +50,4 @@ public:
 
 };
 
-#endif // MACAMERA_H
+#endif // WINCAMERA_H
