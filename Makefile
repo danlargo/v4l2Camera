@@ -20,7 +20,7 @@ else
 #
 	ifeq ($(UNAME_S),Linux)
 
-		CPPFLAGS=-g -std=c++20
+		CPPFLAGS=-g -std=c++20 -I v4l2cam-dist
 		LDLIBS=
 		LDFLAGS=-g 
 
@@ -52,19 +52,37 @@ endif
 all: dist example
 
 #
+# Include Files
+#
+v4l2camera.h: src/v4l2camera.h
+	cp src/v4l2camera.h v4l2cam-dist
+
+linuxcamera.h: src/linuxcamera.h
+	cp src/linuxcamera.h v4l2cam-dist
+
+maccamera.h: src/maccamera.h
+	cp src/maccamera.h v4l2cam-dist
+
+v4l2cam_defs.h: src/v4l2cam_defs.h
+	cp src/v4l2cam_defs.h v4l2cam-dist
+
+wincamera.h: src/wincamera.h
+	cp src/wincamera.h v4l2cam-dist
+
+#
 #
 # Distribution Files
 #
-v4l2camera.o: v4l2camera.cpp v4l2camera.h
-	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/v4l2camera.o -c v4l2camera.cpp
+v4l2camera.o: src/v4l2camera.cpp v4l2camera.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/v4l2camera.o -c src/v4l2camera.cpp
 
-linuxcamera.o: linux/linuxcamera.cpp linux/linuxcamera.h v4l2camera.h
-	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/linuxcamera.o -c linux/linuxcamera.cpp 
+linuxcamera.o: src/linuxcamera.cpp v4l2camera.h linuxcamera.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/linuxcamera.o -c src/linuxcamera.cpp 
 
-maccamera.o: macos/maccamera.cpp macos/maccamera.h v4l2camera.h macos/v4l2cam_defs.h
-	@echo "\n\nMACOS - NOT YET SUPPORTED, coming soon\n" 
+maccamera.o: src/maccamera.cpp v4l2camera.h maccamera.h v4l2cam_defs.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/maccamera.o -c src/maccamera.cpp 
 
-wincamera.o: windows/wincamera.cpp windows/wincamera.h v4l2camera.h
+wincamera.o: src/wincamera.cpp v4l2camera.h wincamera.h
 	@echo "\n\nWINDOWS - NOT YET SUPPORTED, coming soon\n" 
 
 #
@@ -72,6 +90,7 @@ wincamera.o: windows/wincamera.cpp windows/wincamera.h v4l2camera.h
 #
 ifeq ($(OS),Windows_NT)
 dist: wincamera.o 
+	@echo "Not implemented yet"
 
 else
 
@@ -94,9 +113,6 @@ dist: linuxcamera.o v4l2camera.o
 	sha256sum v4l2cam-dist/libv4l2cam-linux-aarch64.a > v4l2cam-dist/libv4l2cam-linux-aarch64.sha256sum
 endif
 
-	cp linux/linuxcamera.h v4l2cam-dist/linux
-	cp v4l2camera.h v4l2cam-dist
-
 else
 
 
@@ -105,7 +121,8 @@ else
 #
 ifeq ($(UNAME_S),Darwin)
 
-dist: maccamera.o 
+dist:
+	@echo "Nothing to do, managed by XCode"
 
 endif
 
@@ -120,7 +137,7 @@ endif
 example: dist main.o utils.o print.o list.o capture.o
 	$(CXX) $(LDFLAGS) -o v4l2cam build/main.o build/utils.o build/print.o build/list.o build/capture.o $(LDLIBS) $(STATIC_LIBS)
 
-includes: example/defines.h v4l2camera.h linux/linuxcamera.h macos/maccamera.h macos/v4l2cam_defs.h
+includes: example/defines.h v4l2camera.h linuxcamera.h maccamera.h wincamera.h v4l2cam_defs.h
 
 main.o: includes example/main.cpp
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/main.o -c example/main.cpp
@@ -144,31 +161,44 @@ clean:
 	$(RM) v4l2cam
 	$(RRM) build
 	$(MD) build
+	${RM} v4l2cam-dist/*.h
 
+#
+# Clean Target
+#
+#
+# Windows
 ifeq ($(OS),Windows_NT)
+	@echo "Windows - Not Implemented Yet"
 
+# ---- not Windows
 else
 
+#
+# Linux
 ifeq ($(UNAME_S),Linux)
 
+#
+# AMD64 Target
 ifeq ($(UNAME_M),x86_64)
 	$(RM) v4l2cam-dist/*-linux-amd64.a
 	$(RM) v4l2cam-dist/*-linux-amd64.sha256sum
 endif
 
+#
+# ARM64 Target
 ifeq ($(UNAME_M),aarch64)
 	$(RM) v4l2cam-dist/*-linux-aarch64.a
 	$(RM) v4l2cam-dist/*-linux-aarch64.sha256sum
 endif
 
-	$(RM) v4l2cam-dist/linux/linuxcamera.h
-	$(RM) v4l2cam-dist/v4l2camera.h
+# ---- not Linunx
 else
 
 #
-# MACOS dist target
-#
+# MacOS
 ifeq ($(UNAME_S),Darwin)
+	@echo "Nothing to do, managed by XCode"
 
 endif
 
