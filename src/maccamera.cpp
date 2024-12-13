@@ -8,9 +8,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "wincamera.h"
+#include "maccamera.h"
 
-WinCamera::WinCamera()
+MACCamera::MACCamera()
     : V4l2Camera()
 {
     throw std::runtime_error("MACCamera::MACCamera() : Not currently supported, coming soon - using AVFoundation api");
@@ -18,62 +18,52 @@ WinCamera::WinCamera()
 }
 
 
-WinCamera::~WinCamera()
+MACCamera::~MACCamera()
 {
 }
 
 
-void WinCamera::initAPI()
+std::vector< MACCamera *> MACCamera::discoverCameras()
 {
-}
-
-
-void WinCamera::closeAPI()
-{
-}
-
-
-std::vector< WinCamera *> WinCamera::discoverCameras()
-{
-    std::vector< WinCamera *> camList;
+    std::vector< MACCamera *> camList;
     
     return camList;
 }
 
 
-std::string WinCamera::getDevName()
+std::string MACCamera::getDevName()
 {
     return "-not set-";
 }
 
 
-bool WinCamera::canFetch()
+bool MACCamera::canFetch()
 {
     return false;    
 }
 
 
-bool WinCamera::canRead()
+bool MACCamera::canRead()
 {
     return false;
 }
 
 
-int WinCamera::setValue( int id, int newVal, bool openOnDemand )
+int MACCamera::setValue( int id, int newVal, bool openOnDemand )
 {
     int ret = -1;
 
     return ret;
 }
 
-int WinCamera::getValue( int id, bool openOnDemand )
+int MACCamera::getValue( int id, bool openOnDemand )
 {
     int ret = -1;
 
     return ret;
 }
 
-bool WinCamera::open()
+bool MACCamera::open()
 {
     bool ret = false;
     
@@ -81,13 +71,13 @@ bool WinCamera::open()
 }
 
 
-bool WinCamera::isOpen()
+bool MACCamera::isOpen()
 {
     return false;
 }
 
 
-bool WinCamera::enumCapabilities()
+bool MACCamera::enumCapabilities()
 {
     bool ret = false;
 
@@ -95,18 +85,18 @@ bool WinCamera::enumCapabilities()
 }
 
 
-void WinCamera::close()
+void MACCamera::close()
 {
 }
 
 
-bool WinCamera::setFrameFormat( struct v4l2cam_video_mode vm )
+bool MACCamera::setFrameFormat( struct v4l2cam_video_mode vm )
 {
     return false;
 }
 
 
-bool WinCamera::init( enum v4l2cam_fetch_mode newMode )
+bool MACCamera::init( enum v4l2cam_fetch_mode newMode )
 {
     bool ret = false;
 
@@ -120,7 +110,7 @@ bool WinCamera::init( enum v4l2cam_fetch_mode newMode )
     return ret;
 }
 
-struct v4l2cam_image_buffer * WinCamera::fetch( bool lastOne )
+struct v4l2cam_image_buffer * MACCamera::fetch( bool lastOne )
 {
     struct v4l2cam_image_buffer * retBuffer = nullptr;
 
@@ -134,7 +124,7 @@ struct v4l2cam_image_buffer * WinCamera::fetch( bool lastOne )
 }
 
 
-bool WinCamera::enumVideoModes()
+bool MACCamera::enumVideoModes()
 {
     bool ret = false;
 
@@ -151,7 +141,7 @@ bool WinCamera::enumVideoModes()
 }
 
 
-bool WinCamera::enumControls()
+bool MACCamera::enumControls()
 {
     bool ret = false;
 
@@ -168,7 +158,7 @@ bool WinCamera::enumControls()
     return ret;
 }
 
-std::string WinCamera::cntrlTypeToString( int type )
+std::string MACCamera::cntrlTypeToString( int type )
 {
     std::string ret = "unknown";
 

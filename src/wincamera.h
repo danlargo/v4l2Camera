@@ -1,5 +1,5 @@
-#ifndef MACCAMERA_H
-#define MACCAMERA_H
+#ifndef WINCAMERA_H
+#define WINCAMERA_H
 
 #include "v4l2camera.h"
 
@@ -7,20 +7,15 @@
 #include <vector>
 #include <string>
 
-class MACCamera : public V4l2Camera
+class WinCamera : public V4l2Camera
 {
 public:
-    MACCamera();
-    virtual ~MACCamera();
-
-    // libuvc support methods
-    //
-    static void initAPI();
-    static void closeAPI();
+    WinCamera();
+    virtual ~WinCamera();
 
     // Camera discovery methods
     //
-    static std::vector<MACCamera *>  discoverCameras();
+    static std::vector<WinCamera *>  discoverCameras();
 
     // Methods that should be overridden in sublcass
     //
@@ -55,4 +50,4 @@ public:
 
 };
 
-#endif // MACAMERA_H
+#endif // WINCAMERA_H

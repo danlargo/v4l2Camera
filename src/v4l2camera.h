@@ -21,6 +21,8 @@
 // v0.3.106 : added support for user controls on MACOS
 // v0.3.107 : backed out all MacOS changes, added folder structure for MacOS and Windows
 // v0.3.108 : updated documentation, converted repo to Public
+// v1.0.100 : First release build
+// v1.1.101 : starting to add MacOS support via AVFoundation framework
 
 #include <map>
 #include <vector>
@@ -93,11 +95,11 @@ class V4l2Camera
 private:
     // Version Info
     //
-    static const int s_majorVersion = 0;
-    static const int s_minorVersion = 3;
-    static const int s_revision = 108;
-    inline static const std::string s_codeName = "Andrea";
-    inline static const std::string s_lastCommitMsg = "[danlargo] updated documentation, converted repo to Public";
+    static const int s_majorVersion = 1;
+    static const int s_minorVersion = 1;
+    static const int s_revision = 101;
+    inline static const std::string s_codeName = "Jennifer";
+    inline static const std::string s_lastCommitMsg = "[danlargo] starting to add MacOS support via AVFoundation framework";
 
     static const int s_logDepth = 500;
 

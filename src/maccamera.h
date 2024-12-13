@@ -1,32 +1,22 @@
-#ifndef WINCAMERA_H
-#define WINCAMERA_H
+#ifndef MACCAMERA_H
+#define MACCAMERA_H
 
+#include "v4l2camera.h"
 #include "v4l2cam_defs.h"
-#include "../v4l2camera.h"
 
 #include <map>
 #include <vector>
 #include <string>
 
-class WinCamera : public V4l2Camera
+class MACCamera : public V4l2Camera
 {
 public:
-    WinCamera();
-    virtual ~WinCamera();
-
-    // Device access vaariables
-    //
-    struct usb_device * m_dev;
-    struct libusb_device_handle * m_Handle;
-
-    // libuvc support methods
-    //
-    static void initAPI();
-    static void closeAPI();
+    MACCamera();
+    virtual ~MACCamera();
 
     // Camera discovery methods
     //
-    static std::vector<WinCamera *>  discoverCameras();
+    static std::vector<MACCamera *>  discoverCameras();
 
     // Methods that should be overridden in sublcass
     //
@@ -61,4 +51,4 @@ public:
 
 };
 
-#endif // WINCAMERA_H
+#endif // MACAMERA_H
