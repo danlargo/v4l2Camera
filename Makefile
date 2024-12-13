@@ -60,11 +60,11 @@ v4l2camera.h: src/v4l2camera.h
 linuxcamera.h: src/linuxcamera.h
 	cp src/linuxcamera.h v4l2cam-dist
 
-maccamera.h: src/maccamera.h
-	cp src/maccamera.h v4l2cam-dist
+maccamera.h: macos/v4l2cam/maccamera.h
+	cp macos/v4l2cam/maccamera.h v4l2cam-dist
 
-v4l2cam_defs.h: src/v4l2cam_defs.h
-	cp src/v4l2cam_defs.h v4l2cam-dist
+v4l2cam_defs.h: macos/v4l2cam/v4l2cam_defs.h
+	cp macos/v4l2cam/v4l2cam_defs.h v4l2cam-dist
 
 wincamera.h: src/wincamera.h
 	cp src/wincamera.h v4l2cam-dist

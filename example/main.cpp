@@ -9,10 +9,10 @@
 #include "defines.h"
 
 #ifdef __linux__
-    #include "../linux/linuxcamera.h"
+    #include "linuxcamera.h"
 #elif __APPLE__
-    #include "../macos/maccamera.h"
-    #include "../macos/v4l2cam_defs.h"
+    #include "maccamera.h"
+    #include "v4l2cam_defs.h"
 #endif
 
 #include <unistd.h>
@@ -24,19 +24,8 @@ bool silentMode = false;
 
 int main( int argc, char** argv )
 {
-    #ifdef __APPLE__
-        // init the handler library for the MACCamera class
-        MACCamera::initAPI();
-    #endif
-
     // check for command line arguments and then bail
-    if( argc == 1 ) 
-    {
-        #ifdef __APPLE__
-            MACCamera::closeAPI();
-        #endif
-        return printBasicHelp();
-    }
+    if( argc == 1 ) return printBasicHelp();
 
     // parse the input command line
     std::map<std::string, std::string> cmdLine = parseCmdLine( argc, argv );

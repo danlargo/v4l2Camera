@@ -13,11 +13,6 @@ public:
     MACCamera();
     virtual ~MACCamera();
 
-    // libuvc support methods
-    //
-    static void initAPI();
-    static void closeAPI();
-
     // Camera discovery methods
     //
     static std::vector<MACCamera *>  discoverCameras();
