@@ -13,7 +13,9 @@
 		A25C18752D0BAA5C00AF37CE /* v4l2camera.h in Headers */ = {isa = PBXBuildFile; fileRef = A25C18722D0BAA5C00AF37CE /* v4l2camera.h */; };
 		A25C18772D0BAAED00AF37CE /* v4l2cam_defs.h in Headers */ = {isa = PBXBuildFile; fileRef = A25C18762D0BAAED00AF37CE /* v4l2cam_defs.h */; };
 		A25C187A2D0BAD2800AF37CE /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A25C18792D0BAD2800AF37CE /* AVFoundation.framework */; };
-		A25C187E2D0BADAA00AF37CE /* libv4l2cam-macos.a in CopyFiles */ = {isa = PBXBuildFile; fileRef = A25C18672D0BA8E200AF37CE /* libv4l2cam-macos.a */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		A2DB42EE2D0C6C8D002A4809 /* libv4l2cam-macos.a in CopyFiles */ = {isa = PBXBuildFile; fileRef = A25C18672D0BA8E200AF37CE /* libv4l2cam-macos.a */; };
+		A2DB42F22D0C6D22002A4809 /* maccamera.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = A25C186E2D0BA97700AF37CE /* maccamera.h */; };
+		A2DB42F32D0C6D27002A4809 /* v4l2cam_defs.h in CopyFiles */ = {isa = PBXBuildFile; fileRef = A25C18762D0BAAED00AF37CE /* v4l2cam_defs.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -23,7 +25,18 @@
 			dstPath = "/Users/stevied/Desktop/v4l2Camera/v4l2cam-dist";
 			dstSubfolderSpec = 0;
 			files = (
-				A25C187E2D0BADAA00AF37CE /* libv4l2cam-macos.a in CopyFiles */,
+				A2DB42EE2D0C6C8D002A4809 /* libv4l2cam-macos.a in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		A2DB42F12D0C6D0F002A4809 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "/Users/stevied/Desktop/v4l2Camera/v4l2cam-dist/macos";
+			dstSubfolderSpec = 0;
+			files = (
+				A2DB42F32D0C6D27002A4809 /* v4l2cam_defs.h in CopyFiles */,
+				A2DB42F22D0C6D22002A4809 /* maccamera.h in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -96,21 +109,22 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
-		A25C18662D0BA8E200AF37CE /* v4l2cam */ = {
+		A25C18662D0BA8E200AF37CE /* v4l2cam-macos */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A25C186B2D0BA8E200AF37CE /* Build configuration list for PBXNativeTarget "v4l2cam" */;
+			buildConfigurationList = A25C186B2D0BA8E200AF37CE /* Build configuration list for PBXNativeTarget "v4l2cam-macos" */;
 			buildPhases = (
 				A25C18632D0BA8E200AF37CE /* Headers */,
 				A25C18642D0BA8E200AF37CE /* Sources */,
 				A25C18652D0BA8E200AF37CE /* Frameworks */,
 				A25C187B2D0BAD7900AF37CE /* Resources */,
 				A25C187D2D0BAD9700AF37CE /* CopyFiles */,
+				A2DB42F12D0C6D0F002A4809 /* CopyFiles */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = v4l2cam;
+			name = "v4l2cam-macos";
 			packageProductDependencies = (
 			);
 			productName = v4l2cam;
@@ -124,14 +138,14 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastUpgradeCheck = 1610;
+				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					A25C18662D0BA8E200AF37CE = {
 						CreatedOnToolsVersion = 16.1;
 					};
 				};
 			};
-			buildConfigurationList = A25C18622D0BA8E200AF37CE /* Build configuration list for PBXProject "v4l2cam" */;
+			buildConfigurationList = A25C18622D0BA8E200AF37CE /* Build configuration list for PBXProject "v4l2cam-macos" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -145,7 +159,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A25C18662D0BA8E200AF37CE /* v4l2cam */,
+				A25C18662D0BA8E200AF37CE /* v4l2cam-macos */,
 			);
 		};
 /* End PBXProject section */
@@ -207,6 +221,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
@@ -268,6 +283,7 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
@@ -292,9 +308,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = T3MG8VT72Q;
 				EXECUTABLE_PREFIX = lib;
-				PRODUCT_NAME = "$(TARGET_NAME)-macos";
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
 			name = Debug;
@@ -303,9 +320,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = T3MG8VT72Q;
 				EXECUTABLE_PREFIX = lib;
-				PRODUCT_NAME = "$(TARGET_NAME)-macos";
+				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
 			name = Release;
@@ -313,7 +331,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A25C18622D0BA8E200AF37CE /* Build configuration list for PBXProject "v4l2cam" */ = {
+		A25C18622D0BA8E200AF37CE /* Build configuration list for PBXProject "v4l2cam-macos" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A25C18692D0BA8E200AF37CE /* Debug */,
@@ -322,7 +340,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
 		};
-		A25C186B2D0BA8E200AF37CE /* Build configuration list for PBXNativeTarget "v4l2cam" */ = {
+		A25C186B2D0BA8E200AF37CE /* Build configuration list for PBXNativeTarget "v4l2cam-macos" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A25C186C2D0BA8E200AF37CE /* Debug */,
