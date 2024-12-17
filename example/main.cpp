@@ -96,11 +96,6 @@ int main( int argc, char** argv )
         }
     }
 
-    // close down the handler library for the MACCamera class
-    #ifdef __APPLE__
-        MACCamera::closeAPI();
-    #endif
-
     return 0;
 }
 

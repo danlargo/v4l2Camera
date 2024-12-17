@@ -53,7 +53,7 @@ void listUSBCameras()
                         + std::to_string(x->getControls().size()) + " user controls"
                     );
             }
-            // close and delete he camera now that we are done with it
+            // close the camera now that we are done with it
             x->close();
         } else outerr( "Invalid V4l2Camera pointer in list" );
     }

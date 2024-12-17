@@ -22,7 +22,7 @@ void printSudoHint( int numCameras )
     #ifdef __APPLE__
     if(  numCameras == 0 )
     {
-        outln( "Hint : v4l2cam, must be run as root on MACOS to access USB cameras" );
+        outln( "Hint : v4l2cam, may have to be run as root on MACOS to access USB cameras" );
         outln( "...it is not possible to ask for Camera permissions from a command line app on MACOS");
         outln( "...see Readme file for instructions on adding V4l2Camera to GUI app on MACOS" );
     }

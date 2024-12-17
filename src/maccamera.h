@@ -3,6 +3,8 @@
 
 #include "v4l2camera.h"
 
+#include "i_objccamera.h"
+
 #include <map>
 #include <vector>
 #include <string>
@@ -10,9 +12,20 @@
 class MACCamera : public V4l2Camera
 {
 public:
-    MACCamera();
+    MACCamera( std::string device_name );
     virtual ~MACCamera();
 
+    // device identifiers
+    int m_fid;
+    std::string m_devName;
+    std::string m_manufacturer;
+    std::string m_modelID;
+    std::string m_deviceType;
+    bool m_rearFacing;
+
+    // Interface identifiers
+    i_ObjCCamera * m_objcCamera;
+    
     // Camera discovery methods
     //
     static std::vector<MACCamera *>  discoverCameras();
