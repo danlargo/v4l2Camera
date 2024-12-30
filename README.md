@@ -26,7 +26,7 @@ V4l2Camera is an attempt to abstract the video4linux2 api into something more ea
 - [-here-](#distribution) V4l2Camera Overview                       
 - [-here-](./API_Readme.md) API/Class Details                         
 - [-here-](./example/ExampleCode_Readme.md) Command Line Example Code                 
-- [-here-](./camControl/camControl_Readme.md)camControl Cross Platform GUI app         
+- [-here-](./camControl/camControl_Readme.md) camControl Cross Platform GUI app         
 - [-here-](./image_conversion_functions/ImageConversion_Readme.md) Image Conversion Functions                
 
 
