@@ -13,6 +13,8 @@
 - (NSArray*) discoverCameras;
 - (NSArray*) getVideoFormats;
 - (bool) setCaptureFormat:(int)format;
+- (void) initCapture;
+- (unsigned char *) captureFrame:(int*)size
 
 
 @end

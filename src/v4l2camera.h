@@ -23,6 +23,7 @@
 // v0.3.108 : updated documentation, converted repo to Public
 // v1.0.100 : First release build
 // v1.1.101 : starting to add MacOS support via AVFoundation framework
+// v1.1.110 : enhancing capability ennumeration
 
 #include <map>
 #include <vector>
@@ -67,6 +68,15 @@ struct v4l2cam_image_buffer
     unsigned char * buffer;
 };
 
+// v4l2_metadata_buffer - structure to hold meta data buffer
+//
+struct v4l2cam_metadata_buffer
+{
+    int length;
+    int errcode;
+    unsigned char * buffer;
+};
+
 // Image Fetch Mode, only userPtrMode is supported
 //
 enum v4l2cam_fetch_mode
@@ -97,9 +107,9 @@ private:
     //
     static const int s_majorVersion = 1;
     static const int s_minorVersion = 1;
-    static const int s_revision = 101;
+    static const int s_revision = 110;
     inline static const std::string s_codeName = "Jennifer";
-    inline static const std::string s_lastCommitMsg = "[danlargo] starting to add MacOS support via AVFoundation framework";
+    inline static const std::string s_lastCommitMsg = "[danlargo] enhancing capability ennumeration";
 
     static const int s_logDepth = 500;
 
@@ -131,6 +141,8 @@ public:
     //
     std::map<int, struct v4l2cam_control> m_controls;
     std::vector<struct v4l2cam_video_mode> m_modes;
+    unsigned int m_metamode, m_metasize;
+
     unsigned int m_capabilities;
     std::string m_userName;
     std::string m_cameraType;
@@ -141,7 +153,6 @@ public:
     struct v4l2cam_video_mode m_currentMode;
     enum v4l2cam_fetch_mode m_bufferMode;
     int m_healthCounter;
-
 
     // Logging control
     //
@@ -165,6 +176,9 @@ public:
     std::vector<struct v4l2cam_video_mode> getVideoModes() { return this->m_modes; };
     struct v4l2cam_video_mode getOneVM( int index );
 
+    int getMetaMode() { return m_metamode; };
+    int getMetaSize() { return m_metasize; };
+
     bool checkCapabilities( unsigned int val );
 
     bool setFrameFormat( std::string mode, int width, int height );
@@ -186,13 +200,18 @@ public:
     virtual bool enumCapabilities();
     virtual bool enumControls();
     virtual bool enumVideoModes();
+    virtual bool enumMetadataModes();
     virtual bool isOpen();
     virtual bool isHealthy();
+
+    virtual std::vector<std::string> capabilitiesToStr();
 
     // Check and change camera settings
     //
     virtual bool canFetch();
     virtual bool canRead();
+    virtual bool hasMetaData();
+
     virtual std::string cntrlTypeToString(int type);
     virtual int setValue( int id, int val, bool openOnDemand = false );
     virtual int getValue( int id, bool openOnDemand = false );
@@ -201,6 +220,10 @@ public:
     //
     virtual bool setFrameFormat( struct v4l2cam_video_mode );
     virtual struct v4l2cam_image_buffer * fetch( bool lastOne );
+
+    // Meta Data methods
+    //
+    virtual struct v4l2cam_metadata_buffer * fetchMetaData();
 
     // FourCC conversion methods
     //

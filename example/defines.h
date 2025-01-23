@@ -28,8 +28,13 @@ void listUSBCameras();
 void listAllDevices();
 void listVideoModes( std::string deviceID );
 void listUserControls( std::string deviceID );
+void fetchMetaData( std::string deviceID );
+
 void captureImage( std::string deviceID, std::string videoMode, std::string fileName = "" );
 void captureVideo( std::string deviceID, std::string videoMode, std::string timeInSeconds = "10", std::string fileName = "");
+
+int getControlValue( std::string deviceID, std::string cntrlID );
+bool setControlValue( std::string deviceID, std::string cntrlID, std::string newVal );
 
 // Helper functions
 //

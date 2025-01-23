@@ -19,7 +19,7 @@ public:
     LinuxCamera( std::string );
     virtual ~LinuxCamera();
 
-    static std::vector<LinuxCamera *>  discoverCameras();
+    static std::vector<LinuxCamera *>  discoverCameras(v4l2cam_logging_mode logMode);
     static std::vector<std::string> buildCamList();
 
     // Methods that should be overridden in sublcass
@@ -27,6 +27,9 @@ public:
     virtual bool enumCapabilities() override;
     virtual bool canFetch() override;
     virtual bool canRead() override;
+    virtual bool hasMetaData() override;
+
+    virtual std::vector<std::string> capabilitiesToStr() override;
 
     virtual bool enumControls() override;
     virtual std::string cntrlTypeToString(int type) override;
@@ -36,12 +39,15 @@ public:
     virtual bool enumVideoModes() override;
     virtual bool setFrameFormat( struct v4l2cam_video_mode ) override;
 
+    virtual bool enumMetadataModes() override;
+
     virtual bool isOpen() override;
     virtual bool open() override;
     virtual bool init( enum v4l2cam_fetch_mode ) override;
     virtual void close() override;
 
     virtual struct v4l2cam_image_buffer * fetch( bool lastOne ) override;
+    virtual struct v4l2cam_metadata_buffer * fetchMetaData() override;
 
 };
 

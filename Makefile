@@ -152,8 +152,8 @@ endif
 #
 # Common Example targets
 #
-example: dist main.o utils.o print.o list.o capture.o
-	$(CXX) $(LDFLAGS) -o v4l2cam build/main.o build/utils.o build/print.o build/list.o build/capture.o $(LDLIBS) $(STATIC_LIBS)
+example: dist main.o utils.o print.o list.o capture.o control.o
+	$(CXX) $(LDFLAGS) -o v4l2cam build/main.o build/utils.o build/print.o build/list.o build/capture.o build/control.o $(LDLIBS) $(STATIC_LIBS)
 
 includes: example/defines.h v4l2camera.h linuxcamera.h maccamera.h wincamera.h v4l2cam_defs.h objccamera.h i_objccamera.h
 
@@ -171,6 +171,9 @@ list.o: includes example/list.cpp
 	
 capture.o: includes example/capture.cpp
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/capture.o -c example/capture.cpp
+
+control.o: includes example/control.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/control.o -c example/control.cpp
 
 #
 # Clean before build

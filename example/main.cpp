@@ -47,7 +47,7 @@ int main( int argc, char** argv )
 
     else {
 
-        // Video Mode - should be done alone, skip all other commands
+        // Video Mode
         if( cmdLine["m"] == "1" )
         {
             // make sure there is a device specified
@@ -56,7 +56,7 @@ int main( int argc, char** argv )
             
         } else {
 
-            // User Controls - should be done alone, skip all other commands
+            // User Controls
             if( cmdLine["u"] == "1" )
             {
                 // make sure there is a device specified
@@ -65,31 +65,57 @@ int main( int argc, char** argv )
                 
             } else {
 
-                // Grab an Image - should be done alone, skip all other commands
-                if( cmdLine["g"].length() > 0 )
+                // Grab Meta Data
+                if( cmdLine["M"] == "1" )
                 {
-                    outerr( "Capturing image, all other commands will be ignored" );
-
                     // make sure there is a device specified
-                    if( cmdLine["d"].length() > 0 ) captureImage( cmdLine["d"], cmdLine["g"], cmdLine["o"] );
-                    else outerr( "Must provide a device number to grab an image : -d [0..63]" );
+                    if( cmdLine["d"].length() > 0 ) fetchMetaData( cmdLine["d"] ) ;
+                    else outerr( "Must provide a device number to gab meta data : -d [0..63]" );
                     
                 } else {
-
-                    // Capture Video - should be done alone, skip all other commands
-                    if( cmdLine["c"].length() > 0 )
+                    
+                    // Grab an Image
+                    if( cmdLine["g"].length() > 0 )
                     {
-                        outerr( "Starting video capture, all other commands will be ignored" );
-                        
                         // make sure there is a device specified
-                        if( cmdLine["d"].length() > 0 ) captureVideo( cmdLine["d"], cmdLine["c"], cmdLine["t"], cmdLine["o"] ) ;
-                        else outerr( "Must provide a device number to start video capture : -d [0..63]" );
+                        if( cmdLine["d"].length() > 0 ) captureImage( cmdLine["d"], cmdLine["g"], cmdLine["o"] );
+                        else outerr( "Must provide a device number to grab an image : -d [0..63]" );
                         
                     } else {
 
-                        if( cmdLine["l"] == "1" ) listUSBCameras();
+                        // Capture Video
+                        if( cmdLine["c"].length() > 0 )
+                        {                        
+                            // make sure there is a device specified
+                            if( cmdLine["d"].length() > 0 ) captureVideo( cmdLine["d"], cmdLine["c"], cmdLine["t"], cmdLine["o"] ) ;
+                            else outerr( "Must provide a device number to start video capture : -d [0..63]" );
+                            
+                        } else {
 
-                        if( cmdLine["i"] == "1" ) listAllDevices();
+                            // Get Control Value
+                            if( cmdLine["r"].length() > 0 )
+                            {                        
+                                // make sure there is a device specified
+                                if( cmdLine["d"].length() > 0 ) getControlValue( cmdLine["d"], cmdLine["r"] ) ;
+                                else outerr( "Must provide a device number to get a control : -d [0..63]" );
+                                
+                            } else {
+
+                                 // Set Control Value
+                                if( cmdLine["s"].length() > 0 )
+                                {                        
+                                    // make sure there is a device specified
+                                    if( cmdLine["d"].length() > 0 ) setControlValue( cmdLine["d"], cmdLine["s"], cmdLine["s2"] ) ;
+                                    else outerr( "Must provide a device number to set a control : -d [0..63]" );
+                                    
+                                } else {
+
+                                    if( cmdLine["l"] == "1" ) listUSBCameras();
+
+                                    if( cmdLine["i"] == "1" ) listAllDevices();
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -140,6 +166,9 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
 
         // List all user controls
         if( argS == "-u" ) { cmdLine["u"] = "1"; continue; }
+
+        // Get Meta Data
+        if( argS == "-M" ) { cmdLine["M"] = "1"; continue; }
         
         // Show some sample commands
         if( argS == "-x" ) { cmdLine["x"] = "1"; continue; }
@@ -157,7 +186,7 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
             }
         }
 
-        // GRab an Image - specify video mode in second parameter
+        // Grab an Image - specify video mode in second parameter
         if( argS == "-g" )
         {
             if( (i < argc) && (is_number(argv[i])) ) { cmdLine["g"] = argv[i++]; continue; }
@@ -177,6 +206,43 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
             else
             {
                 outerr( "Invalid attribute for Capture Video [-c]" );
+                printBasicHelp();
+                cmdLine.clear();
+                return cmdLine;
+            }
+        }
+
+        // Retrieve Control Value - specify control number in second parameter
+        if( argS == "-r" )
+        {
+            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["r"] = argv[i++]; continue; }
+            else
+            {
+                outerr( "Invalid attribute for Retrieve Control Value [-r]" );
+                printBasicHelp();
+                cmdLine.clear();
+                return cmdLine;
+            }
+        }
+
+        // Set Control Value - specify control number in second parameter and new value in 3rd parameter
+        if( argS == "-s" )
+        {
+            if( (i < argc) && (is_number(argv[i])) ) 
+            {
+                cmdLine["s"] = argv[i++];
+                // check for second parameter
+                if( (i < argc) && (is_number(argv[i])) ) { cmdLine["s2"] = argv[i++]; continue; }
+                else
+                {
+                    outerr( "Set Control Value must have 2 attributes [-s]" );
+                    printBasicHelp();
+                    cmdLine.clear();
+                    return cmdLine;
+                }
+            } else
+            {
+                outerr( "Invalid attribute for Set Control Value [-s]" );
                 printBasicHelp();
                 cmdLine.clear();
                 return cmdLine;

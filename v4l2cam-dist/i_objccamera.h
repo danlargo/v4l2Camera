@@ -29,6 +29,8 @@ public:
     std::vector<struct avCamera*> discoverCameras();
 
     bool setCaptureFormat( int i );
+    bool initCapture();
+    unsigned char * captureFrame( int * size );
 
     int reverseBytes( int in );
 

@@ -47,29 +47,31 @@ int printBasicHelp()
     outln( "v4l2cam Usage" );
     outln( "-------------" );
 
-    outln( "-h :            this message" );
-    outln( "-v :            show version of the UVCCamera sub system");
-    outln( "-V :            operate in verbose mode (lots of information messages from low level functions)");
-    outln( "-S :            run totally silent so that this app will not be chatty when used in scripts");
-    outln( "-x :            display some sample commands");
+    outln( "-h  :           this message" );
+    outln( "-v  :           show version of the v4l2camera sub system");
+    outln( "-V  :           operate in verbose mode (lots of information messages from low level functions)");
+    outln( "-S  :           run totally silent so that this app will not be chatty when used in scripts");
+    outln( "-x  :           display some sample commands");
     outln( "---" );
     #ifdef __linux__
-        outln( "-i :            identify all openable devices in /dev/videoX driver space" );
+        outln( "-i  :           identify all openable devices in /dev/videoX driver space" );
     #endif
-    outln( "-l :            list all UVC compatible cameras in the USB device space" );
+    outln( "-l  :           list all UVC compatible cameras in the USB device space" );
     outln( "---" );
-    outln( "-d [0..63] :    select camera # for operation" );
-    outln( "-m :            list all the video modes supported by camera -d #" );
-    outln( "-u :            list all the user controls supported by camera -d #" );
+    outln( "-d [0..63]  :   select camera # for operation" );
     outln( "---" );
-    outln( "-t [0..##] :    set user control [0..??] to value specified with -k [##]");
-    outln( "-k [0..##] :    used user control number [0..##] for set or retrieve commands");
-    outln( "-r :            retrieve value from user control specified by -k [##]");
-    outln( "-o file    :    specify filename for output, will send to stdout if not set" );
+    outln( "-m  :           list all the video modes supported by camera -d #" );
+    outln( "-u  :           list all the user controls supported by camera -d #" );
+    outln( "-M  :           grab the metadata associated with camera -d #" );
     outln( "---" );
-    outln( "-g [0..##] :    grab an image from camera -d #, using video mode <number>" );
-    outln( "-c [0..##] :    capture video from camera -d #, using video mode <number>, for time -t [0..##] seconds, default is 10 seconds" );
-    outln( "-t [0..##] :    specify a time duration for video capture, default is 10 seconds" );
+    outln( "-s [##] [val]   :   set user control [##] to value specified by [val] (do not include braces)");
+    outln( "-r [##]     :   retrieve value from user control [##]");
+    outln( "---" );
+    outln( "-o file     :   specify filename for output, will send to stdout if not set" );
+    outln( "---" );
+    outln( "-g [##]     :   grab an image from camera -d #, using video mode [##]" );
+    outln( "-c [##]     :   capture video from camera -d #, using video mode [##], for time -t [0##] seconds, default is 10 seconds" );
+    outln( "-t [##]     :   specify a time duration [##] for video capture, default is 10 seconds" );
     outln( "" );
 
     return 1;

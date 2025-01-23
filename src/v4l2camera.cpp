@@ -19,6 +19,7 @@ V4l2Camera::V4l2Camera()
     m_modes.clear();
     m_controls.clear();
     m_cameraType = "unknown";
+    m_capabilities = 0;
 
     // force to unhealthy state
     m_healthCounter = s_healthCountLimit;
@@ -52,6 +53,11 @@ bool V4l2Camera::canFetch()
 }
 
 bool V4l2Camera::canRead()
+{
+    return false;
+}
+
+bool V4l2Camera::hasMetaData()
 {
     return false;
 }
@@ -164,9 +170,9 @@ bool V4l2Camera::isOpen()
 
 bool V4l2Camera::isHealthy()
 {
-    // general operation, interntion anyway
+    // general operation, intention anyway
     //
-    // incremenet m_healthCounter is call fails, set to zero if call is successful
+    // incremenet m_healthCounter if a call fails, set to zero if call is successful
     // - allows for a coiuple of failed calls before declaring the camera unhealthy
     //
     // - in base class m_healthCounter is set to s_healthCountLimit in constructor, base class is always UN healthy
@@ -182,6 +188,14 @@ bool V4l2Camera::enumCapabilities()
 
     return false;
 }
+
+std::vector<std::string> V4l2Camera::capabilitiesToStr()
+{
+    std::vector<std::string> ret = {};
+
+    return ret;
+}
+
 
 
 bool V4l2Camera::checkCapabilities( unsigned int val )
@@ -232,6 +246,15 @@ struct v4l2cam_image_buffer * V4l2Camera::fetch( bool lastOne )
 }
 
 
+struct v4l2cam_metadata_buffer * V4l2Camera::fetchMetaData()
+{
+    struct v4l2cam_metadata_buffer * retBuffer = nullptr;
+
+    return retBuffer;
+}
+
+
+
 struct v4l2cam_video_mode V4l2Camera::getOneVM( int index )
 {
     // check if it exists
@@ -242,8 +265,13 @@ struct v4l2cam_video_mode V4l2Camera::getOneVM( int index )
 bool V4l2Camera::enumVideoModes()
 {
     // clear the existing control structure
-    this->m_modes.clear();
+    m_modes.clear();
 
+    return false;
+}
+
+bool V4l2Camera::enumMetadataModes()
+{
     return false;
 }
 

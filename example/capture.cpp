@@ -40,7 +40,9 @@ void captureImage( std::string deviceID, std::string videoMode, std::string file
     // create the camera object
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
-        camList = LinuxCamera::discoverCameras();
+        v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
+        if( verbose ) t = v4l2cam_logging_mode::logToStdOut;
+        camList = LinuxCamera::discoverCameras(t);
         LinuxCamera * cam = camList[std::stoi(deviceID)];
     #elif __APPLE__
         std::vector<MACCamera *> camList;
@@ -162,7 +164,9 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
 
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
-        camList = LinuxCamera::discoverCameras();
+        v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
+        if( verbose ) t = v4l2cam_logging_mode::logToStdOut;
+        camList = LinuxCamera::discoverCameras(t);
         LinuxCamera * cam = camList[std::stoi(deviceID)];    
     #elif __APPLE__
         std::vector<MACCamera *> camList;
