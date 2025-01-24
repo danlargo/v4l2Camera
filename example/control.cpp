@@ -1,20 +1,23 @@
 #include <iostream>
 #include <string>
+#include <cstdint>
 
 #include "defines.h"
 
 #ifdef __linux__
+    #include <unistd.h>
     #include "linuxcamera.h"
 #elif __APPLE__
+    #include <unistd.h>
     #include "maccamera.h"
     #include "v4l2cam_defs.h"
+#elif _WIN32
+    #include "wincamera.h"
 #endif
-
-#include <unistd.h>
 
 int getControlValue( std::string deviceID, std::string cntrlID )
 {
-    int ret = __INT32_MAX__ * -1;
+    int ret = INT32_MIN;
 
     // create the camera object
     #ifdef __linux__
@@ -27,6 +30,10 @@ int getControlValue( std::string deviceID, std::string cntrlID )
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
         MACCamera * tmp = camList[std::stoi(deviceID)];
+    #elif _WIN32
+        std::vector<WinCamera *> camList;
+        camList = WinCamera::discoverCameras();
+        WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
     if( !silentMode )
@@ -84,7 +91,12 @@ bool setControlValue( std::string deviceID, std::string cntrlID, std::string new
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
         MACCamera * tmp = camList[std::stoi(deviceID)];
+    #elif _WIN32       
+        std::vector<WinCamera *> camList;
+        camList = WinCamera::discoverCameras();
+        WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
+
     if( !silentMode )
     {
         outln( "------------------------------");

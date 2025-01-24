@@ -60,7 +60,7 @@ V4l2Camera is an attempt to abstract the video4linux2 api into something more ea
 - In progress, will (hopefully) be designed to work with the [AVFoundation](https://developer.apple.com/av-foundation/) api
 
 ### Windows
-- In progress, will besigned to work with the [Media.Capture](https://learn.microsoft.com/en-us/uwp/api/windows.media.capture.mediacapture?view=winrt-26100) api
+- In progress, will be designed to work with the [Media.Capture](https://learn.microsoft.com/en-us/uwp/api/windows.media.capture.mediacapture?view=winrt-26100) api
 
 
 
@@ -76,7 +76,7 @@ $ git clone https://github.com/danlargo/v4l2Camera.git
 
 ```
 
-### Make
+### Make (MAC and Linux)
 
 - Run **make** in the source folder, this will create the example binary (v4l2cam) and create a distribution folder for inclusion in other apps (v4l2cam-dist)
 ```
@@ -84,6 +84,31 @@ $ cd v4l2camera
 $ make
 
 ```
+- Copy the distribution folder into the top level of your project
+```
+$ cp -r ./v4l2cam-dist ../myProject
+
+```
+
+### Make (Windows)
+- Check out this link for help if command line tools are not installed - [here](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170)
+
+- Verify the C++ command line tools are installed
+    - Open a Developer Power Shell from the Visual Studio app 
+        - Tools -> Command Line -> Developer Power Shell
+    - change folder to v4l2camera
+    - run nmake
+
+```
+C:\...> cd v4l2camera
+C:\...> dir
+...should show the file structure for v4l2camera
+
+c:\...> nmake
+```
+- should build the v4l2camera library and command line files
+    - might say "nmake : The term 'nmake' is not recognized as the name of a cmdlet...", which means the command line tools are not installed or not in the command path
+
 - Copy the distribution folder into the top level of your project
 ```
 $ cp -r ./v4l2cam-dist ../myProject

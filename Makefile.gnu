@@ -4,20 +4,31 @@ RM=rm -f
 RRM=rm -rf
 MD=mkdir
 
-UNAME_S := $(shell uname -s)
-UNAME_M := $(shell uname -m)
-
 #
 # WINDOWS specific compile and link flags
 #
 ifeq ($(OS),Windows_NT)
-	@echo "Noting implemented for Windows yet"
+	
+	CCFLAGS += -D WIN32
+    ifeq ($(PROCESSOR_ARCHITEW6432),AMD64)
+        CCFLAGS += -D AMD64
+    else
+        ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
+            CCFLAGS += -D AMD64
+        endif
+        ifeq ($(PROCESSOR_ARCHITECTURE),x86)
+            CCFLAGS += -D IA32
+        endif
+    endif
 
 else
 
 #
 # Linux and architecture specific compile and link flags
 #
+	UNAME_S := $(shell uname -s)
+	UNAME_M := $(shell uname -m)
+
 	ifeq ($(UNAME_S),Linux)
 
 		CPPFLAGS=-g -std=c++20 -I v4l2cam-dist

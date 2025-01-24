@@ -24,6 +24,7 @@
 // v1.0.100 : First release build
 // v1.1.101 : starting to add MacOS support via AVFoundation framework
 // v1.1.110 : enhancing capability ennumeration
+// v1.3.010 : started adding Windows support
 
 #include <map>
 #include <vector>
@@ -106,10 +107,10 @@ private:
     // Version Info
     //
     static const int s_majorVersion = 1;
-    static const int s_minorVersion = 1;
-    static const int s_revision = 110;
-    inline static const std::string s_codeName = "Jennifer";
-    inline static const std::string s_lastCommitMsg = "[danlargo] enhancing capability ennumeration";
+    static const int s_minorVersion = 3;
+    static const int s_revision = 010;
+    inline static const std::string s_codeName = "Tara";
+    inline static const std::string s_lastCommitMsg = "[danlargo] started adding Windows support";
 
     static const int s_logDepth = 500;
 

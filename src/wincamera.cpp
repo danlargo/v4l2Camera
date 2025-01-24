@@ -5,7 +5,6 @@
 #include <vector>
 #include <iomanip>
 
-#include <unistd.h>
 #include <fcntl.h>
 
 #include "wincamera.h"

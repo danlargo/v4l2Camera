@@ -9,13 +9,16 @@
 #include "defines.h"
 
 #ifdef __linux__
+    #include <unistd.h>
     #include "linuxcamera.h"
 #elif __APPLE__
+    #include <unistd.h>
     #include "maccamera.h"
     #include "v4l2cam_defs.h"
+#elif _WIN32
+    #include "wincamera.h"
 #endif
 
-#include <unistd.h>
 
 // encourage the low level objects to spew out information
 bool verbose = false;

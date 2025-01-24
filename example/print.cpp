@@ -9,13 +9,16 @@
 #include "defines.h"
 
 #ifdef __linux__
+    #include <unistd.h>
     #include "linuxcamera.h"
 #elif __APPLE__
+    #include <unistd.h>
     #include "maccamera.h"
     #include "v4l2cam_defs.h"
+#elif _WIN32
+    #include "wincamera.h"
+    #include "v4l2cam_defs.h"
 #endif
-
-#include <unistd.h>
 
 void printSudoHint( int numCameras )
 {

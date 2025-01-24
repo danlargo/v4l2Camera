@@ -9,13 +9,16 @@
 #include "defines.h"
 
 #ifdef __linux__
+    #include <unistd.h>
     #include "linuxcamera.h"
 #elif __APPLE__
+    #include <unistd.h>
     #include "maccamera.h"
     #include "v4l2cam_defs.h"
+#elif _WIN32
+    #include "wincamera.h"
+    #include "v4l2cam_defs.h"
 #endif
-
-#include <unistd.h>
 
 // Functional demonstration functions
 void listUSBCameras()
@@ -31,6 +34,9 @@ void listUSBCameras()
     #elif __APPLE__
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
+    #elif _WIN32
+        std::vector<WinCamera *> camList;
+        camList = WinCamera::discoverCameras();
     #endif
 
     // output the collected information
@@ -124,6 +130,9 @@ void listAllDevices()
     #elif __APPLE__
         outln( "*** Not supported on MACOS" );
         outln( "" );
+    #elif _WIN32
+        outln( "*** Not currently supported on Windows" );
+        outln( "" );
     #endif
 }
 
@@ -153,6 +162,16 @@ void listVideoModes( std::string deviceID )
             return;
         }
         printSudoHint( camList.size() );
+    #elif _WIN32
+        std::vector<WinCamera *> camList;
+        WinCamera * tmp = nullptr;
+        if( (camList.size() > 0) && (std::stoi(deviceID) < camList.size()) ) tmp = camList[std::stoi(deviceID)];
+        else 
+        {
+            outerr( "Selected device outside range : numCameras = " + std::to_string(camList.size()) + " yourDeviceID = " + deviceID );
+            return;
+        }
+        camList = WinCamera::discoverCameras();
     #endif
 
     outln( "------------------------------");
@@ -202,6 +221,10 @@ void listUserControls( std::string deviceID )
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
         MACCamera * tmp = camList[std::stoi(deviceID)];
+    #elif _WIN32
+        std::vector<WinCamera *> camList;
+        camList = WinCamera::discoverCameras();
+        WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
     outln( "------------------------------");
@@ -232,11 +255,15 @@ void listUserControls( std::string deviceID )
                 #elif __linux__
                     if( ct.type == V4L2_CTRL_TYPE_MENU )
                     {
+                #elif _WIN32
+                    if( ct.type == v4l2cam_control_type::v4l2_menu )
+                    {
                 #endif
                         std::string menStr = "\t\t[menu]\t" + std::to_string(ct.menuItems.size()) + " item(s) : \n\t\t\t";
                         for( const auto &y : ct.menuItems ) menStr += "[" + std::to_string(y.first) + "] " + y.second + "\n\t\t\t";
                         outln( menStr );
                     }
+                    
             }
             outln( "" );
             outln( "..." + std::to_string(tmp->getControls().size()) + " user controls supported" );
@@ -266,6 +293,10 @@ void fetchMetaData( std::string deviceID )
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
         MACCamera * tmp = camList[std::stoi(deviceID)];
+    #elif _WIN32
+        std::vector<WinCamera *> camList;
+        camList = WinCamera::discoverCameras();
+        WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
     outln( "" );

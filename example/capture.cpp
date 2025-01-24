@@ -9,13 +9,15 @@
 #include "defines.h"
 
 #ifdef __linux__
+    #include <unistd.h>
     #include "linuxcamera.h"
 #elif __APPLE__
+    #include <unistd.h>
     #include "maccamera.h"
     #include "v4l2cam_defs.h"
+#elif _WIN32
+    #include "wincamera.h"
 #endif
-
-#include <unistd.h>
 
 void captureImage( std::string deviceID, std::string videoMode, std::string fileName )
 {
@@ -48,6 +50,10 @@ void captureImage( std::string deviceID, std::string videoMode, std::string file
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
         MACCamera * cam = camList[std::stoi(deviceID)];
+    #elif _WIN32
+        std::vector<WinCamera *> camList;
+        camList = WinCamera::discoverCameras();
+        WinCamera * cam = camList[std::stoi(deviceID)];
     #endif
 
     // initiate image (one frame) capture
@@ -172,6 +178,10 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras();
         MACCamera * cam = camList[std::stoi(deviceID)];
+    #elif _WIN32
+        std::vector<WinCamera *> camList;
+        camList = WinCamera::discoverCameras();
+        WinCamera * cam = camList[std::stoi(deviceID)];
     #endif
 
     // check if filename is specified
@@ -272,7 +282,7 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
                     while( delta < (std::chrono::milliseconds)(1000/fpsVideo) )
                     {
                         delta = std::chrono::duration_cast<millisec_t> (std::chrono::steady_clock::now() - start );
-                        usleep( 1000 );
+                        // usleep( 1000 );
                     }
                     start = std::chrono::steady_clock::now();
 
