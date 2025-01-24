@@ -266,7 +266,7 @@ unsigned char * yuv422ToRGB( unsigned char * yuyv_image, int width, int height, 
 
 ### Planar (non-interleaved) YUV 420 to RGB conversion
 
-![I420](./assets/I420%20-%20planar%20Y:UV%20420.png)
+![I420](./assets/I420planarYUV420.png)
 ```
 // Planar (Non-Interleaved) YUV 420 format definition
 //
@@ -352,7 +352,7 @@ unsigned char * planarYUV420ToRGB( unsigned char * yuv_image, int width, int hei
 }
 ```
 
-![YV12](./assets/YV12%20-%20planar%20Y:VU%20420.png)
+![YV12](./assets/YV12planarYVU420.png)
 
 ```
 // same as above but U and V samples are reversed
@@ -413,7 +413,7 @@ unsigned char * planarYVU420ToRGB( unsigned char * yuv_image, int width, int hei
 
 ### Interleaved (interlaced) YUV 420 to RGB conversion
 
-![NV12](./assets/NV12%20-%20Interlaced%20YUV%20420.png)
+![NV12](./assets/NV12InterlacedYUV420.png)
 
 ```
 // Interleaved YUV 420 format definition
@@ -496,7 +496,7 @@ unsigned char * interleavedYUV420ToRGB( unsigned char * yuv_image, int width, in
 }
 ```
 
-![NV21](./assets/NV21%20-%20Interlaced%20Y:VU%20420.png)
+![NV21](./assets/NV21InterlacedYVU420.png)
 
 ```
 // same algorithm as above, with U and V reversed in the interleaving
