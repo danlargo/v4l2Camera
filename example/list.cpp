@@ -56,7 +56,7 @@ void listUSBCameras()
             if( x->open() )
             {
                 std::string out = "[" + std::to_string(camIndex++) + "] "
-                        + x->getDevName() + " : " + x->getUserName() + ", ";
+                        + x->getDevName() + " : " + x->getUserName() + " : ";
                 if( x->getVideoModes().size() > 0 ) out += std::to_string(x->getVideoModes().size()) + " video modes, ";
                 if( x->getControls().size() > 0 ) out += std::to_string(x->getControls().size()) + " user controls, ";
                         
@@ -70,7 +70,7 @@ void listUSBCameras()
 
                 outln( out );
                 // output the capabilities info
-                if( 0 == x->m_capabilities ) outln( "\r\n    devcaps...none" );
+                if( 0 == x->m_capabilities ) outln( "    devcaps...none\r\n" );
                 else 
                 {
                     outln( "    devcaps..." );

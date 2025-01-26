@@ -7,10 +7,21 @@
 #include <vector>
 #include <string>
 
+#include <winrt/Windows.Media.Capture.h>
+#include <winrt/Windows.Media.MediaProperties.h>
+#include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.Foundation.Collections.h>
+
 class WinCamera : public V4l2Camera
 {
+private:
+    // device identifiers
+    int m_fid;
+    std::string m_devName;
+    winrt::Windows::Media::Capture::MediaCapture m_mediaCapture;
+
 public:
-    WinCamera();
+    WinCamera( std::string devname );
     virtual ~WinCamera();
 
     // Camera discovery methods

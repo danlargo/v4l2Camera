@@ -38,92 +38,87 @@ int main( int argc, char** argv )
                                 << "   ...using V4l2Camera " << V4l2Camera::getVersionString() << " " << V4l2Camera::getCodeName()
                                 << std::endl << std::endl;
     //
-    // now process the commands, some depend on others, some can be done in sequence 
-    // ex. -l -a can both be completed in single cmd line request
+    // now process the commands, only one command at a time
     //
 
-    // always print the version info if asked
-    if( cmdLine["v"] == "1" ) printVersionInfo();
+#ifdef _WIN32
+    // Windows specific initialization
+    WinCamera::initMF();
+#endif
+
+    // always print the version if requested
+	if (cmdLine["v"] == "1") printVersionInfo();
 
     // show example commands
-    if( cmdLine["x"] == "1" ) printExamples();
+	if (cmdLine["x"] == "1") { printExamples(); return 0; }
+    // list of USB Cameras in the system
+	if (cmdLine["l"] == "1") { listUSBCameras(); return 0; }
+	// list all devices
+	if (cmdLine["i"] == "1") { listAllDevices(); return 0; }
 
     else {
 
-        // Video Mode
+        // Video Mode, requires device indicator
         if( cmdLine["m"] == "1" )
         {
-            // make sure there is a device specified
             if( cmdLine["d"].length() > 0 ) listVideoModes( cmdLine["d"] ) ;
             else outerr( "Must provide a device number to list video modes : -d [0..63]" );
-            
-        } else {
-
-            // User Controls
-            if( cmdLine["u"] == "1" )
-            {
-                // make sure there is a device specified
-                if( cmdLine["d"].length() > 0 ) listUserControls( cmdLine["d"] ) ;
-                else outerr( "Must provide a device number to list user controls : -d [0..63]" );
-                
-            } else {
-
-                // Grab Meta Data
-                if( cmdLine["M"] == "1" )
-                {
-                    // make sure there is a device specified
-                    if( cmdLine["d"].length() > 0 ) fetchMetaData( cmdLine["d"] ) ;
-                    else outerr( "Must provide a device number to gab meta data : -d [0..63]" );
-                    
-                } else {
-                    
-                    // Grab an Image
-                    if( cmdLine["g"].length() > 0 )
-                    {
-                        // make sure there is a device specified
-                        if( cmdLine["d"].length() > 0 ) captureImage( cmdLine["d"], cmdLine["g"], cmdLine["o"] );
-                        else outerr( "Must provide a device number to grab an image : -d [0..63]" );
-                        
-                    } else {
-
-                        // Capture Video
-                        if( cmdLine["c"].length() > 0 )
-                        {                        
-                            // make sure there is a device specified
-                            if( cmdLine["d"].length() > 0 ) captureVideo( cmdLine["d"], cmdLine["c"], cmdLine["t"], cmdLine["o"] ) ;
-                            else outerr( "Must provide a device number to start video capture : -d [0..63]" );
-                            
-                        } else {
-
-                            // Get Control Value
-                            if( cmdLine["r"].length() > 0 )
-                            {                        
-                                // make sure there is a device specified
-                                if( cmdLine["d"].length() > 0 ) getControlValue( cmdLine["d"], cmdLine["r"] ) ;
-                                else outerr( "Must provide a device number to get a control : -d [0..63]" );
-                                
-                            } else {
-
-                                 // Set Control Value
-                                if( cmdLine["s"].length() > 0 )
-                                {                        
-                                    // make sure there is a device specified
-                                    if( cmdLine["d"].length() > 0 ) setControlValue( cmdLine["d"], cmdLine["s"], cmdLine["s2"] ) ;
-                                    else outerr( "Must provide a device number to set a control : -d [0..63]" );
-                                    
-                                } else {
-
-                                    if( cmdLine["l"] == "1" ) listUSBCameras();
-
-                                    if( cmdLine["i"] == "1" ) listAllDevices();
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
+
+        // User Controls, requires device indicator
+        else if( cmdLine["u"] == "1")
+        {
+            // make sure there is a device specified
+            if (cmdLine["d"].length() > 0) listUserControls(cmdLine["d"]);
+            else outerr("Must provide a device number to list user controls : -d [0..63]");
+        }
+                
+        // Try to Grab Meta Data, requires device indicator
+        else if( cmdLine["M"] == "1")
+        {
+            // make sure there is a device specified
+            if (cmdLine["d"].length() > 0) fetchMetaData(cmdLine["d"]);
+            else outerr("Must provide a device number to grab meta data : -d [0..63]");
+        }
+                                        
+		// Grab an Image, must have a device and a video mode, optionally has an output file
+        else if( cmdLine["g"].length() > 0)
+        {
+            // make sure there is a device specified
+            if( cmdLine["d"].length() > 0 ) captureImage(cmdLine["d"], cmdLine["g"], cmdLine["o"]);
+            else outerr("Must provide a device number to grab an image : -d [0..63]");
+        }
+                        
+        // Capture Video, must have a device and a video mode, optionally has an output file
+        else if( cmdLine["c"].length() > 0)
+        {
+            // make sure there is a device specified
+            if (cmdLine["d"].length() > 0) captureVideo(cmdLine["d"], cmdLine["c"], cmdLine["t"], cmdLine["o"]);
+            else outerr("Must provide a device number to start video capture : -d [0..63]");
+        }
+                            
+		// Get Control Value, must have a device and a control number
+        else if( cmdLine["r"].length() > 0)
+        {
+            // make sure there is a device specified
+            if (cmdLine["d"].length() > 0) getControlValue(cmdLine["d"], cmdLine["r"]);
+            else outerr("Must provide a device number to get a control : -d [0..63]");
+        }
+                                
+		// Set Control Value, must have a device and a control number and a new value
+        else if( cmdLine["s"].length() > 0)
+        {
+            // make sure there is a device specified
+            if (cmdLine["d"].length() > 0) setControlValue(cmdLine["d"], cmdLine["s"], cmdLine["s2"]);
+            else outerr("Must provide a device number to set a control : -d [0..63]");
+        }
+
     }
+
+#ifdef _WIN32
+    // Windows specific shutdown
+    WinCamera::shutdownMF();
+#endif
 
     return 0;
 }

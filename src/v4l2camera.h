@@ -99,6 +99,9 @@ enum v4l2cam_msg_type
     info, warning, error, critical
 };
 
+const std::string s_codeName = "Tara";
+const std::string s_lastCommitMsg = "[danlargo] started adding Windows support";
+
 // V4l2Camera - base class for all camera types
 //
 class V4l2Camera
@@ -109,8 +112,6 @@ private:
     static const int s_majorVersion = 1;
     static const int s_minorVersion = 3;
     static const int s_revision = 010;
-    inline static const std::string s_codeName = "Tara";
-    inline static const std::string s_lastCommitMsg = "[danlargo] started adding Windows support";
 
     static const int s_logDepth = 500;
 

@@ -16,6 +16,7 @@
     #include "maccamera.h"
     #include "v4l2cam_defs.h"
 #elif _WIN32
+    #include <array>
     #include "wincamera.h"
 #endif
 
@@ -34,7 +35,13 @@ void captureImage( std::string deviceID, std::string videoMode, std::string file
         outFile.open( fileName, std::ios::trunc | std::ios::binary );
         if( !outFile.is_open() ) 
         {
+#ifdef _WIN32
+            std::array<char, 256> errorBuffer;
+            strerror_s(errorBuffer.data(), errorBuffer.size(), errno);
+            outerr("Failed to open output file : " + fileName + " - " + std::string(errorBuffer.data()));
+#else
             outerr( "Failed to open output file : " + fileName + " - " + strerror(errno) );
+#endif
             return;
         }
     }
@@ -69,7 +76,7 @@ void captureImage( std::string deviceID, std::string videoMode, std::string file
         try { vm = cam->getOneVM( std::stoi(videoMode) ); }
         catch(const std::exception& e) 
         { 
-            outerr( "Failed to set image mode - operation aborted ");
+            outerr( "Failed to set image mode - operation aborted " + std::string(e.what()) );
             return; 
         }
         // set the video mode
@@ -80,7 +87,7 @@ void captureImage( std::string deviceID, std::string videoMode, std::string file
             if( cam->init( v4l2cam_fetch_mode::userPtrMode ) )
             {
                 // grab a single frame
-                struct v4l2cam_image_buffer * inB = cam->fetch(true);
+                struct v4l2cam_image_buffer* inB = cam->fetch(true);
                 if( inB && inB->buffer )
                 {
                     // check for invalid JPG file (if Motion-JPEG selected)
@@ -133,13 +140,16 @@ void captureImage( std::string deviceID, std::string videoMode, std::string file
                         }
                     }
 
-                    // write the buffer out to the file
-                    if( sendToStdout ) std::cout.write( (char*)inB->buffer, inB->length );
-                    else outFile.write( (char *)inB->buffer, inB->length );
+                    if (inB)
+                    {
+                        // write the buffer out to the file
+                        if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
+                        else outFile.write((char*)inB->buffer, inB->length);
 
-                    // delete the returned data
-                    delete inB->buffer;
-                    delete inB;
+                        // delete the returned data
+                        if( inB->buffer ) delete inB->buffer;
+                        delete inB;
+                    }
 
                 } else outerr( "Nothing returned from fetch call for : " + cam->getDevName() + " " + cam->getUserName() );
             } else outerr( "Failed to initilize fetch mode for : " + cam->getDevName() + " " + cam->getUserName() );
@@ -213,7 +223,13 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
         outFile.open( fileName, std::ios::trunc | std::ios::binary );
         if( !outFile.is_open() ) 
         {
+#ifdef _WIN32
+            std::array<char, 256> errorBuffer;
+            strerror_s(errorBuffer.data(), errorBuffer.size(), errno);
+            outerr("Failed to open output file : " + fileName + " - " + std::string(errorBuffer.data()));
+#else
             outerr( "Failed to open output file : " + fileName + " - " + strerror(errno) );
+#endif
             return;
         }
     }
@@ -228,7 +244,7 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
         try { vm = cam->getOneVM( std::stoi(videoMode) ); }
         catch(const std::exception& e) 
         { 
-            outerr( "Failed to find matching video mode - operation aborted ");
+            outerr( "Failed to find matching video mode - operation aborted : " + std::string(e.what()) );
             return; 
         }
         // set the video mode
