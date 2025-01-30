@@ -46,35 +46,6 @@
 //
 -(void)initCapture
 { 
-    NSError *error=nil;
-
-    //Capture Session
-    AVCaptureSession *session = [[AVCaptureSession alloc]init];
-    session.sessionPreset = AVCaptureSessionPresetPhoto;
-
-    //Add device
-    AVCaptureDevice *inputDevice = m_camera;
-    [session addInput:inputDevice];
-
-    // Add an Output
-    AVCapturePhotoOutput *output = [[AVCapturePhotoOutput alloc] init];
-    AVCapturePhotoSettings *settings = [[AVCapturePhotoSettings alloc] init];
-    [settings setFlashMode:AVCaptureFlashModeAuto];
-    [settings setHighResolutionPhotoEnabled:YES];
-    [settings setAutoStillImageStabilizationEnabled:YES];
-    [settings setCaptureFormat:JPEG];
-    [output setPreparedPhotoSettingsArray:@[[AVCapturePhotoSettings settings]]];
-
-    [session addOutput:output];
-    [session commitConfiguration];
-
-    [session startRunning];
-
-    //Preview Layer - we dont need this rifght now
-    //AVCaptureVideoPreviewLayer *previewLayer = [[AVCaptureVideoPreviewLayer alloc] initWithSession:session];
-    //previewLayer.frame = viewForCamera.bounds;
-    //previewLayer.videoGravity = AVLayerVideoGravityResizeAspectFill;
-    //[viewForCamera.layer addSublayer:previewLayer];
 
 }
 

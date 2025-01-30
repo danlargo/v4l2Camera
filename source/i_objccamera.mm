@@ -63,17 +63,15 @@ bool i_ObjCCamera::setCaptureFormat( int i )
 
 bool i_ObjCCamera::initCapture()
 {
-    return [(ObjCCamera*)m_objcCamera initCapture];
+    return false;
 }
 
 
 unsigned char * i_ObjCCamera::captureFrame( int * size )
 {
     unsigned char * ret = nullptr;
-    ret = [(ObjCCamera*)m_objcCamera captureFrame];
 
     if( ret == nullptr ) std::cout << "Failed to capture frame" << std::endl;
-    else *size = ret.size();
 
     return ret;
 }
