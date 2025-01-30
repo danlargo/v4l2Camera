@@ -189,11 +189,18 @@
     <ClCompile Include="..\example\main.cpp" />
     <ClCompile Include="..\example\print.cpp" />
     <ClCompile Include="..\example\utils.cpp" />
+    <ClCompile Include="..\image_conversion_functions\fromYUV.cpp" />
+    <ClCompile Include="..\image_conversion_functions\greyScale.cpp" />
+    <ClCompile Include="..\image_conversion_functions\interleavedYUV420.cpp" />
+    <ClCompile Include="..\image_conversion_functions\planarYUV420.cpp" />
+    <ClCompile Include="..\image_conversion_functions\saveRGB24ToBMP.cpp" />
+    <ClCompile Include="..\image_conversion_functions\yuv422.cpp" />
     <ClCompile Include="..\src\v4l2camera.cpp" />
     <ClCompile Include="..\src\wincamera.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\example\defines.h" />
+    <ClInclude Include="..\image_conversion_functions\image_utils.h" />
     <ClInclude Include="..\src\v4l2camera.h" />
     <ClInclude Include="..\src\v4l2cam_defs.h" />
     <ClInclude Include="..\src\wincamera.h" />

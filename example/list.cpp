@@ -165,13 +165,13 @@ void listVideoModes( std::string deviceID )
     #elif _WIN32
         std::vector<WinCamera *> camList;
         WinCamera * tmp = nullptr;
+        camList = WinCamera::discoverCameras();
         if( (camList.size() > 0) && (std::stoi(deviceID) < camList.size()) ) tmp = camList[std::stoi(deviceID)];
         else 
         {
             outerr( "Selected device outside range : numCameras = " + std::to_string(camList.size()) + " yourDeviceID = " + deviceID );
             return;
         }
-        camList = WinCamera::discoverCameras();
     #endif
 
     outln( "------------------------------");

@@ -39,6 +39,24 @@
     <ClCompile Include="..\src\wincamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\image_conversion_functions\interleavedYUV420.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\image_conversion_functions\fromYUV.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\image_conversion_functions\planarYUV420.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\image_conversion_functions\saveRGB24ToBMP.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\image_conversion_functions\yuv422.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\image_conversion_functions\greyScale.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\example\defines.h">
@@ -51,6 +69,9 @@
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\wincamera.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\image_conversion_functions\image_utils.h">
       <Filter>Source Files</Filter>
     </ClInclude>
   </ItemGroup>

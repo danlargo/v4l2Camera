@@ -1,3 +1,5 @@
+#include "image_utils.h"
+
 unsigned char R_fromYUV( int Y, int U, int V )
 {
     double R = Y + (1.4065 * (U - 128));

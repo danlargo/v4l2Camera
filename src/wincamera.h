@@ -20,11 +20,14 @@ class WinCamera : public V4l2Camera
 private:
     // device identifiers
     std::wstring m_devName;
-    IMFSourceReader* m_pReader;
+    IMFSourceReader * m_pReader;
+	IMFMediaSource* m_pSource;
     bool m_isOpen;
 
     int GetFourCCFromGUID(const GUID& guid);
     std::string GetLongNameFromGUID(const GUID& guid);
+    const GUID GetGuidFromFourCC(int fourCC);
+    std::string HResultToString(HRESULT hr);
 
 public:
     WinCamera( std::wstring devname );

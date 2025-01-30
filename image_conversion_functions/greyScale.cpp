@@ -1,3 +1,5 @@
+#include "image_utils.h"
+
 // linear 16 bit grey scale values
 //
 unsigned char * gs16ToRGB( unsigned char * yuv_image, int width, int height, bool grayScale )

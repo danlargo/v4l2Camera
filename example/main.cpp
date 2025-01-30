@@ -85,7 +85,7 @@ int main( int argc, char** argv )
         else if( cmdLine["g"].length() > 0)
         {
             // make sure there is a device specified
-            if( cmdLine["d"].length() > 0 ) captureImage(cmdLine["d"], cmdLine["g"], cmdLine["o"]);
+            if( cmdLine["d"].length() > 0 ) captureImage(cmdLine["d"], cmdLine["g"], cmdLine["o"], cmdLine["f"]);
             else outerr("Must provide a device number to grab an image : -d [0..63]");
         }
                         
@@ -268,6 +268,20 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
             else
             {
                 outerr( "Invalid attribute for File name [-o]" );
+                printBasicHelp();
+                cmdLine.clear();
+                return cmdLine;
+            }
+        }
+
+        // Output Image format, defaults to raw if not specified, second parameter is fmt (jpg, bmp, raw)
+        if (argS == "-f")
+        {
+
+            if ((i < argc)) { cmdLine["f"] = argv[i++]; continue; }
+            else
+            {
+                outerr("Invalid attribute for Imaeg format [-f]");
                 printBasicHelp();
                 cmdLine.clear();
                 return cmdLine;

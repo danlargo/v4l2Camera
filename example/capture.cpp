@@ -5,8 +5,10 @@
 #include <string>
 #include <sstream>
 #include <chrono>
+#include <array>
 
 #include "defines.h"
+#include "../image_conversion_functions/image_utils.h"
 
 #ifdef __linux__
     #include <unistd.h>
@@ -16,18 +18,30 @@
     #include "maccamera.h"
     #include "v4l2cam_defs.h"
 #elif _WIN32
-    #include <array>
     #include "wincamera.h"
 #endif
 
-void captureImage( std::string deviceID, std::string videoMode, std::string fileName )
+void captureImage( std::string deviceID, std::string videoMode, std::string fileName, std::string format )
 {
     bool sendToStdout = true;
     std::ofstream outFile;
 
+    // validate imag format
+    if (format.length() > 0)
+    {
+		if (format == "jpg" || format == "bmp" || format == "raw") {}
+		else 
+        {
+            format = "raw";
+            outerr("Invalid image format specified, defaulting to <raw>");
+		}
+    } else {
+        format = "raw";
+        outerr("No format specified, writing raw output data");
+    }
     // check if filename is specified
     if( fileName.length() > 0 ) sendToStdout = false;
-    else outerr( "No filename specified, writing output data (image frame) to STDOUT");
+    else outerr( "No filename specified, writing raw output data (image frame) to STDOUT");
 
     // open the output file
     if( !sendToStdout ) 
@@ -142,9 +156,52 @@ void captureImage( std::string deviceID, std::string videoMode, std::string file
 
                     if (inB)
                     {
-                        // write the buffer out to the file
-                        if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
-                        else outFile.write((char*)inB->buffer, inB->length);
+						// make sure MJPEG gets output as <jpg>
+                        //
+                        if ("Motion-JPEG" == vm.format_str)
+                        {
+                            if (format != "jpg")  outerr("Invalid format specified for Motion-JPEG capture, defaulting to <jpg> format");
+
+                            // output as native JPEG (basically raw output)
+                            if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
+                            else outFile.write((char*)inB->buffer, inB->length);
+
+                        } else if(format == "bmp" )
+                        {
+                            // try to convert to RGB24 format
+                            unsigned char* rgbBuffer = nullptr;
+                            if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"YUYV")) rgbBuffer = yuv422ToRGB(inB->buffer, vm.width, vm.height, false);
+                            else if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"YVYU")) rgbBuffer = yvu422ToRGB(inB->buffer, vm.width, vm.height, false);
+                            else if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"YUY2")) rgbBuffer = yuy2422ToRGB(inB->buffer, vm.width, vm.height, false);
+                            else if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"YU12")) rgbBuffer = planarYUV420ToRGB(inB->buffer, vm.width, vm.height, false);
+                            else if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"I420")) rgbBuffer = planarYVU420ToRGB(inB->buffer, vm.width, vm.height, false);
+                            else if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"NV12")) rgbBuffer = interleavedYUV420ToRGB(inB->buffer, vm.width, vm.height, false);
+                            else if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"NV21")) rgbBuffer = interleavedYVU420ToRGB(inB->buffer, vm.width, vm.height, false);
+                            else if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"Y16 ")) rgbBuffer = gs16ToRGB(inB->buffer, vm.width, vm.height, false);
+                            else if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"Y8  ")) rgbBuffer = gs8ToRGB(inB->buffer, vm.width, vm.height, false);
+                            else if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"Y800")) rgbBuffer = gs8ToRGB(inB->buffer, vm.width, vm.height, false);
+                            else if (vm.fourcc == cam->fourcc_charArray_to_int((unsigned char*)"GREY")) rgbBuffer = gs8ToRGB(inB->buffer, vm.width, vm.height, false);
+
+                            if( rgbBuffer )
+                            {
+                                // close the current file attempt
+                                outFile.close();
+								// output as BMP image, if fileName is blank then will send to stdout
+								saveRGB24AsBMP(rgbBuffer, vm.width, vm.height, fileName );
+								delete rgbBuffer;
+                            }
+                            else {
+                                // unable to convert, output as raw
+								outerr("Unable to convert to RGB format, outputting raw image data");
+                                // output as raw image data
+                                if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
+                                else outFile.write((char*)inB->buffer, inB->length);
+                            }
+                        }  else {
+							// output as raw image data
+							if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
+							else outFile.write((char*)inB->buffer, inB->length);
+                        }
 
                         // delete the returned data
                         if( inB->buffer ) delete inB->buffer;

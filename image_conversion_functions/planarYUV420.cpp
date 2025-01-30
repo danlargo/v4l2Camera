@@ -1,3 +1,5 @@
+#include "image_utils.h"
+
 // Planar (Non-Interleaved) YUV 420 format definition
 //
 // Y - Luminence, one byte per pixel in first section of file

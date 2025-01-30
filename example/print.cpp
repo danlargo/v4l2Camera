@@ -71,6 +71,12 @@ int printBasicHelp()
     outln( "-r [##]     :   retrieve value from user control [##]");
     outln( "---" );
     outln( "-o file     :   specify filename for output, will send to stdout if not set" );
+    outln( "-f fmt      :   specify output format for image, no attempt will be made to ensure the format matches the requested file extension");
+    outln( "            :   ...   jpg - only supported if video mode is MJPEG");
+    outln( "            :   ...   bmp - supported from all video modes except MJPEG");
+    outln( "            :   ...   raw - output raw image data captured from camera, including MJPEG");
+    outln( "            :   ...   any other fmt, image will be output as raw image data");
+    outln( "            :   ...   if no fmt specified or not flag, image will be output as raw image data");
     outln( "---" );
     outln( "-g [##]     :   grab an image from camera -d #, using video mode [##]" );
     outln( "-c [##]     :   capture video from camera -d #, using video mode [##], for time -t [0##] seconds, default is 10 seconds" );
