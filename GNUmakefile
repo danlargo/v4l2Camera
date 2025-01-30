@@ -117,7 +117,7 @@ ifeq ($(UNAME_M),aarch64)
 
 dist: linuxcamera.o v4l2camera.o
 	ar rcs build/libv4l2camera-linux-aarch64.a build/linuxcamera.o build/v4l2camera.o
-	mv build/libv4l2camera-linux-aarch64.a v4l2cam-dist
+	mv build/libv4l2camera-linux-aarch64.a v4l2camera-dist
 	sha256sum v4l2camera-dist/libv4l2camera-linux-aarch64.a > v4l2camera-dist/libv4l2camera-linux-aarch64.sha256sum
 endif
 
@@ -130,7 +130,7 @@ ifeq ($(UNAME_S),Darwin)
 
 dist: maccamera.o objccamera.o v4l2camera.o i_objccamera.o
 	ar rcs build/libv4l2camera-macos.a build/maccamera.o build/v4l2camera.o build/objccamera.o build/i_objccamera.o
-	mv build/libv4l2camera-macos.a v4l2cam-dist
+	mv build/libv4l2camera-macos.a v4l2camera-dist
 	sha256sum v4l2camera-dist/libv4l2camera-macos.a > v4l2camera-dist/libv4l2camera-macos.sha256sum
 
 endif
