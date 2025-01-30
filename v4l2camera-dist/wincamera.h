@@ -7,22 +7,34 @@
 #include <vector>
 #include <string>
 
-#include <winrt/Windows.Media.Capture.h>
-#include <winrt/Windows.Media.MediaProperties.h>
-#include <winrt/Windows.Foundation.h>
-#include <winrt/Windows.Foundation.Collections.h>
+#include <mfapi.h>
+#include <mfidl.h>
+#include <mfreadwrite.h>
+#include <mfobjects.h>
+#include <mftransform.h>
+#include <mferror.h>
+#include <mfmediaengine.h>
 
 class WinCamera : public V4l2Camera
 {
 private:
     // device identifiers
-    int m_fid;
-    std::string m_devName;
-    winrt::Windows::Media::Capture::MediaCapture m_mediaCapture;
+    std::wstring m_devName;
+    IMFSourceReader * m_pReader;
+	IMFMediaSource* m_pSource;
+    bool m_isOpen;
+
+    int GetFourCCFromGUID(const GUID& guid);
+    std::string GetLongNameFromGUID(const GUID& guid);
+    const GUID GetGuidFromFourCC(int fourCC);
+    std::string HResultToString(HRESULT hr);
 
 public:
-    WinCamera( std::string devname );
+    WinCamera( std::wstring devname );
     virtual ~WinCamera();
+
+    static void initMF();
+	static void shutdownMF();
 
     // Camera discovery methods
     //
@@ -45,6 +57,9 @@ public:
     virtual bool enumControls();
     virtual bool enumVideoModes();
     virtual bool isOpen();
+
+    virtual std::vector<std::string> capabilitiesToStr();
+
 
     // Check and change camera settings
     //

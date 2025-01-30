@@ -8,7 +8,7 @@
 #include <array>
 
 #include "defines.h"
-#include "../image_conversion_functions/image_utils.h"
+#include "image_utils/image_utils.h"
 
 #ifdef __linux__
     #include <unistd.h>

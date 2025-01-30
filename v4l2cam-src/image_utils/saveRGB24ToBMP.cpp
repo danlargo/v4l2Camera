@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <array>
+#include <cstring>
 
 
 bool saveRGB24AsBMP( unsigned char * rgbData, int width, int height, std::string fid )
