@@ -20,6 +20,8 @@ V4l2Camera::V4l2Camera()
     m_controls.clear();
     m_cameraType = "unknown";
     m_capabilities = 0;
+    m_metamode = -1;
+    m_metasize = -1;
 
     // force to unhealthy state
     m_healthCounter = s_healthCountLimit;

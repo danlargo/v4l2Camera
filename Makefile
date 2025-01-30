@@ -27,30 +27,30 @@ CPPFLAGS=/EHsc /std:c++20 /I v4l2camera-dist
 #
 # V4l2 build targets
 #
-all: dist example
+all: dist v4l2cam
 
 #
 # Include Files
 #
-v4l2camera.h: src\v4l2camera.h
-	$(CP) src\v4l2camera.h v4l2cam-dist
+v4l2camera.h: source\v4l2camera.h
+	$(CP) source\v4l2camera.h v4l2camera-dist
 
-v4l2cam_defs.h: src\v4l2cam_defs.h
-	$(CP) src\v4l2cam_defs.h v4l2cam-dist
+v4l2cam_defs.h: source\v4l2cam_defs.h
+	$(CP) source\v4l2cam_defs.h v4l2camera-dist
 
-wincamera.h: src\wincamera.h
-	$(CP) src\wincamera.h v4l2cam-dist
+wincamera.h: source\wincamera.h
+	$(CP) source\wincamera.h v4l2camera-dist
 
 #
 #
 # Distribution Files
 #
-v4l2camera.obj: src\v4l2camera.cpp v4l2camera.h
-	$(CXX) $(CFLAGS) $(CPPFLAGS) /c src\v4l2camera.cpp
+v4l2camera.obj: source\v4l2camera.cpp v4l2camera.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c source\v4l2camera.cpp
 	$(MV) v4l2camera.obj build
 
-wincamera.obj: src\wincamera.cpp v4l2camera.h wincamera.h
-	$(CXX) $(CFLAGS) $(CPPFLAGS) /c src\wincamera.cpp
+wincamera.obj: source\wincamera.cpp v4l2camera.h wincamera.h
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c source\wincamera.cpp
 	$(MV) wincamera.obj build
 
 #
@@ -59,41 +59,72 @@ wincamera.obj: src\wincamera.cpp v4l2camera.h wincamera.h
 dist: v4l2cam.lib
 
 v4l2cam.lib: wincamera.obj v4l2camera.obj
-    lib /OUT:v4l2cam-dist\v4l2cam-win64.lib build\wincamera.obj build\v4l2camera.obj
-	powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-FileHash v4l2cam-dist\v4l2cam-win64.lib > v4l2cam-dist\v4l2cam-win64.sha256"
+    lib /OUT:v4l2camera-dist\v4l2camera-win64.lib build\wincamera.obj build\v4l2camera.obj
+	powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command "Get-FileHash v4l2camera-dist\v4l2camera-win64.lib > v4l2camera-dist\v4l2camera-win64.sha256"
 
 #
 #
 # Common Example targets
 #
-example: v4l2cam.lib main.obj utils.obj print.obj list.obj capture.obj control.obj
-	$(CXX) /Fev4l2cam.exe build\main.obj build\utils.obj build\print.obj build\list.obj build\capture.obj build\control.obj v4l2cam-dist\v4l2cam-win64.lib
+v4l2cam: v4l2cam.lib main.obj utils.obj print.obj list.obj capture.obj control.obj
+	$(CXX) /Fev4l2cam.exe build\main.obj build\utils.obj build\print.obj build\list.obj build\capture.obj build\control.obj \
+							build/fromYUV.obj build/greyScale.obj build/interleavedYUV420.obj build/planarYUV420.obj build/saveRGB24ToBMP.obj build/yuv422.obj  \
+							v4l2camera-dist\v4l2camera-win64.lib
 
-includes: example\defines.h v4l2camera.h wincamera.h v4l2cam_defs.h
+includes: v4l2cam-src\defines.h v4l2camera.h wincamera.h v4l2cam_defs.h
 
-main.obj: includes example\main.cpp
-	$(CXX) $(CFLAGS) $(CPPFLAGS) /c example\main.cpp
+main.obj: includes v4l2cam-src\main.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\main.cpp
 	$(MV) main.obj build
 
-utils.obj: includes example\utils.cpp
-	$(CXX) $(CFLAGS) $(CPPFLAGS) /c example\utils.cpp
+utils.obj: includes v4l2cam-src\utils.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\utils.cpp
 	$(MV) utils.obj build
 
-print.obj: includes example\print.cpp
-	$(CXX) $(CFLAGS) $(CPPFLAGS) /c example\print.cpp
+print.obj: includes v4l2cam-src\print.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\print.cpp
 	$(MV) print.obj build
 	
-list.obj: includes example\list.cpp
-	$(CXX) $(CFLAGS) $(CPPFLAGS) /c example\list.cpp
+list.obj: includes v4l2cam-src\list.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\list.cpp
 	$(MV) list.obj build
 	
-capture.obj: includes example\capture.cpp
-	$(CXX) $(CFLAGS) $(CPPFLAGS) /c example\capture.cpp
+capture.obj: includes v4l2cam-src\capture.cpp fromYUV.obj greyScale.obj interleavedYUV420.obj planarYUV420.obj saveRGB24ToBMP.obj yuv422.obj
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\capture.cpp
 	$(MV) capture.obj build
 
-control.obj: includes example\control.cpp
-	$(CXX) $(CFLAGS) $(CPPFLAGS) /c example\control.cpp
+control.obj: includes v4l2cam-src\control.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\control.cpp
 	$(MV) control.obj build
+
+
+#
+# Image Utility targets
+#
+#
+fromYUV.obj: includes v4l2cam-src\image_utils\fromYUV.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\image_utils\fromYUV.cpp
+	$(MV) fromYUV.obj build
+
+greyScale.obj: includes v4l2cam-src\image_utils\greyScale.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\image_utils\greyScale.cpp
+	$(MV) greyScale.obj build
+
+interleavedYUV420.obj: includes v4l2cam-src\image_utils\interleavedYUV420.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\image_utils\interleavedYUV420.cpp
+	$(MV) interleavedYUV420.obj build
+
+planarYUV420.obj: includes v4l2cam-src\image_utils\planarYUV420.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\image_utils\planarYUV420.cpp
+	$(MV) planarYUV420.obj build
+
+saveRGB24ToBMP.obj: includes v4l2cam-src\image_utils\saveRGB24ToBMP.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\image_utils\saveRGB24ToBMP.cpp
+	$(MV) saveRGB24ToBMP.obj build
+
+yuv422.obj: includes v4l2cam-src\image_utils\yuv422.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) /c v4l2cam-src\image_utils\yuv422.cpp
+	$(MV) yuv422.obj build
 
 #
 # Clean before build
@@ -102,7 +133,7 @@ clean:
 	$(RM) v4l2cam.exe -Force
 
 	$(RM) build\*.obj -Force
-	$(RM) v4l2cam-dist\*.h -Force
+	$(RM) v4l2camera-dist\*.h -Force
 
-	$(RM) v4l2cam-dist\*-win64-amd64.a -Force
-	$(RM) v4l2cam-dist\*-win64-amd64.sha256sum -Force
+	$(RM) v4l2camera-dist\*-win64-amd64.a -Force
+	$(RM) v4l2camera-dist\*-win64-amd64.sha256sum -Force
