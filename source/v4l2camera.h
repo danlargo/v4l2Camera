@@ -112,7 +112,7 @@ private:
     //
     static const int s_majorVersion = 1;
     static const int s_minorVersion = 3;
-    static const int s_revision = 021;
+    static const int s_revision = 21;
 
     static const int s_logDepth = 500;
 
