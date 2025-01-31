@@ -5,6 +5,9 @@
 .DS_Store
 .vscode
 
+# Windows Shit
+.vs
+
 # Compiled Object files
 *.slo
 *.lo
@@ -29,10 +32,9 @@
 *.out
 *.app
 
-# Specific Executable
+# Ignore Specific LInux Executable
 v4l2cam
-v4l2cam-win.exe
 
-# Build folders
-.vs/
-ARM64/
+# include the two redist windows obj files
+!wincamera.obj
+!v4l2camera-win.obj

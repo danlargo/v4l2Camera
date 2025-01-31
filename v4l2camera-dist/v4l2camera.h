@@ -25,6 +25,7 @@
 // v1.1.101 : starting to add MacOS support via AVFoundation framework
 // v1.1.110 : enhancing capability ennumeration
 // v1.3.010 : started adding Windows support
+// v1.3.021 : Windows support added, only camera controls remain to be implemented.
 
 #include <map>
 #include <vector>
@@ -100,7 +101,7 @@ enum v4l2cam_msg_type
 };
 
 const std::string s_codeName = "Tara";
-const std::string s_lastCommitMsg = "[danlargo] started adding Windows support";
+const std::string s_lastCommitMsg = "[danlargo] Windows camera enumeration and image fetch added";
 
 // V4l2Camera - base class for all camera types
 //
@@ -111,7 +112,7 @@ private:
     //
     static const int s_majorVersion = 1;
     static const int s_minorVersion = 3;
-    static const int s_revision = 010;
+    static const int s_revision = 021;
 
     static const int s_logDepth = 500;
 
