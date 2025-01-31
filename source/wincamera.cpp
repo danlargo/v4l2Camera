@@ -8,6 +8,8 @@
 #include <locale>
 #include <codecvt>
 #include <fcntl.h>
+#include <atlstr.h> // Add this include for CString
+#include <tchar.h>  // Add this include for _T
 
 #include <windows.h>
 #include <mfapi.h>
@@ -15,8 +17,11 @@
 #include <mfreadwrite.h>
 #include <mferror.h>
 #include <comdef.h>
-#include <atlstr.h> // Add this include for CString
-#include <tchar.h>  // Add this include for _T
+#include <mfobjects.h>
+#include <mftransform.h>
+#include <mfmediaengine.h>
+#include <dshow.h>
+#include <combaseapi.h>
 
 #pragma comment(lib, "mf.lib")
 #pragma comment(lib, "mfplat.lib")
@@ -71,7 +76,7 @@ void WinCamera::shutdownMF()
 
 }
 
-std::vector< WinCamera *> WinCamera::discoverCameras()
+std::vector< WinCamera *> WinCamera::discoverCameras( v4l2cam_logging_mode logMode )
 {
     std::vector< WinCamera *> camList;
     
@@ -100,6 +105,7 @@ std::vector< WinCamera *> WinCamera::discoverCameras()
                         {
                             // create a WinCamera object
                             WinCamera* tmp = new WinCamera(friendlyName);
+                            tmp->setLogMode( logMode );
                             camList.push_back(tmp);
                             CoTaskMemFree(friendlyName);
 
@@ -289,35 +295,6 @@ bool WinCamera::setFrameFormat( struct v4l2cam_video_mode vm )
         mediaTypeIndex++;
     }
 
-/*
-    HRESULT hr = m_pReader->GetCurrentMediaType(streamIndex, &pType);
-    if (FAILED(hr)) log("GetCurrentMediaType failed : " + HResultToString(hr), error);
-    else
-    {
-
-
-        
-		GUID videoType = GetGuidFromFourCC(vm.fourcc);
-        if (videoType == GUID({ 0 }) ) log("Unknonw Video Type Requested", error);
-        else
-        {
-            hr = pType->SetGUID(MF_MT_SUBTYPE, videoType);
-            if (FAILED(hr)) log("SetGUID MF_MT_SUBTYPE YUY2 failed : " + HResultToString(hr), error);
-            else
-            {
-                hr = MFSetAttributeSize(pType, MF_MT_FRAME_SIZE, vm.width, vm.height);
-                if (FAILED(hr)) log("MFSetAttributeSize failed : " + HResultToString(hr), error);
-
-                hr = m_pReader->SetCurrentMediaType(streamIndex, NULL, pType);
-                if (FAILED(hr)) log("SetCurrentMediaType : " + HResultToString(hr), error);
-                else ret = true;
-
-            }
-            pType->Release();
-        
-    }
-*/
-
     return ret;
 }
 
@@ -433,17 +410,9 @@ bool WinCamera::enumVideoModes()
         while (SUCCEEDED(hr)) 
         {
             hr = m_pReader->GetNativeMediaType(streamIndex, mediaTypeIndex, &pType);
-            if (hr == MF_E_NO_MORE_TYPES) {
-                // No more media types for this stream, move to the next stream
-                //streamIndex++;
-                //mediaTypeIndex = 0;
-                //hr = S_OK;
-                //continue;
-                break;
-            }
-            else if (FAILED(hr)) {
-                break;
-            }
+
+            if (hr == MF_E_NO_MORE_TYPES) break;
+            else if (FAILED(hr)) break;
 
             // Extract and print media type information
             UINT32 width = 0, height = 0;
@@ -545,22 +514,127 @@ bool WinCamera::enumControls()
     m_controls.clear();
 
     // make sure fid is valid
-    if( !isOpen() ) log( "Unable to call enumControls() as device is NOT open", warning );
+    if( !isOpen() )  log( "Unable to call enumControls() as device is NOT open", warning );
     else
     {
+
     }
 
     return ret;
 }
 
-std::string WinCamera::cntrlTypeToString( int type )
+std::string WinCamera::cntrlIDToString( int id )
+{
+    std::string ret = "unknown";
+    
+    switch( id )
+    {
+        // Video Controls , offset = 0x0
+        //
+        case VideoProcAmp_Contrast:
+		    ret = "Contrast";
+		    break;
+	    case VideoProcAmp_Hue:
+		    ret = "Hue";
+		    break;
+	    case VideoProcAmp_Saturation:
+		    ret = "Saturation";
+		    break;
+	    case VideoProcAmp_Sharpness:
+		    ret = "Sharpness";
+		    break;
+	    case VideoProcAmp_Gamma:
+		    ret = "Gamma";
+		    break;
+	    case VideoProcAmp_ColorEnable:
+		    ret = "Color Enable";
+		    break;
+	    case VideoProcAmp_WhiteBalance:
+		    ret = "White Balance";
+		    break;
+        case VideoProcAmp_BacklightCompensation:
+		    ret = "Backlight Compensation";
+		    break;
+	    case VideoProcAmp_Gain:
+		    ret = "Gain";
+		    break;
+
+		// Camera Controls, offset = 0x100
+        //
+        case CameraControl_Pan + 0x100:
+			ret = "Pan";
+			break;
+		case CameraControl_Tilt + 0x100:
+			ret = "Tilt";
+			break;
+		case CameraControl_Roll + 0x100:
+			ret = "Roll";
+			break;
+		case CameraControl_Zoom + 0x100:
+			ret = "Zoom";
+            break;
+		case CameraControl_Exposure + 0x100:
+			ret = "Exposure";
+			break;
+		case CameraControl_Iris + 0x100:
+			ret = "Iris";
+			break;
+		case CameraControl_Focus + 0x100:
+			ret = "Focus";
+			break;
+
+        default:
+            break;
+    }
+
+    return ret;
+}
+
+std::string WinCamera::cntrlTypeToString(int type)
 {
     std::string ret = "unknown";
 
-    switch( type )
+    switch (type)
     {
-        default:
-            break;
+    case V4L2_CTRL_TYPE_INTEGER:
+        ret = "int";
+        break;
+    case V4L2_CTRL_TYPE_BOOLEAN:
+        ret = "bool";
+        break;
+    case V4L2_CTRL_TYPE_MENU:
+        ret = "menu";
+        break;
+    case V4L2_CTRL_TYPE_INTEGER_MENU:
+        ret = "int-menu";
+        break;
+    case V4L2_CTRL_TYPE_BITMASK:
+        ret = "bitmask";
+        break;
+    case V4L2_CTRL_TYPE_BUTTON:
+        ret = "button";
+        break;
+    case V4L2_CTRL_TYPE_INTEGER64:
+        ret = "int64";
+        break;
+    case V4L2_CTRL_TYPE_STRING:
+        ret = "str";
+        break;
+    case V4L2_CTRL_TYPE_CTRL_CLASS:
+        ret = "cntrl-class";
+        break;
+    case V4L2_CTRL_TYPE_U8:
+        ret = "uint8";
+        break;
+    case V4L2_CTRL_TYPE_U16:
+        ret = "uint16";
+        break;
+    case V4L2_CTRL_TYPE_U32:
+        ret = "uint32";
+        break;
+
+    default:
+        break;
     }
 
     return ret;

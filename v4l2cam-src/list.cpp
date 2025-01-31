@@ -26,17 +26,18 @@ void listUSBCameras()
     outinfo( "" );
     outinfo( "USB camera discovery starting..." );
 
+    v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
+    if (verbose) t = v4l2cam_logging_mode::logToStdOut;
+
     #ifdef __linux__
         std::vector<LinuxCamera *> camList;
-        v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
-        if( verbose ) t = v4l2cam_logging_mode::logToStdOut;
         camList = LinuxCamera::discoverCameras(t);
     #elif __APPLE__
         std::vector<MACCamera *> camList;
-        camList = MACCamera::discoverCameras();
+        camList = MACCamera::discoverCameras(t);
     #elif _WIN32
         std::vector<WinCamera *> camList;
-        camList = WinCamera::discoverCameras();
+        camList = WinCamera::discoverCameras(t);
     #endif
 
     // output the collected information
@@ -139,10 +140,11 @@ void listAllDevices()
 void listVideoModes( std::string deviceID )
 {
     // create the camera object
+    v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
+    if (verbose) t = v4l2cam_logging_mode::logToStdOut;
+
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
-        v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
-        if( verbose ) t = v4l2cam_logging_mode::logToStdOut;
         camList = LinuxCamera::discoverCameras(t);
         LinuxCamera * tmp = nullptr;
         if( (camList.size() > 0) && (std::stoi(deviceID) < camList.size()) ) tmp = camList[std::stoi(deviceID)];
@@ -165,7 +167,7 @@ void listVideoModes( std::string deviceID )
     #elif _WIN32
         std::vector<WinCamera *> camList;
         WinCamera * tmp = nullptr;
-        camList = WinCamera::discoverCameras();
+        camList = WinCamera::discoverCameras(t);
         if( (camList.size() > 0) && (std::stoi(deviceID) < camList.size()) ) tmp = camList[std::stoi(deviceID)];
         else 
         {
@@ -211,10 +213,11 @@ void listVideoModes( std::string deviceID )
 void listUserControls( std::string deviceID )
 {
     // create the camera object
+    v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
+    if (verbose) t = v4l2cam_logging_mode::logToStdOut;
+
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
-        v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
-        if( verbose ) t = v4l2cam_logging_mode::logToStdOut;
         camList = LinuxCamera::discoverCameras(t);
         LinuxCamera * tmp = camList[std::stoi(deviceID)];
     #elif __APPLE__
@@ -223,7 +226,7 @@ void listUserControls( std::string deviceID )
         MACCamera * tmp = camList[std::stoi(deviceID)];
     #elif _WIN32
         std::vector<WinCamera *> camList;
-        camList = WinCamera::discoverCameras();
+        camList = WinCamera::discoverCameras(t);
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
@@ -283,10 +286,11 @@ void listUserControls( std::string deviceID )
 void fetchMetaData( std::string deviceID )
 {
     // create the camera object
+    v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
+    if (verbose) t = v4l2cam_logging_mode::logToStdOut;
+
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
-        v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
-        if( verbose ) t = v4l2cam_logging_mode::logToStdOut;
         camList = LinuxCamera::discoverCameras(t);
         LinuxCamera * tmp = camList[std::stoi(deviceID)];
     #elif __APPLE__
@@ -295,7 +299,7 @@ void fetchMetaData( std::string deviceID )
         MACCamera * tmp = camList[std::stoi(deviceID)];
     #elif _WIN32
         std::vector<WinCamera *> camList;
-        camList = WinCamera::discoverCameras();
+        camList = WinCamera::discoverCameras(t);
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 

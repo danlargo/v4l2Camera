@@ -61,10 +61,11 @@ void captureImage( std::string deviceID, std::string videoMode, std::string file
     }
 
     // create the camera object
+    v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
+    if (verbose) t = v4l2cam_logging_mode::logToStdOut;
+
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
-        v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
-        if( verbose ) t = v4l2cam_logging_mode::logToStdOut;
         camList = LinuxCamera::discoverCameras(t);
         LinuxCamera * cam = camList[std::stoi(deviceID)];
     #elif __APPLE__
@@ -73,7 +74,7 @@ void captureImage( std::string deviceID, std::string videoMode, std::string file
         MACCamera * cam = camList[std::stoi(deviceID)];
     #elif _WIN32
         std::vector<WinCamera *> camList;
-        camList = WinCamera::discoverCameras();
+        camList = WinCamera::discoverCameras(t);
         WinCamera * cam = camList[std::stoi(deviceID)];
     #endif
 
@@ -235,10 +236,11 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
     int fpsVideo = 30;      // let's try to capture 30 FPS
     int framesToCapture;
 
+    v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
+    if (verbose) t = v4l2cam_logging_mode::logToStdOut;
+
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
-        v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
-        if( verbose ) t = v4l2cam_logging_mode::logToStdOut;
         camList = LinuxCamera::discoverCameras(t);
         LinuxCamera * cam = camList[std::stoi(deviceID)];    
     #elif __APPLE__
@@ -247,7 +249,7 @@ void captureVideo( std::string deviceID, std::string videoMode, std::string time
         MACCamera * cam = camList[std::stoi(deviceID)];
     #elif _WIN32
         std::vector<WinCamera *> camList;
-        camList = WinCamera::discoverCameras();
+        camList = WinCamera::discoverCameras(t);
         WinCamera * cam = camList[std::stoi(deviceID)];
     #endif
 

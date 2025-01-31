@@ -32,16 +32,16 @@ v4l2cam_defs.h: source\v4l2cam_defs.h
 wincamera.h: source\wincamera.h
 	$(CP) source\wincamera.h v4l2camera-dist
 
-linuxcamera.h: source/linuxcamera.h
+linuxcamera.h: source\linuxcamera.h
 	$(CP) source\linuxcamera.h v4l2camera-dist
 
-maccamera.h: source/maccamera.h
+maccamera.h: source\maccamera.h
 	$(CP) source\maccamera.h v4l2camera-dist
 
-objccamera.h: source/objccamera.h
+objccamera.h: source\objccamera.h
 	$(CP) source\objccamera.h v4l2camera-dist
 	
-i_objccamera.h: source/i_objccamera.h
+i_objccamera.h: source\i_objccamera.h
 	$(CP) source\i_objccamera.h v4l2camera-dist
 
 #
@@ -127,7 +127,6 @@ clean:
 	$(RM) v4l2cam.exe -Force
 
 	$(RM) build\*.obj -Force
-	$(RM) v4l2camera-dist\*.h -Force
 
 	$(RM) v4l2camera-dist\wincamera.obj -Force
 	$(RM) v4l2camera-dist\v4l2camera-win.obj -Force

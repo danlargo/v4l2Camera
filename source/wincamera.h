@@ -15,6 +15,19 @@
 #include <mferror.h>
 #include <mfmediaengine.h>
 
+#define V4L2_CTRL_TYPE_INTEGER 1
+#define V4L2_CTRL_TYPE_BOOLEAN 2
+#define V4L2_CTRL_TYPE_MENU 3
+#define V4L2_CTRL_TYPE_BUTTON 4
+#define V4L2_CTRL_TYPE_INTEGER64 5
+#define V4L2_CTRL_TYPE_CTRL_CLASS 6
+#define V4L2_CTRL_TYPE_STRING 7
+#define V4L2_CTRL_TYPE_BITMASK 8
+#define V4L2_CTRL_TYPE_INTEGER_MENU 9
+#define V4L2_CTRL_TYPE_U8 10
+#define V4L2_CTRL_TYPE_U16 11
+#define V4L2_CTRL_TYPE_U32 12
+
 class WinCamera : public V4l2Camera
 {
 private:
@@ -28,6 +41,7 @@ private:
     std::string GetLongNameFromGUID(const GUID& guid);
     const GUID GetGuidFromFourCC(int fourCC);
     std::string HResultToString(HRESULT hr);
+    std::string cntrlIDToString(int id);
 
 public:
     WinCamera( std::wstring devname );
@@ -38,7 +52,7 @@ public:
 
     // Camera discovery methods
     //
-    static std::vector<WinCamera *>  discoverCameras();
+    static std::vector<WinCamera *>  discoverCameras( v4l2cam_logging_mode logMode );
 
     // Methods that should be overridden in sublcass
     //

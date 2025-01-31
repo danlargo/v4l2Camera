@@ -844,7 +844,6 @@ std::string LinuxCamera::cntrlTypeToString( int type )
 
     switch( type )
     {
-        #ifdef __linux__
         case V4L2_CTRL_TYPE_INTEGER:
             ret = "int";
             break;
@@ -881,7 +880,6 @@ std::string LinuxCamera::cntrlTypeToString( int type )
         case V4L2_CTRL_TYPE_U32:
             ret = "uint32";
             break;
-        #endif
 
         default:
             break;

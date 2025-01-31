@@ -19,11 +19,12 @@ int getControlValue( std::string deviceID, std::string cntrlID )
 {
     int ret = INT32_MIN;
 
-    // create the camera object
+    // create the camera 
+    v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
+    if (verbose) t = v4l2cam_logging_mode::logToStdOut;
+
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
-        v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
-        if( verbose ) t = v4l2cam_logging_mode::logToStdOut;
         camList = LinuxCamera::discoverCameras(t);
         LinuxCamera * tmp = camList[std::stoi(deviceID)];
     #elif __APPLE__
@@ -32,7 +33,7 @@ int getControlValue( std::string deviceID, std::string cntrlID )
         MACCamera * tmp = camList[std::stoi(deviceID)];
     #elif _WIN32
         std::vector<WinCamera *> camList;
-        camList = WinCamera::discoverCameras();
+        camList = WinCamera::discoverCameras(t);
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
@@ -81,10 +82,11 @@ bool setControlValue( std::string deviceID, std::string cntrlID, std::string new
     int ret = false;
 
     // create the camera object
+    v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
+    if (verbose) t = v4l2cam_logging_mode::logToStdOut;
+
     #ifdef __linux__
         std::vector< LinuxCamera *> camList;
-        v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
-        if( verbose ) t = v4l2cam_logging_mode::logToStdOut;
         camList = LinuxCamera::discoverCameras(t);
         LinuxCamera * tmp = camList[std::stoi(deviceID)];
     #elif __APPLE__
@@ -93,7 +95,7 @@ bool setControlValue( std::string deviceID, std::string cntrlID, std::string new
         MACCamera * tmp = camList[std::stoi(deviceID)];
     #elif _WIN32       
         std::vector<WinCamera *> camList;
-        camList = WinCamera::discoverCameras();
+        camList = WinCamera::discoverCameras(t);
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
