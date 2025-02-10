@@ -30,6 +30,7 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <set>
 
 // Control structures
 //
@@ -58,6 +59,7 @@ struct v4l2cam_video_mode
     int width;
     int height;
     int size;
+    std::set<int> fps;
 };
 
 // v4l2_image_buffer - structure to hold a single image buffer

@@ -687,9 +687,11 @@ bool LinuxCamera::enumVideoModes()
     {
         struct v4l2_fmtdesc tmpF;
         struct v4l2_frmsizeenum tmpS;
+        struct v4l2_frmivalenum tmpI;
 
         memset( &tmpF, 0, sizeof(tmpF) );
         memset( &tmpS, 0, sizeof(tmpS) );
+        memset( &tmpI, 0, sizeof(tmpS) );
 
         log( "ioctl(VIDIOC_ENUM_FMT) for : " + m_userName, info );
 
@@ -706,17 +708,45 @@ bool LinuxCamera::enumVideoModes()
             tmpS.pixel_format = tmpF.pixelformat;
             while( -1 != ioctl( m_fid, VIDIOC_ENUM_FRAMESIZES, &tmpS ) )
             {
-                log( "Found : " + std::to_string(tmpS.discrete.width) + " x " + std::to_string(tmpS.discrete.height), info );
+                // make sure the discrete type is set
+                if((0 == tmpS.index) && (tmpS.type != V4L2_FRMSIZE_TYPE_DISCRETE) ) break;
+                if( tmpS.type != V4L2_FRMSIZE_TYPE_DISCRETE ) continue;
+
+                log( "Size : " + std::to_string(tmpS.discrete.width) + " x " + std::to_string(tmpS.discrete.height), info );
 
                 // save all the info
                 struct v4l2cam_video_mode tmpVM;
+
                 tmpVM.fourcc = tmpF.pixelformat;
                 tmpVM.format_str = (char*)(tmpF.description);
                 tmpVM.size = tmpS.discrete.width * 4 * tmpS.discrete.height;
                 tmpVM.width = tmpS.discrete.width;
                 tmpVM.height = tmpS.discrete.height;
+                tmpVM.fps = {};
 
-                m_modes.push_back(tmpVM);
+                // now find out the frame intervals for this size
+                tmpI.index = 0;
+                tmpI.pixel_format = tmpF.pixelformat;
+                tmpI.width = tmpS.discrete.width;
+                tmpI.height = tmpS.discrete.height;
+
+                while( -1 != ioctl( m_fid, VIDIOC_ENUM_FRAMEINTERVALS, &tmpI ) )
+                {
+                    // make sure the discrete type is set
+                    if((0 == tmpI.index) && (tmpI.type != V4L2_FRMIVAL_TYPE_DISCRETE) ) break;
+                    if( tmpI.type != V4L2_FRMIVAL_TYPE_DISCRETE ) continue;
+
+                    // save the frame rate
+                    int fps = tmpI.discrete.denominator / tmpI.discrete.numerator;
+                    tmpVM.fps.insert(fps);
+
+                    log( "FPS : " + std::to_string(fps), info );
+
+                    tmpI.index++;
+                }
+
+                // only save if we found frame rates
+                if( tmpVM.fps.size() > 0 ) m_modes.push_back(tmpVM);
 
                 tmpS.index++;
             }
