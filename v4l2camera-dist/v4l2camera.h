@@ -26,6 +26,7 @@
 // v1.1.110 : enhancing capability ennumeration
 // v1.3.010 : started adding Windows support
 // v1.3.021 : Windows support added, only camera controls remain to be implemented.
+// v1.3.050 : added support to enumerate and set frame rate on image formats
 
 #include <map>
 #include <vector>

@@ -403,6 +403,26 @@ bool LinuxCamera::setFrameFormat( struct v4l2cam_video_mode vm )
                     + std::to_string(vm.height) + "]", info );
                     m_healthCounter = 0;
         }
+
+        // now set the frame rate to 30
+        struct v4l2_streamparm streamparm;
+        memset(&streamparm, 0, sizeof(streamparm));
+        streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
+        {
+            log( "ioctl(VIDIOC_G_PARM) failed : " + std::string(strerror(errno)), error );
+            m_healthCounter++;
+
+        } else {
+            streamparm.parm.capture.capturemode |= V4L2_CAP_TIMEPERFRAME;
+            streamparm.parm.capture.timeperframe.numerator = 1;
+            streamparm.parm.capture.timeperframe.denominator = 30;
+            if( -1 == ioctl( m_fid,VIDIOC_S_PARM, &streamparm) !=0) 
+            {
+                log( "ioctl(VIDIOC_S_PARM) failed : " + std::string(strerror(errno)), error );
+                m_healthCounter++;
+            }
+        }
     }
     
     return ret;
