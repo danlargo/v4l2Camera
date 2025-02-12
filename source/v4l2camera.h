@@ -26,6 +26,11 @@
 // v1.1.110 : enhancing capability ennumeration
 // v1.3.010 : started adding Windows support
 // v1.3.021 : Windows support added, only camera controls remain to be implemented.
+// v1.3.055 : added frame rate control
+
+
+
+// v1.5.010 : Windows C# MediaControl version (stand alone implementation for Windows, V4l2Camera.cs)
 
 #include <map>
 #include <vector>
@@ -100,8 +105,8 @@ enum v4l2cam_msg_type
     info, warning, error, critical
 };
 
-const std::string s_codeName = "Tara";
-const std::string s_lastCommitMsg = "[danlargo] Windows camera enumeration and image fetch added";
+const std::string s_codeName = "Syd";
+const std::string s_lastCommitMsg = "[danlargo] Adding frame rate control";
 
 // V4l2Camera - base class for all camera types
 //
@@ -112,7 +117,7 @@ private:
     //
     static const int s_majorVersion = 1;
     static const int s_minorVersion = 3;
-    static const int s_revision = 21;
+    static const int s_revision = 55;
 
     static const int s_logDepth = 500;
 
