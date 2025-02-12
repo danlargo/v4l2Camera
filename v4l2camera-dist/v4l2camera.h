@@ -26,10 +26,12 @@
 // v1.1.110 : enhancing capability ennumeration
 // v1.3.010 : started adding Windows support
 // v1.3.021 : Windows support added, only camera controls remain to be implemented.
+// v1.3.050 : added support to enumerate and set frame rate on image formats
 
 #include <map>
 #include <vector>
 #include <string>
+#include <set>
 
 // Control structures
 //
@@ -58,6 +60,7 @@ struct v4l2cam_video_mode
     int width;
     int height;
     int size;
+    std::set<int> fps;
 };
 
 // v4l2_image_buffer - structure to hold a single image buffer

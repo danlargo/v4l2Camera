@@ -195,8 +195,16 @@ void listVideoModes( std::string deviceID )
             int offset = 0;
             for( auto x : tmp->getVideoModes() )
             {
+                // get the fps list
+                std::string fpsStr = "";
+                for( const auto &y : x.fps ) fpsStr += std::to_string(y) + " ";
+
                 struct v4l2cam_video_mode vm = x;
-                outln( std::to_string(offset++) + " - " + vm.format_str + " : " + std::to_string(vm.width) + " x " + std::to_string(vm.height) );
+                outln( std::to_string(offset++) + " - " +
+                        vm.format_str + " : " + 
+                        std::to_string(vm.width) + " x " + std::to_string(vm.height) + 
+                        " @ " + fpsStr + "fps" );
+                
             }
 
             tmp->close();
