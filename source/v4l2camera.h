@@ -27,6 +27,9 @@
 // v1.3.010 : started adding Windows support
 // v1.3.021 : Windows support added, only camera controls remain to be implemented.
 
+
+// v1.5.010 : Windows C# MediaCapture stand alone version V4l2Camera.cs
+
 #include <map>
 #include <vector>
 #include <string>
