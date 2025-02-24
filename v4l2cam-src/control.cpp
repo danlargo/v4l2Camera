@@ -6,11 +6,11 @@
 
 #ifdef __linux__
     #include <unistd.h>
-    #include "linuxcamera.h"
+    #include "linux/linuxcamera.h"
 #elif __APPLE__
     #include <unistd.h>
-    #include "maccamera.h"
-    #include "v4l2cam_defs.h"
+    #include "macos/maccamera.h"
+    #include "macos/v4l2cam_defs.h"
 #elif _WIN32
     #include "wincamera.h"
 #endif

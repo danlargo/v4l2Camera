@@ -25,8 +25,8 @@
 // v1.1.101 : starting to add MacOS support via AVFoundation framework
 // v1.1.110 : enhancing capability ennumeration
 // v1.3.010 : started adding Windows support
-// v1.3.021 : Windows support added, only camera controls remain to be implemented.
-// v1.3.050 : added support to enumerate and set frame rate on image formats
+// v1.3.068 : moved Windows support for C# into separate file , V4l2Camea.cs
+// v1.3.089 : added frame rate support for video mode queries
 
 #include <map>
 #include <vector>
@@ -103,8 +103,8 @@ enum v4l2cam_msg_type
     info, warning, error, critical
 };
 
-const std::string s_codeName = "Tara";
-const std::string s_lastCommitMsg = "[danlargo] Windows camera enumeration and image fetch added";
+const std::string s_codeName = "Syd";
+const std::string s_lastCommitMsg = "[danlargo] added frame rate support for video mode queries";
 
 // V4l2Camera - base class for all camera types
 //
@@ -115,7 +115,7 @@ private:
     //
     static const int s_majorVersion = 1;
     static const int s_minorVersion = 3;
-    static const int s_revision = 21;
+    static const int s_revision = 89;
 
     static const int s_logDepth = 500;
 

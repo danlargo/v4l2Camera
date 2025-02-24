@@ -12,7 +12,7 @@ CC=gcc
 CXX=g++
 RM=rm -f
 RRM=rm -rf
-MD=mkdir
+MD=mkdir -p
 
 #
 # Linux and architecture specific compile and link flags
@@ -27,11 +27,11 @@ ifeq ($(UNAME_S),Linux)
 	LDFLAGS=-g 
 
 	ifeq ($(UNAME_M),x86_64)
-		STATIC_LIBS=v4l2camera-dist/libv4l2camera-linux-amd64.a
+		STATIC_LIBS=v4l2camera-dist/linux/libv4l2camera-linux-amd64.a
 	endif
 
 	ifeq ($(UNAME_M),aarch64)
-		STATIC_LIBS=v4l2camera-dist/libv4l2camera-linux-aarch64.a
+		STATIC_LIBS=v4l2camera-dist/linux/libv4l2camera-linux-aarch64.a
 	endif
 
 else 
@@ -45,7 +45,7 @@ else
 		CPPFLAGS=-g -std=c++20 -arch arm64 -mmacosx-version-min=15.0 -I v4l2camera-dist
 		LDLIBS=-framework AVFoundation -framework Foundation -framework CoreMedia
 		LDFLAGS=-g
-		STATIC_LIBS=v4l2camera-dist/libv4l2camera-macos.a
+		STATIC_LIBS=v4l2camera-dist/macos/libv4l2camera-macos.a
 	endif
 
 endif
@@ -59,26 +59,30 @@ all: dist v4l2cam
 #
 # Include Files
 #
+ifeq ($(UNAME_S),Linux)
+
 v4l2camera.h: source/v4l2camera.h
 	cp source/v4l2camera.h v4l2camera-dist
 
 linuxcamera.h: source/linuxcamera.h
-	cp source/linuxcamera.h v4l2camera-dist
+	cp source/linuxcamera.h v4l2camera-dist/linux
+else
 
+ifeq ($(UNAME_S),Darwin)
 maccamera.h: source/maccamera.h
-	cp source/maccamera.h v4l2camera-dist
+	cp source/maccamera.h v4l2camera-dist/macos
 
 v4l2cam_defs.h: source/v4l2cam_defs.h
-	cp source/v4l2cam_defs.h v4l2camera-dist
+	cp source/v4l2cam_defs.h v4l2camera-dist/macos
 
 objccamera.h: source/objccamera.h
-	cp source/objccamera.h v4l2camera-dist
+	cp source/objccamera.h v4l2camera-dist/macos
 	
 i_objccamera.h: source/i_objccamera.h
-	cp source/i_objccamera.h v4l2camera-dist
+	cp source/i_objccamera.h v4l2camera-dist/macos
+endif
 
-wincamera.h: source/wincamera.h
-	cp source/wincamera.h v4l2camera-dist
+endif
 
 #
 #
@@ -109,16 +113,16 @@ ifeq ($(UNAME_M),x86_64)
 
 dist: linuxcamera.o v4l2camera.o
 	ar rcs build/libv4l2camera-linux-amd64.a build/linuxcamera.o build/v4l2camera.o
-	mv build/libv4l2camera-linux-amd64.a v4l2camera-dist
-	sha256sum v4l2camera-dist/libv4l2camera-linux-amd64.a > v4l2camera-dist/libv4l2camera-linux-amd64.sha256sum
+	mv build/libv4l2camera-linux-amd64.a v4l2camera-dist/linux
+	sha256sum v4l2camera-dist/linux/libv4l2camera-linux-amd64.a > v4l2camera-dist/linux/libv4l2camera-linux-amd64.sha256sum
 endif
 
 ifeq ($(UNAME_M),aarch64)
 
 dist: linuxcamera.o v4l2camera.o
 	ar rcs build/libv4l2camera-linux-aarch64.a build/linuxcamera.o build/v4l2camera.o
-	mv build/libv4l2camera-linux-aarch64.a v4l2camera-dist
-	sha256sum v4l2camera-dist/libv4l2camera-linux-aarch64.a > v4l2camera-dist/libv4l2camera-linux-aarch64.sha256sum
+	mv build/libv4l2camera-linux-aarch64.a v4l2camera-dist/linux
+	sha256sum v4l2camera-dist/linux/libv4l2camera-linux-aarch64.a > v4l2camera-dist/linux/libv4l2camera-linux-aarch64.sha256sum
 endif
 
 else
@@ -130,8 +134,8 @@ ifeq ($(UNAME_S),Darwin)
 
 dist: maccamera.o objccamera.o v4l2camera.o i_objccamera.o
 	ar rcs build/libv4l2camera-macos.a build/maccamera.o build/v4l2camera.o build/objccamera.o build/i_objccamera.o
-	mv build/libv4l2camera-macos.a v4l2camera-dist
-	sha256sum v4l2camera-dist/libv4l2camera-macos.a > v4l2camera-dist/libv4l2camera-macos.sha256sum
+	mv build/libv4l2camera-macos.a v4l2camera-dist/macos
+	sha256sum v4l2camera-dist/macos/libv4l2camera-macos.a > v4l2camera-dist/macos/libv4l2camera-macos.sha256sum
 
 endif
 
@@ -143,10 +147,16 @@ endif
 #
 v4l2cam: dist main.o utils.o print.o list.o capture.o control.o fromYUV.o greyScale.o interleavedYUV420.o planarYUV420.o saveRGB24ToBMP.o yuv422.o
 	$(CXX) $(LDFLAGS) -o v4l2cam build/main.o build/utils.o build/print.o build/list.o build/capture.o build/control.o \
-							build/fromYUV.o build/greyScale.o build/interleavedYUV420.o build/planarYUV420.o build/saveRGB24ToBMP.o build/yuv422.o  \
-							$(LDLIBS) $(STATIC_LIBS)
+	build/fromYUV.o build/greyScale.o build/interleavedYUV420.o build/planarYUV420.o build/saveRGB24ToBMP.o build/yuv422.o  \
+	$(LDLIBS) $(STATIC_LIBS)
 
-includes: v4l2cam-src/defines.h v4l2camera.h linuxcamera.h maccamera.h wincamera.h v4l2cam_defs.h objccamera.h i_objccamera.h
+ifeq ($(UNAME_S),Linux)
+includes: v4l2cam-src/defines.h v4l2camera.h linuxcamera.h
+else
+ifeq ($(UNAME_S),Darwin)
+includes: v4l2cam-src/defines.h v4l2camera.h maccamera.h v4l2cam_defs.h objccamera.h i_objccamera.h
+endif
+endif
 
 main.o: includes v4l2cam-src/main.cpp
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/main.o -c v4l2cam-src/main.cpp
@@ -195,7 +205,9 @@ clean:
 	$(RM) v4l2cam
 	$(RRM) build
 	$(MD) build
-	${RM} v4l2camera-dist/*.h
+	$(MD) v4l2camera-dist
+	$(MD) v4l2camera-dist/linux
+	$(MD) v4l2camera-dist/macos
 
 #
 # Clean Targets
@@ -205,28 +217,38 @@ clean:
 ifeq ($(UNAME_S),Linux)
 
 #
+# Common Linux include files
+	$(RM) v4l2camera-dist/linux/linuxcamera.h
+	$(RM) v4l2camera-dist/v4l2camera.h
+
+#
 # AMD64 Target
 ifeq ($(UNAME_M),x86_64)
-	$(RM) v4l2camera-dist/*-linux-amd64.a
-	$(RM) v4l2camera-dist/*-linux-amd64.sha256sum
+	$(RM) v4l2camera-dist/linux/*-linux-amd64.a
+	$(RM) v4l2camera-dist/linux/*-linux-amd64.sha256sum
+
 endif
 
 #
 # ARM64 Target
 ifeq ($(UNAME_M),aarch64)
-	$(RM) v4l2camera-dist/*-linux-aarch64.a
-	$(RM) v4l2camera-dist/*-linux-aarch64.sha256sum
+	$(RM) v4l2camera-dist/linux/*-linux-aarch64.a
+	$(RM) v4l2camera-dist/linux/*-linux-aarch64.sha256sum
 endif
 
-# ---- not Linunx
+#
+# ---- not Linux, but likely MacOS
 else
 
 #
 # MacOS
 ifeq ($(UNAME_S),Darwin)
-	$(RM) v4l2camera-dist/*-macos.a
-	$(RM) v4l2camera-dist/*-macos.sha256sum
-
+	$(RM) v4l2camera-dist/macos/*-macos.a
+	$(RM) v4l2camera-dist/macos/*-macos.sha256sum
+	$(RM) v4l2camera-dist/macos/maccamera.h
+	$(RM) v4l2camera-dist/macos/objccamera.h
+	$(RM) v4l2camera-dist/macos/i_objccamera.h
+	$(RM) v4l2camera-dist/v4l2camera.h
 endif
 
 endif
