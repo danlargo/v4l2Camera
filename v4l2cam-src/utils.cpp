@@ -21,7 +21,7 @@
 
 void outln( std::string line )
 {
-    if( !silentMode ) std::cout << "   " << line << std::endl;
+    std::cout << "   " << line << std::endl;
 }
 
 void outerr( std::string line )
@@ -32,7 +32,7 @@ void outerr( std::string line )
 
 void outinfo( std::string line )
 {
-    if( !silentMode ) if( verbose ) std::cout << "[\x1b[1;33minfo\x1b[0m] " << line << std::endl;
+    std::cerr << "[\x1b[1;33minfo\x1b[0m] " << line << std::endl;
 }
 
 bool is_number(const std::string& s)

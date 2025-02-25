@@ -34,9 +34,13 @@ int main( int argc, char** argv )
     std::map<std::string, std::string> cmdLine = parseCmdLine( argc, argv );
 
     // show welcome message
-    if( !silentMode ) std::cerr << std::endl << "Welcome to " << argv[0] 
-                                << "   ...using V4l2Camera " << V4l2Camera::getVersionString() << " " << V4l2Camera::getCodeName()
-                                << std::endl << std::endl;
+    if( !silentMode ) outinfo( "Welcome to " + std::string(argv[0]) + "   ...using V4l2Camera " + V4l2Camera::getVersionString() + " " + V4l2Camera::getCodeName() );
+    else 
+    {
+        outerr( "Welcome to " + std::string(argv[0]) + "   ...using V4l2Camera " + V4l2Camera::getVersionString() + " " + V4l2Camera::getCodeName() );
+        outerr( "...running in silent mode" );
+    }
+
     //
     // now process the commands, only one command at a time
     //
@@ -46,75 +50,121 @@ int main( int argc, char** argv )
     WinCamera::initMF();
 #endif
 
-    // always print the version if requested
+    // always print the version, if requested
 	if (cmdLine["v"] == "1") printVersionInfo();
 
+    // Exclusive Commands
+
     // show example commands
-	if (cmdLine["x"] == "1") { printExamples(); return 0; }
+	if (cmdLine["x"] == "1") printExamples();
+
     // list of USB Cameras in the system
-	if (cmdLine["l"] == "1") { listUSBCameras(); return 0; }
+	else if (cmdLine["l"] == "1") listUSBCameras();
+
 	// list all devices
-	if (cmdLine["i"] == "1") { listAllDevices(); return 0; }
+	else if (cmdLine["i"] == "1") listAllDevices();
 
-    else {
-
-        // Video Mode, requires device indicator
-        if( cmdLine["m"] == "1" )
-        {
-            if( cmdLine["d"].length() > 0 ) listVideoModes( cmdLine["d"] ) ;
-            else outerr( "Must provide a device number to list video modes : -d [0..63]" );
-        }
-
-        // User Controls, requires device indicator
-        else if( cmdLine["u"] == "1")
-        {
-            // make sure there is a device specified
-            if (cmdLine["d"].length() > 0) listUserControls(cmdLine["d"]);
-            else outerr("Must provide a device number to list user controls : -d [0..63]");
-        }
-                
-        // Try to Grab Meta Data, requires device indicator
-        else if( cmdLine["M"] == "1")
-        {
-            // make sure there is a device specified
-            if (cmdLine["d"].length() > 0) fetchMetaData(cmdLine["d"]);
-            else outerr("Must provide a device number to grab meta data : -d [0..63]");
-        }
-                                        
-		// Grab an Image, must have a device and a video mode, optionally has an output file
-        else if( cmdLine["g"].length() > 0)
-        {
-            // make sure there is a device specified
-            if( cmdLine["d"].length() > 0 ) captureImage(cmdLine["d"], cmdLine["g"], cmdLine["o"], cmdLine["f"]);
-            else outerr("Must provide a device number to grab an image : -d [0..63]");
-        }
-                        
-        // Capture Video, must have a device and a video mode, optionally has an output file
-        else if( cmdLine["c"].length() > 0)
-        {
-            // make sure there is a device specified
-            if (cmdLine["d"].length() > 0) captureVideo(cmdLine["d"], cmdLine["c"], cmdLine["t"], cmdLine["o"]);
-            else outerr("Must provide a device number to start video capture : -d [0..63]");
-        }
-                            
-		// Get Control Value, must have a device and a control number
-        else if( cmdLine["r"].length() > 0)
-        {
-            // make sure there is a device specified
-            if (cmdLine["d"].length() > 0) getControlValue(cmdLine["d"], cmdLine["r"]);
-            else outerr("Must provide a device number to get a control : -d [0..63]");
-        }
-                                
-		// Set Control Value, must have a device and a control number and a new value
-        else if( cmdLine["s"].length() > 0)
-        {
-            // make sure there is a device specified
-            if (cmdLine["d"].length() > 0) setControlValue(cmdLine["d"], cmdLine["s"], cmdLine["s2"]);
-            else outerr("Must provide a device number to set a control : -d [0..63]");
-        }
-
+    // Video Modes, requires device indicator
+    else if( cmdLine["m"] == "1" )
+    {
+        if( cmdLine["d"].length() > 0 ) listVideoModes( cmdLine["d"] ) ;
+        else outerr( "Must provide a device number to list video modes : -d [0..63]" );
     }
 
+    // User Controls, requires device indicator
+    else if( cmdLine["u"] == "1")
+    {
+        // make sure there is a device specified
+        if (cmdLine["d"].length() > 0) listUserControls(cmdLine["d"]);
+        else outerr("Must provide a device number to list user controls : -d [0..63]");
+    }
+            
+    // Try to Grab Meta Data, requires device indicator
+    else if( cmdLine["M"] == "1")
+    {
+        // make sure there is a device specified
+        if (cmdLine["d"].length() > 0) fetchMetaData(cmdLine["d"]);
+        else outerr("Must provide a device number to grab meta data : -d [0..63]");
+    }
+        
+    //Get Video Format and FPS rate, must have a device as second parameter
+    else if( cmdLine["?"].length() > 0) getVideoFormat(cmdLine["?"]);
+
+    // Grab an Image, will set video mode and frame rate first if requested
+    else if( cmdLine["g"] == "1" )
+    {
+        // make sure there is a device specified
+        if( cmdLine["d"].length() > 0 ) 
+        {   
+            // set video mode if requested
+            if (cmdLine["w"].length() > 0) 
+            {
+                if (cmdLine["p"].length() > 0) setVideoFormat(cmdLine["d"], cmdLine["w"], cmdLine["p"]);
+                else setVideoFormat(cmdLine["d"], cmdLine["w"], "30" );
+            } else if( cmdLine["p"].length() > 0 ) setFrameRate(cmdLine["d"], cmdLine["p"]);
+
+            captureImage(cmdLine["d"], cmdLine["o"], cmdLine["f"]);
+        }
+        else outerr("Must provide a device number to grab an image : -d [0..63]");
+    }
+                    
+    // Capture Video, will set video mode and frame rate first if requested
+    else if( cmdLine["c"] == "1")
+    {
+        // make sure there is a device specified
+        if (cmdLine["d"].length() > 0) 
+        {
+            // set video mode if requested
+            if (cmdLine["w"].length() > 0) 
+            {
+                // set frame rate if requested
+                if (cmdLine["p"].length() > 0) setVideoFormat(cmdLine["d"], cmdLine["w"], cmdLine["p"]);
+                else setVideoFormat(cmdLine["d"], cmdLine["w"], "30");
+            } else if( cmdLine["p"].length() > 0 ) setFrameRate(cmdLine["d"], cmdLine["p"]);
+
+            captureVideo(cmdLine["d"], cmdLine["t"], cmdLine["o"]);
+        }
+        else outerr("Must provide a device number to start video capture : -d [0..63]");
+    }
+                        
+    // Get Control Value, must have a device and a control number
+    else if( cmdLine["r"].length() > 0)
+    {
+        // make sure there is a device specified
+        if (cmdLine["d"].length() > 0) getControlValue(cmdLine["d"], cmdLine["r"]);
+        else outerr("Must provide a device number to get a control : -d [0..63]");
+    }
+                            
+    // Set Control Value, must have a device and a control number and a new value
+    else if( cmdLine["s"].length() > 0)
+    {
+        // make sure there is a device specified
+        if (cmdLine["d"].length() > 0) setControlValue(cmdLine["d"], cmdLine["s"], cmdLine["s2"]);
+        else outerr("Must provide a device number to set a control : -d [0..63]");
+    }
+
+    // Set Video Mode, requires device indicator and video mode, optional frame rate
+    else if( cmdLine["w"].length() > 0 )
+    {
+        // make sure there is a device specified
+        if (cmdLine["d"].length() > 0) 
+        {
+            // if frame rate also set, do them both at the same time
+            if( cmdLine["p"].length() > 0 ) setVideoFormat(cmdLine["d"], cmdLine["w"], cmdLine["p"]);
+            else setVideoFormat(cmdLine["d"], cmdLine["w"], "30");
+        }
+        else outerr("Must provide a device number to set video mode : -d [0..63]");
+    }
+
+    // Set Frame Rate, requires device indicator and rate (> 0 and < 60)
+    else if( cmdLine["p"].length() > 0 )
+    {
+        // make sure there is a device specified
+        if (cmdLine["d"].length() > 0) setFrameRate(cmdLine["d"], cmdLine["p"]);
+        else outerr("Must provide a device number to set frame rate : -d [0..63]");
+    }
+
+        
 #ifdef _WIN32
     // Windows specific shutdown
     WinCamera::shutdownMF();
@@ -164,6 +214,12 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
 
         // List all user controls
         if( argS == "-u" ) { cmdLine["u"] = "1"; continue; }
+        
+        // Grab an Image
+        if( argS == "-g" ) { cmdLine["g"] = "1"; continue; }
+        
+        // Capture Video
+        if( argS == "-c" ) { cmdLine["c"] = "1"; continue; }
 
         // Get Meta Data
         if( argS == "-M" ) { cmdLine["M"] = "1"; continue; }
@@ -184,31 +240,19 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
             }
         }
 
-        // Grab an Image - specify video mode in second parameter
-        if( argS == "-g" )
+        // Specify device number for quering current format, specify device number in second parameter, between 0 and 63
+        if( argS == "-?" )
         {
-            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["g"] = argv[i++]; continue; }
+            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["?"] = argv[i++]; continue; }
             else
             {
-                outerr( "Invalid attribute for Grab Image [-g]" );
+                outerr( "Invalid attribute for Device Number [-?]" );
                 printBasicHelp();
                 cmdLine.clear();
                 return cmdLine;
             }
         }
 
-        // Capture Video - specify video mode in second parameter
-        if( argS == "-c" )
-        {
-            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["c"] = argv[i++]; continue; }
-            else
-            {
-                outerr( "Invalid attribute for Capture Video [-c]" );
-                printBasicHelp();
-                cmdLine.clear();
-                return cmdLine;
-            }
-        }
 
         // Retrieve Control Value - specify control number in second parameter
         if( argS == "-r" )
@@ -217,6 +261,32 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
             else
             {
                 outerr( "Invalid attribute for Retrieve Control Value [-r]" );
+                printBasicHelp();
+                cmdLine.clear();
+                return cmdLine;
+            }
+        }
+
+        // Set Video Mode- specify mode number in second parameter
+        if( argS == "-w" )
+        {
+            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["w"] = argv[i++]; continue; }
+            else
+            {
+                outerr( "Invalid attribute for Set Video mode [-w]" );
+                printBasicHelp();
+                cmdLine.clear();
+                return cmdLine;
+            }
+        }
+
+        // Set Frame- specify mode number in second parameter
+        if( argS == "-p" )
+        {
+            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["p"] = argv[i++]; continue; }
+            else
+            {
+                outerr( "Invalid attribute for Frame Rate [-p]" );
                 printBasicHelp();
                 cmdLine.clear();
                 return cmdLine;

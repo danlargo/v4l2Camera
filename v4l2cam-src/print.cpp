@@ -35,6 +35,8 @@ void printSudoHint( int numCameras )
 // Basic Helper Functions
 void printVersionInfo()
 {
+    // ignore silentMode and output help message
+    //
     outln("");
     outln( "V4l2Camera - version info");
     outln( "-------------------------");
@@ -46,26 +48,29 @@ void printVersionInfo()
 
 int printBasicHelp()
 {
+    // ignore silentMode and output help message
+    //
     outln( "" );
     outln( "v4l2cam Usage" );
     outln( "-------------" );
 
-    outln( "-h  :           this message" );
-    outln( "-v  :           show version of the v4l2camera sub system");
-    outln( "-V  :           operate in verbose mode (lots of information messages from low level functions)");
-    outln( "-S  :           run totally silent so that this app will not be chatty when used in scripts");
-    outln( "-x  :           display some sample commands");
+    outln( "-h          :   this message" );
+    outln( "-v          :   show version of the v4l2camera sub system");
+    outln( "-V          :   operate in verbose mode (lots of information messages from low level functions)");
+    outln( "-S          :   run totally silent so that this app will not be chatty when used in scripts");
+    outln( "-x          :   display some sample commands");
     outln( "---" );
     #ifdef __linux__
-        outln( "-i  :           identify all openable devices in /dev/videoX driver space" );
+    outln( "-i          :   identify all openable devices in /dev/videoX driver space" );
     #endif
-    outln( "-l  :           list all UVC compatible cameras in the USB device space" );
+    outln( "-l          :   list all UVC compatible cameras in the USB device space" );
     outln( "---" );
-    outln( "-d [0..63]  :   select camera # for operation" );
+    outln( "-d [0..63]  :   select camera ## for operation" );
+    outln( "-? [0..63]  :   display current video format and frame rate for camera ##" );
     outln( "---" );
-    outln( "-m  :           list all the video modes supported by camera -d #" );
-    outln( "-u  :           list all the user controls supported by camera -d #" );
-    outln( "-M  :           grab the metadata associated with camera -d #" );
+    outln( "-m          :   list all the video modes supported by camera -d ##" );
+    outln( "-u          :   list all the user controls supported by camera -d ##" );
+    outln( "-M          :   grab the metadata associated with camera -d ##" );
     outln( "---" );
     outln( "-s [##] [val]   :   set user control [##] to value specified by [val] (do not include braces)");
     outln( "-r [##]     :   retrieve value from user control [##]");
@@ -78,9 +83,11 @@ int printBasicHelp()
     outln( "            :   ...   any other fmt, image will be output as raw image data");
     outln( "            :   ...   if no fmt specified or not flag, image will be output as raw image data");
     outln( "---" );
-    outln( "-g [##]     :   grab an image from camera -d #, using video mode [##]" );
-    outln( "-c [##]     :   capture video from camera -d #, using video mode [##], for time -t [0##] seconds, default is 10 seconds" );
-    outln( "-t [##]     :   specify a time duration [##] for video capture, default is 10 seconds" );
+    outln( "-w [val]    :   set the video mode for camera -d ##, to [val]" );
+    outln( "-p [val]    :   set the frame rate for camera -d ##, to [val]" );
+    outln( "-g          :   grab an image from camera -d ##" );
+    outln( "-c          :   capture video from camera -d ##, for time -t [val] seconds, default is 10 seconds" );
+    outln( "-t [val]    :   specify a time duration [val] for video capture, default is 10 seconds" );
     outln( "" );
 
     return 1;
@@ -88,6 +95,8 @@ int printBasicHelp()
 
 void printExamples()
 {
+    // ignore silentMode and output help message
+    //
     outln("");
     outln( "v4l2cam - example usage");
     outln( "-------------------------");

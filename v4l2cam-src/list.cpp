@@ -23,8 +23,10 @@
 // Functional demonstration functions
 void listUSBCameras()
 {
-    outinfo( "" );
-    outinfo( "USB camera discovery starting..." );
+    // very run silent
+    //
+    outln( "" );
+    outln( "USB camera discovery starting..." );
 
     v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
     if (verbose) t = v4l2cam_logging_mode::logToStdOut;
@@ -44,6 +46,7 @@ void listUSBCameras()
     outln( "----------------------------------" );
     outln( "Detected " + std::to_string(camList.size()) + " USB camera(s)" );
     outln( "" );
+
     printSudoHint( camList.size() );
 
     int camIndex = 0;
@@ -176,6 +179,8 @@ void listVideoModes( std::string deviceID )
         }
     #endif
 
+    // never run silent
+    //
     outln( "------------------------------");
     outln( "Video Mode(s) for camera [" + deviceID + "] " + tmp->getDevName() + " : " + tmp->getUserName() );
     outln( "" );
@@ -196,14 +201,15 @@ void listVideoModes( std::string deviceID )
             for( auto x : tmp->getVideoModes() )
             {
                 // get the fps list
-                std::string fpsStr = "";
+                std::string fpsStr = "[ ";
                 for( const auto &y : x.fps ) fpsStr += std::to_string(y) + " ";
+                fpsStr += "]";
 
                 struct v4l2cam_video_mode vm = x;
                 outln( std::to_string(offset++) + " - " +
                         vm.format_str + " : " + 
                         std::to_string(vm.width) + " x " + std::to_string(vm.height) + 
-                        " @ " + fpsStr + "fps" );
+                        " @ " + fpsStr + " fps");
                 
             }
 
@@ -238,6 +244,8 @@ void listUserControls( std::string deviceID )
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
+    // never run silent
+    //
     outln( "------------------------------");
     outln( "User Control(s) for " + tmp->getDevName() + " : " + tmp->getUserName() );
     outln( "" );
@@ -311,6 +319,8 @@ void fetchMetaData( std::string deviceID )
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
+    // never run silent
+    //
     outln( "" );
     outln( "------------------------------");
     std::string out = "MetaData for (";

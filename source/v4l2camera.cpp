@@ -211,7 +211,24 @@ void V4l2Camera::close()
 }
 
 
-bool V4l2Camera::setFrameFormat( struct v4l2cam_video_mode vm )
+struct v4l2cam_video_mode * V4l2Camera::getFrameFormat()
+{
+    return nullptr;
+}
+
+
+int V4l2Camera::getFrameRate()
+{
+    return -1;
+}
+
+bool V4l2Camera::setFrameRate( int fps )
+{
+    return false;
+}
+
+
+bool V4l2Camera::setFrameFormat( struct v4l2cam_video_mode vm, int fps )
 {
     return false;
 }

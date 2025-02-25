@@ -373,8 +373,69 @@ void LinuxCamera::close()
 
 }
 
+struct v4l2cam_video_mode * LinuxCamera::getFrameFormat()
+{
+    struct v4l2cam_video_mode * ret = nullptr;
 
-bool LinuxCamera::setFrameFormat( struct v4l2cam_video_mode vm )
+    if( !isOpen() ) log( "Unable to call getFrameFormat() as no device is open", warning );
+    else 
+    {
+        struct v4l2_format fmt;
+
+        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+        if( -1 == ioctl(m_fid, VIDIOC_G_FMT, &fmt) ) 
+        {
+            log( "ioctl(VIDIOC_G_FMT) failed : " + std::string(strerror(errno)), error );
+            m_healthCounter++;
+        }
+        else
+        {
+            ret = new struct v4l2cam_video_mode;
+            ret->fourcc = fmt.fmt.pix.pixelformat;
+            ret->width = fmt.fmt.pix.width;
+            ret->height = fmt.fmt.pix.height;
+            ret->size = fmt.fmt.pix.sizeimage;
+            char fStr[256];
+            V4l2Camera::fourcc_int_to_charArray(ret->fourcc, fStr);
+            ret->format_str = fStr;
+            log( "ioctl(VIDIOC_G_FMT) success, frame format : " + ret->format_str + " at [" + std::to_string(ret->width) + " x " + std::to_string(ret->height) + "]", info );
+            m_healthCounter = 0;
+        }
+    }
+
+    return ret;
+}
+
+
+int LinuxCamera::getFrameRate()
+{
+    int ret = -1;
+
+    if( !isOpen() ) log( "Unable to call getFrameRate() as no device is open", warning );
+    else 
+    {
+        struct v4l2_streamparm streamparm;
+        memset(&streamparm, 0, sizeof(streamparm));
+        streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
+        {
+            log( "ioctl(VIDIOC_G_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
+            m_healthCounter++;
+        }
+        else
+        {
+            ret = streamparm.parm.capture.timeperframe.denominator;
+            log( "ioctl(VIDIOC_G_PARM) success, frame rate is : " + std::to_string(ret), info );
+            m_healthCounter = 0;
+        }
+    }
+
+    return ret;
+}
+
+
+bool LinuxCamera::setFrameFormat( struct v4l2cam_video_mode vm, int fps )
 {
     bool ret = false;
 
@@ -404,25 +465,71 @@ bool LinuxCamera::setFrameFormat( struct v4l2cam_video_mode vm )
                     m_healthCounter = 0;
         }
 
-        // now set the frame rate to 30
-        struct v4l2_streamparm streamparm;
-        memset(&streamparm, 0, sizeof(streamparm));
-        streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
+        // now set the frame rate, if  requested
+        if( fps > 0 )
         {
-            log( "ioctl(VIDIOC_G_PARM) failed : " + std::string(strerror(errno)), error );
-            m_healthCounter++;
-
-        } else {
-            streamparm.parm.capture.capturemode |= V4L2_CAP_TIMEPERFRAME;
-            streamparm.parm.capture.timeperframe.numerator = 1;
-            streamparm.parm.capture.timeperframe.denominator = 30;
-            if( -1 == ioctl( m_fid,VIDIOC_S_PARM, &streamparm) !=0) 
+            struct v4l2_streamparm streamparm;
+            memset(&streamparm, 0, sizeof(streamparm));
+            streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+            if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
             {
-                log( "ioctl(VIDIOC_S_PARM) failed : " + std::string(strerror(errno)), error );
+                log( "ioctl(VIDIOC_G_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
                 m_healthCounter++;
+
+            } else {
+                streamparm.parm.capture.capturemode |= V4L2_CAP_TIMEPERFRAME;
+                streamparm.parm.capture.timeperframe.numerator = 1;
+                streamparm.parm.capture.timeperframe.denominator = fps;
+                if( -1 == ioctl( m_fid,VIDIOC_S_PARM, &streamparm) !=0) 
+                {
+                    log( "ioctl(VIDIOC_S_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
+                    m_healthCounter++;
+                } else 
+                {
+                    log( "ioctl(VIDIOC_S_PARM - FrameRate) success, set frame rate to : " + std::to_string(fps), info );
+                    m_healthCounter = 0;
+                }
             }
         }
+    }
+    
+    return ret;
+}
+
+bool LinuxCamera::setFrameRate( int fps )
+{
+    bool ret = false;
+
+    if( -1 == m_fid ) log( "Unable to call setFrameFormat() as device is NOT open", warning );
+    else 
+    {
+        // set the frame rate, if  requested
+        if( fps > 0 )
+        {
+            struct v4l2_streamparm streamparm;
+            memset(&streamparm, 0, sizeof(streamparm));
+            streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+            if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
+            {
+                log( "ioctl(VIDIOC_G_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
+                m_healthCounter++;
+
+            } else {
+                streamparm.parm.capture.capturemode |= V4L2_CAP_TIMEPERFRAME;
+                streamparm.parm.capture.timeperframe.numerator = 1;
+                streamparm.parm.capture.timeperframe.denominator = fps;
+                if( -1 == ioctl( m_fid,VIDIOC_S_PARM, &streamparm) !=0) 
+                {
+                    log( "ioctl(VIDIOC_S_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
+                    m_healthCounter++;
+                } else 
+                {
+                    log( "ioctl(VIDIOC_S_PARM - FrameRate) success, set frame rate to : " + std::to_string(fps), info );
+                    m_healthCounter = 0;
+                }
+            }
+        } else log( "Invalid frame rate requested : " + std::to_string(fps), error );
+
     }
     
     return ret;

@@ -189,7 +189,6 @@ public:
 
     bool setFrameFormat( std::string mode, int width, int height );
 
-
     // Methods that should be overridden in sublcass
     //
     virtual std::string getDevName();
@@ -224,7 +223,10 @@ public:
 
     // Image fetch methods
     //
-    virtual bool setFrameFormat( struct v4l2cam_video_mode );
+    virtual struct v4l2cam_video_mode * getFrameFormat();
+    virtual int getFrameRate();
+    virtual bool setFrameFormat( struct v4l2cam_video_mode, int fps = -1 );
+    virtual bool setFrameRate( int fps );
     virtual struct v4l2cam_image_buffer * fetch( bool lastOne );
 
     // Meta Data methods
