@@ -77,7 +77,7 @@ std::vector<LinuxCamera *> LinuxCamera::discoverCameras( v4l2cam_logging_mode lo
                 // close the camera
                 tmpC->close();
 
-            } else tmpC->log( nam + " : failed to open device", info  );
+            }
         } else tmpC->log( nam + " : failed to create V4l2Camera object for device", info );
 
         if( !keep ) delete tmpC;
@@ -230,11 +230,7 @@ bool LinuxCamera::open()
 
     m_fid = ::open(m_devName.c_str(), O_RDWR);
 
-    if( -1 == m_fid ) 
-    {
-        log( "::open(" + m_devName + ") failed : " + std::string(strerror(errno)), error );
-        m_healthCounter = s_healthCountLimit;
-    }
+    if( -1 == m_fid ) m_healthCounter = s_healthCountLimit;
     else
     {
         // set the fetch mode to USERPtr as a default
@@ -242,7 +238,6 @@ bool LinuxCamera::open()
 
         // indicate we are open ok
         ret = true;
-        log( "::open(" + m_devName + ") success, FID = " + std::to_string(m_fid), info );
         m_healthCounter = 0;
     }
 
@@ -401,6 +396,9 @@ struct v4l2cam_video_mode * LinuxCamera::getFrameFormat()
             ret->format_str = fStr;
             log( "ioctl(VIDIOC_G_FMT) success, frame format : " + ret->format_str + " at [" + std::to_string(ret->width) + " x " + std::to_string(ret->height) + "]", info );
             m_healthCounter = 0;
+
+            // set the current mode, from this discovered mode
+            m_currentMode = *ret;
         }
     }
 
@@ -569,6 +567,8 @@ bool LinuxCamera::init( enum v4l2cam_fetch_mode newMode )
                 else
                 {
                     log( "ioctl(VIDIOC_REQBUF) success", info );
+
+                    std::cout << "Frame size : " << m_currentMode.size << std::endl;
 
                     // queuing up this->numBuffers fetch buffers
                     m_frameBuffer = new struct v4l2cam_image_buffer;
