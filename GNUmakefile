@@ -259,5 +259,5 @@ endif
 decodeMP4: decodeMP4.o
 	$(CXX) $(LDFLAGS) -o decodeMP4 build/decodeMP4.o
 
-decodeMP4.o: v4l2cam-src/decodeMP4.cpp
-	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/decodeMP4.o -c v4l2cam-src/decodeMP4.cpp
+decodeMP4.o: MP4EncDec/decodeMP4.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/decodeMP4.o -c MP4EncDec/decodeMP4.cpp

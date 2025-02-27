@@ -32,7 +32,7 @@
 *.out
 *.app
 
-# Ignore Specific LInux Executable
+# Ignore Specific Linux Executable
 v4l2cam
 decodeMP4
 
