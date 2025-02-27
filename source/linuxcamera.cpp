@@ -70,13 +70,11 @@ std::vector<LinuxCamera *> LinuxCamera::discoverCameras( v4l2cam_logging_mode lo
                             keep = true;
                             camList.push_back(tmpC);
 
-                        } else tmpC->log( nam + " : reports zero capabilities", info  );
-                    } else tmpC->log( nam + " : does not support video capture", info  );
-                } else tmpC->log( nam + " : unable to query capabilities", info  );
-
+                        }
+                    }
+                }
                 // close the camera
                 tmpC->close();
-
             }
         } else tmpC->log( nam + " : failed to create V4l2Camera object for device", info );
 
@@ -97,133 +95,9 @@ std::vector<std::string> LinuxCamera::buildCamList()
     return ret;
 }
 
-
-std::string LinuxCamera::getDevName()
-{
-    return m_devName;
-}
-
-
-bool LinuxCamera::canFetch()
-{
-    return ( m_capabilities & V4L2_CAP_VIDEO_CAPTURE );
-}
-
-
-bool LinuxCamera::canRead()
-{
-    return ( m_capabilities & V4L2_CAP_READWRITE );
-}
-
-bool LinuxCamera::hasMetaData()
-{
-    return ( m_capabilities & V4L2_CAP_META_CAPTURE );
-}
-
-
-int LinuxCamera::setValue( int id, int newVal, bool openOnDemand )
-{
-    bool closeOnExit = false;
-    int ret = -1;
-
-    struct v4l2_control outQuery;
-
-    // check if the device is open before trying to set the value
-    if( !openOnDemand && (-1 == this->m_fid) )
-    {
-        log( "Unable to call setValue() as device is NOT open", warning );
-        return -1;
-    }
-
-    // if device is closed, check if we ae being asked to open it
-    if( openOnDemand && (-1 == this->m_fid) )
-    {
-        if( !open() )
-        {
-            log( "Unable to openOnDemand for setValue() : " + std::string(strerror(errno)), error );
-            return -1;
-        }
-        closeOnExit = true;
-    }
-
-    memset( &outQuery, 0, sizeof(struct v4l2_control));
-    outQuery.id = id;
-    outQuery.value = newVal;
-    ret = ioctl(m_fid, VIDIOC_S_CTRL, &outQuery );
-
-    if( -1 == ret ) 
-    {
-        log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
-        m_healthCounter++;
-    }
-    else 
-    {
-        log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] = " + std::to_string(newVal), info );
-        m_healthCounter = 0;
-    }
-
-    if( closeOnExit )
-    {
-        ::close( m_fid );
-        m_fid = -1;
-    }
-
-    return ret;
-}
-
-
-int LinuxCamera::getValue( int id, bool openOnDemand )
-{
-
-    bool closeOnExit = false;
-    int ret = -1;
-
-    struct v4l2_control outQuery;
-
-    // check if device is open
-    if( !openOnDemand && (-1 == this->m_fid) )
-    {
-        log( "Unable to call getValue() as device is NOT open", warning );
-        return -1;
-    }
-
-    // check if we are asked to open it
-    if( openOnDemand && (-1 == this->m_fid) )
-    {
-        if( !open() )
-        {
-            log( "Unable to openOnDemand for getValue() : " + std::string(strerror(errno)), error );
-            return -1;
-        }
-        closeOnExit = true;
-    }
-
-    // get the actual value
-    memset( &outQuery, 0, sizeof(struct v4l2_control));
-    outQuery.id = id;
-    if( -1 == ioctl(m_fid, VIDIOC_G_CTRL, &outQuery ) ) 
-    {
-        log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
-        m_healthCounter++;
-    }
-    else
-    {
-        ret = outQuery.value;
-        log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) +"] = " + std::to_string(ret), info );
-        m_healthCounter = 0;
-    }
-
-    // close it if we opened on demand
-    if( closeOnExit )
-    {
-        ::close(m_fid);
-        m_fid = -1;
-    }
-
-    return ret;
-}
-
-
+//
+// Basic Access routines
+//
 bool LinuxCamera::open()
 {
     bool ret = false;
@@ -239,98 +113,16 @@ bool LinuxCamera::open()
         // indicate we are open ok
         ret = true;
         m_healthCounter = 0;
+
+        log( m_devName + " opened", info );
     }
 
     return ret;
 }
-
 
 bool LinuxCamera::isOpen()
 {
     return( m_fid > -1 );
-}
-
-
-bool LinuxCamera::enumCapabilities()
-{
-    bool ret = false;
-
-    if( !isOpen() ) log( "Unable to call getCaps() as device is NOT open", warning );
-    else
-    {
-        struct v4l2_capability tmpV;
-
-        if( -1 == ioctl(m_fid, VIDIOC_QUERYCAP, &tmpV) ) 
-        {
-            log( "ioctl(VIDIOC_QUERYCAP) failed :  " + std::string(strerror(errno)), error );
-            m_healthCounter++;
-        }
-        else
-        {
-            // grab the device name
-            m_userName = (char *)(tmpV.card);
-            // truncate the name if it is duplicated
-            int colon = m_userName.find(":");
-            if(  colon > -1 ) m_userName = m_userName.substr(0,m_userName.find(":"));
-
-            // save the capabilities vector
-            m_capabilities = tmpV.capabilities;
-            log( "ioctl(VIDIOC_QUERYCAP) " + m_devName + " success, vector = " + std::to_string(m_capabilities), info );
-
-            ret = true;
-
-            m_healthCounter = 0;
-        }
-    }
-
-    return ret;
-}
-
-std::vector<std::string> LinuxCamera::capabilitiesToStr()
-{
-    std::vector<std::string> ret = {};
-
-    if( 0 == m_capabilities ) return ret;
-
-    // if( m_capabilities & V4L2_CAP_DEVICE_CAPS ) ret += "device-caps ";
-
-    if( (m_capabilities & V4L2_CAP_STREAMING) && (m_modes.size() > 0) ) ret.push_back("can stream");
-    if( (m_capabilities & V4L2_CAP_EXT_PIX_FORMAT) && (m_modes.size() > 0) ) ret.push_back("can query pixel formats ");
-    
-    if( (m_capabilities & V4L2_CAP_META_CAPTURE) && (m_metamode > 0) ) ret.push_back("can read metadata ");
-    if( (m_capabilities & V4L2_CAP_META_OUTPUT ) && (m_metamode > 0) ) ret.push_back("can write metadata ");
-
-    if( m_capabilities & V4L2_CAP_READWRITE ) ret.push_back("can read/write ");
-    if( m_capabilities & V4L2_CAP_ASYNCIO ) ret.push_back("supports async IO ");
-
-    if( (m_capabilities & V4L2_CAP_VIDEO_CAPTURE) && (m_modes.size() > 0) ) ret.push_back("supports single-planar video capture ");
-    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT ) ret.push_back("video-output ");
-    if( m_capabilities & V4L2_CAP_VIDEO_OVERLAY ) ret.push_back("video-overlay ");
-    if( m_capabilities & V4L2_CAP_TIMEPERFRAME ) ret.push_back("timerperframe ");
-
-    if( m_capabilities & V4L2_CAP_VBI_CAPTURE ) ret.push_back("vbi-capture ");
-    if( m_capabilities & V4L2_CAP_VBI_OUTPUT ) ret.push_back("vbi-output ");
-    if( m_capabilities & V4L2_CAP_SLICED_VBI_CAPTURE ) ret.push_back("slided-vbi-capture ");
-    if( m_capabilities & V4L2_CAP_SLICED_VBI_OUTPUT ) ret.push_back("slided-vbi-output ");
-
-    if( m_capabilities & V4L2_CAP_RDS_CAPTURE ) ret.push_back("rds-capture ");
-    if( m_capabilities & V4L2_CAP_RDS_OUTPUT ) ret.push_back("rds-output ");
-    if( m_capabilities & V4L2_CAP_SDR_CAPTURE ) ret.push_back("sdr-capture ");
-
-    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT_OVERLAY ) ret.push_back("video-output-overlay ");
-
-    if( m_capabilities & V4L2_CAP_VIDEO_M2M ) ret.push_back("video-m2m ");
-    if( m_capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE ) ret.push_back("supports multi-planar video capture  ");
-    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT_MPLANE ) ret.push_back("video-output-mplane ");
-    if( m_capabilities & V4L2_CAP_VIDEO_M2M_MPLANE ) ret.push_back("video-m2m-mplane ");
-
-    if( m_capabilities & V4L2_CAP_HW_FREQ_SEEK ) ret.push_back("hw-freq-seek ");
-    if( m_capabilities & V4L2_CAP_TUNER ) ret.push_back("tuner ");
-    if( m_capabilities & V4L2_CAP_AUDIO ) ret.push_back("audio ");
-    if( m_capabilities & V4L2_CAP_RADIO ) ret.push_back("radio ");
-    if( m_capabilities & V4L2_CAP_MODULATOR ) ret.push_back("modulator ");
-
-    return ret;
 }
 
 
@@ -347,17 +139,9 @@ void LinuxCamera::close()
             break;
 
         case userPtrMode:
+            // this will fail if STREAMON has never been executed, that is ok
             type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            if( -1 == ioctl( m_fid, VIDIOC_STREAMOFF, &type) ) 
-            {
-                log( "ioctl(VIDIOC_STREAMOFF) failed : " + std::string(strerror(errno)), error );
-                m_healthCounter++;
-            }
-            else 
-            {
-                log( "VIDIOC_STREAMOFF success (streaming off) for " + m_devName, info );
-                m_healthCounter = 0;
-            }
+            ioctl( m_fid, VIDIOC_STREAMOFF, &type);
             break;
     }
 
@@ -368,172 +152,9 @@ void LinuxCamera::close()
 
 }
 
-struct v4l2cam_video_mode * LinuxCamera::getFrameFormat()
-{
-    struct v4l2cam_video_mode * ret = nullptr;
-
-    if( !isOpen() ) log( "Unable to call getFrameFormat() as no device is open", warning );
-    else 
-    {
-        struct v4l2_format fmt;
-
-        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-
-        if( -1 == ioctl(m_fid, VIDIOC_G_FMT, &fmt) ) 
-        {
-            log( "ioctl(VIDIOC_G_FMT) failed : " + std::string(strerror(errno)), error );
-            m_healthCounter++;
-        }
-        else
-        {
-            ret = new struct v4l2cam_video_mode;
-            ret->fourcc = fmt.fmt.pix.pixelformat;
-            ret->width = fmt.fmt.pix.width;
-            ret->height = fmt.fmt.pix.height;
-            ret->size = fmt.fmt.pix.sizeimage;
-            char fStr[256];
-            V4l2Camera::fourcc_int_to_charArray(ret->fourcc, fStr);
-            ret->format_str = fStr;
-            log( "ioctl(VIDIOC_G_FMT) success, frame format : " + ret->format_str + " at [" + std::to_string(ret->width) + " x " + std::to_string(ret->height) + "]", info );
-            m_healthCounter = 0;
-
-            // set the current mode, from this discovered mode
-            m_currentMode = *ret;
-        }
-    }
-
-    return ret;
-}
-
-
-int LinuxCamera::getFrameRate()
-{
-    int ret = -1;
-
-    if( !isOpen() ) log( "Unable to call getFrameRate() as no device is open", warning );
-    else 
-    {
-        struct v4l2_streamparm streamparm;
-        memset(&streamparm, 0, sizeof(streamparm));
-        streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
-        {
-            log( "ioctl(VIDIOC_G_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
-            m_healthCounter++;
-        }
-        else
-        {
-            ret = streamparm.parm.capture.timeperframe.denominator;
-            log( "ioctl(VIDIOC_G_PARM) success, frame rate is : " + std::to_string(ret), info );
-            m_healthCounter = 0;
-        }
-    }
-
-    return ret;
-}
-
-
-bool LinuxCamera::setFrameFormat( struct v4l2cam_video_mode vm, int fps )
-{
-    bool ret = false;
-
-    struct v4l2_format fmt;
-
-    if( -1 == m_fid ) log( "Unable to call setFrameFormat() as device is NOT open", warning );
-    else 
-    {
-        fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-        fmt.fmt.pix.pixelformat = vm.fourcc;
-        fmt.fmt.pix.width       = vm.width;
-        fmt.fmt.pix.height      = vm.height;
-
-        if( -1 == ioctl(m_fid, VIDIOC_S_FMT, &fmt) ) 
-        {
-            log( "ioctl(VIDIOC_S_FMT) failed : " + std::string(strerror(errno)), error );
-            m_healthCounter++;
-        }
-        else
-        {
-            m_currentMode = vm;
-            ret = true;
-            log( "ioctl(VIDIOC_S_FMT) success, set to : "
-                    + vm.format_str + " at [" 
-                    + std::to_string(vm.width) + " x " 
-                    + std::to_string(vm.height) + "]", info );
-                    m_healthCounter = 0;
-        }
-
-        // now set the frame rate, if  requested
-        if( fps > 0 )
-        {
-            struct v4l2_streamparm streamparm;
-            memset(&streamparm, 0, sizeof(streamparm));
-            streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
-            {
-                log( "ioctl(VIDIOC_G_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
-                m_healthCounter++;
-
-            } else {
-                streamparm.parm.capture.capturemode |= V4L2_CAP_TIMEPERFRAME;
-                streamparm.parm.capture.timeperframe.numerator = 1;
-                streamparm.parm.capture.timeperframe.denominator = fps;
-                if( -1 == ioctl( m_fid,VIDIOC_S_PARM, &streamparm) !=0) 
-                {
-                    log( "ioctl(VIDIOC_S_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
-                    m_healthCounter++;
-                } else 
-                {
-                    log( "ioctl(VIDIOC_S_PARM - FrameRate) success, set frame rate to : " + std::to_string(fps), info );
-                    m_healthCounter = 0;
-                }
-            }
-        }
-    }
-    
-    return ret;
-}
-
-bool LinuxCamera::setFrameRate( int fps )
-{
-    bool ret = false;
-
-    if( -1 == m_fid ) log( "Unable to call setFrameFormat() as device is NOT open", warning );
-    else 
-    {
-        // set the frame rate, if  requested
-        if( fps > 0 )
-        {
-            struct v4l2_streamparm streamparm;
-            memset(&streamparm, 0, sizeof(streamparm));
-            streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-            if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
-            {
-                log( "ioctl(VIDIOC_G_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
-                m_healthCounter++;
-
-            } else {
-                streamparm.parm.capture.capturemode |= V4L2_CAP_TIMEPERFRAME;
-                streamparm.parm.capture.timeperframe.numerator = 1;
-                streamparm.parm.capture.timeperframe.denominator = fps;
-                if( -1 == ioctl( m_fid,VIDIOC_S_PARM, &streamparm) !=0) 
-                {
-                    log( "ioctl(VIDIOC_S_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
-                    m_healthCounter++;
-                } else 
-                {
-                    log( "ioctl(VIDIOC_S_PARM - FrameRate) success, set frame rate to : " + std::to_string(fps), info );
-                    m_healthCounter = 0;
-                }
-            }
-        } else log( "Invalid frame rate requested : " + std::to_string(fps), error );
-
-    }
-    
-    return ret;
-}
-
-
+//
+// Setup for fetching frames
+//
 bool LinuxCamera::init( enum v4l2cam_fetch_mode newMode )
 {
     bool ret = false;
@@ -566,10 +187,6 @@ bool LinuxCamera::init( enum v4l2cam_fetch_mode newMode )
                 }
                 else
                 {
-                    log( "ioctl(VIDIOC_REQBUF) success", info );
-
-                    std::cout << "Frame size : " << m_currentMode.size << std::endl;
-
                     // queuing up this->numBuffers fetch buffers
                     m_frameBuffer = new struct v4l2cam_image_buffer;
                     m_frameBuffer->length =  m_currentMode.size;
@@ -592,8 +209,6 @@ bool LinuxCamera::init( enum v4l2cam_fetch_mode newMode )
                     }
                     else
                     {
-                        log( "ioctl(VIDIOC_QBUF) Q'd 1 buffer", info );
-
                         // turn streaming on
                         enum v4l2_buf_type type;
                         type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -604,7 +219,6 @@ bool LinuxCamera::init( enum v4l2cam_fetch_mode newMode )
                         }
                         else
                         {
-                            log( "ioctl(VIDIOC_STREAMON) success", info );
                             ret = true;
                             m_healthCounter = 0;
                         }
@@ -623,6 +237,9 @@ bool LinuxCamera::init( enum v4l2cam_fetch_mode newMode )
 }
 
 
+//
+// Data Retreiaval routines
+//
 struct v4l2cam_image_buffer * LinuxCamera::fetch( bool lastOne )
 {
     struct v4l2cam_image_buffer * retBuffer = nullptr;
@@ -692,6 +309,364 @@ struct v4l2cam_image_buffer * LinuxCamera::fetch( bool lastOne )
 
     return retBuffer;
 } 
+
+//
+// Device Capability routines
+//
+bool LinuxCamera::canFetch()
+{
+    return ( m_capabilities & V4L2_CAP_VIDEO_CAPTURE );
+}
+
+
+std::string LinuxCamera::getDevName()
+{
+    return m_devName;
+}
+
+
+bool LinuxCamera::canRead()
+{
+    return ( m_capabilities & V4L2_CAP_READWRITE );
+}
+
+bool LinuxCamera::hasMetaData()
+{
+    return ( m_capabilities & V4L2_CAP_META_CAPTURE );
+}
+
+
+//
+// Camera Control routines
+//
+int LinuxCamera::setValue( int id, int newVal, bool openOnDemand )
+{
+    bool closeOnExit = false;
+    int ret = -1;
+
+    struct v4l2_control outQuery;
+
+    // check if the device is open before trying to set the value
+    if( !openOnDemand && (-1 == this->m_fid) )
+    {
+        log( "Unable to call setValue() as device is NOT open", warning );
+        return -1;
+    }
+
+    // if device is closed, check if we ae being asked to open it
+    if( openOnDemand && (-1 == this->m_fid) )
+    {
+        if( !open() )
+        {
+            log( "Unable to openOnDemand for setValue() : " + std::string(strerror(errno)), error );
+            return -1;
+        }
+        closeOnExit = true;
+    }
+
+    memset( &outQuery, 0, sizeof(struct v4l2_control));
+    outQuery.id = id;
+    outQuery.value = newVal;
+    ret = ioctl(m_fid, VIDIOC_S_CTRL, &outQuery );
+
+    if( -1 == ret ) 
+    {
+        log( "ioctl(VIDIOC_S_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
+        m_healthCounter++;
+    }
+    else m_healthCounter = 0;
+
+    if( closeOnExit )
+    {
+        ::close( m_fid );
+        m_fid = -1;
+    }
+
+    return ret;
+}
+
+
+int LinuxCamera::getValue( int id, bool openOnDemand )
+{
+
+    bool closeOnExit = false;
+    int ret = -1;
+
+    struct v4l2_control outQuery;
+
+    // check if device is open
+    if( !openOnDemand && (-1 == this->m_fid) )
+    {
+        log( "Unable to call getValue() as device is NOT open", warning );
+        return -1;
+    }
+
+    // check if we are asked to open it
+    if( openOnDemand && (-1 == this->m_fid) )
+    {
+        if( !open() )
+        {
+            log( "Unable to openOnDemand for getValue() : " + std::string(strerror(errno)), error );
+            return -1;
+        }
+        closeOnExit = true;
+    }
+
+    // get the actual value
+    memset( &outQuery, 0, sizeof(struct v4l2_control));
+    outQuery.id = id;
+    if( -1 == ioctl(m_fid, VIDIOC_G_CTRL, &outQuery ) ) 
+    {
+        log( "ioctl(VIDIOC_G_CTRL) [" + std::to_string(id) + "] failed :  " + strerror(errno), info );
+        m_healthCounter++;
+    }
+    else
+    {
+        ret = outQuery.value;
+        m_healthCounter = 0;
+    }
+
+    // close it if we opened on demand
+    if( closeOnExit )
+    {
+        ::close(m_fid);
+        m_fid = -1;
+    }
+
+    return ret;
+}
+
+
+bool LinuxCamera::enumCapabilities()
+{
+    bool ret = false;
+
+    if( !isOpen() ) log( "Unable to call getCaps() as device is NOT open", warning );
+    else
+    {
+        struct v4l2_capability tmpV;
+
+        if( -1 == ioctl(m_fid, VIDIOC_QUERYCAP, &tmpV) ) 
+        {
+            log( "ioctl(VIDIOC_QUERYCAP) failed :  " + std::string(strerror(errno)), error );
+            m_healthCounter++;
+        }
+        else
+        {
+            // grab the device name
+            m_userName = (char *)(tmpV.card);
+            // truncate the name if it is duplicated
+            int colon = m_userName.find(":");
+            if(  colon > -1 ) m_userName = m_userName.substr(0,m_userName.find(":"));
+
+            // save the capabilities vector
+            m_capabilities = tmpV.capabilities;
+            ret = true;
+            m_healthCounter = 0;
+        }
+    }
+
+    return ret;
+}
+
+std::vector<std::string> LinuxCamera::capabilitiesToStr()
+{
+    std::vector<std::string> ret = {};
+
+    if( 0 == m_capabilities ) return ret;
+
+    // if( m_capabilities & V4L2_CAP_DEVICE_CAPS ) ret += "device-caps ";
+
+    if( (m_capabilities & V4L2_CAP_STREAMING) && (m_modes.size() > 0) ) ret.push_back("can stream");
+    if( (m_capabilities & V4L2_CAP_EXT_PIX_FORMAT) && (m_modes.size() > 0) ) ret.push_back("can query pixel formats ");
+    
+    if( (m_capabilities & V4L2_CAP_META_CAPTURE) && (m_metamode > 0) ) ret.push_back("can read metadata ");
+    if( (m_capabilities & V4L2_CAP_META_OUTPUT ) && (m_metamode > 0) ) ret.push_back("can write metadata ");
+
+    if( m_capabilities & V4L2_CAP_READWRITE ) ret.push_back("can read/write ");
+    if( m_capabilities & V4L2_CAP_ASYNCIO ) ret.push_back("supports async IO ");
+
+    if( (m_capabilities & V4L2_CAP_VIDEO_CAPTURE) && (m_modes.size() > 0) ) ret.push_back("supports single-planar video capture ");
+    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT ) ret.push_back("video-output ");
+    if( m_capabilities & V4L2_CAP_VIDEO_OVERLAY ) ret.push_back("video-overlay ");
+    if( m_capabilities & V4L2_CAP_TIMEPERFRAME ) ret.push_back("timerperframe ");
+
+    if( m_capabilities & V4L2_CAP_VBI_CAPTURE ) ret.push_back("vbi-capture ");
+    if( m_capabilities & V4L2_CAP_VBI_OUTPUT ) ret.push_back("vbi-output ");
+    if( m_capabilities & V4L2_CAP_SLICED_VBI_CAPTURE ) ret.push_back("slided-vbi-capture ");
+    if( m_capabilities & V4L2_CAP_SLICED_VBI_OUTPUT ) ret.push_back("slided-vbi-output ");
+
+    if( m_capabilities & V4L2_CAP_RDS_CAPTURE ) ret.push_back("rds-capture ");
+    if( m_capabilities & V4L2_CAP_RDS_OUTPUT ) ret.push_back("rds-output ");
+    if( m_capabilities & V4L2_CAP_SDR_CAPTURE ) ret.push_back("sdr-capture ");
+
+    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT_OVERLAY ) ret.push_back("video-output-overlay ");
+
+    if( m_capabilities & V4L2_CAP_VIDEO_M2M ) ret.push_back("video-m2m ");
+    if( m_capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE ) ret.push_back("supports multi-planar video capture  ");
+    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT_MPLANE ) ret.push_back("video-output-mplane ");
+    if( m_capabilities & V4L2_CAP_VIDEO_M2M_MPLANE ) ret.push_back("video-m2m-mplane ");
+
+    if( m_capabilities & V4L2_CAP_HW_FREQ_SEEK ) ret.push_back("hw-freq-seek ");
+    if( m_capabilities & V4L2_CAP_TUNER ) ret.push_back("tuner ");
+    if( m_capabilities & V4L2_CAP_AUDIO ) ret.push_back("audio ");
+    if( m_capabilities & V4L2_CAP_RADIO ) ret.push_back("radio ");
+    if( m_capabilities & V4L2_CAP_MODULATOR ) ret.push_back("modulator ");
+
+    return ret;
+}
+
+
+struct v4l2cam_video_mode * LinuxCamera::getFrameFormat()
+{
+    struct v4l2cam_video_mode * ret = nullptr;
+
+    if( !isOpen() ) log( "Unable to call getFrameFormat() as no device is open", warning );
+    else 
+    {
+        struct v4l2_format fmt;
+
+        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+
+        if( -1 == ioctl(m_fid, VIDIOC_G_FMT, &fmt) ) 
+        {
+            log( "ioctl(VIDIOC_G_FMT) failed : " + std::string(strerror(errno)), error );
+            m_healthCounter++;
+        }
+        else
+        {
+            ret = new struct v4l2cam_video_mode;
+            ret->fourcc = fmt.fmt.pix.pixelformat;
+            ret->width = fmt.fmt.pix.width;
+            ret->height = fmt.fmt.pix.height;
+            ret->size = fmt.fmt.pix.sizeimage;
+            char fStr[256];
+            V4l2Camera::fourcc_int_to_charArray(ret->fourcc, fStr);
+            ret->format_str = fStr;
+            m_healthCounter = 0;
+
+            // set the current mode, from this discovered mode
+            m_currentMode = *ret;
+        }
+    }
+
+    return ret;
+}
+
+
+int LinuxCamera::getFrameRate()
+{
+    int ret = -1;
+
+    if( !isOpen() ) log( "Unable to call getFrameRate() as no device is open", warning );
+    else 
+    {
+        struct v4l2_streamparm streamparm;
+        memset(&streamparm, 0, sizeof(streamparm));
+        streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
+        {
+            log( "ioctl(VIDIOC_G_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
+            m_healthCounter++;
+        }
+        else
+        {
+            ret = streamparm.parm.capture.timeperframe.denominator;
+            m_healthCounter = 0;
+        }
+    }
+
+    return ret;
+}
+
+
+bool LinuxCamera::setFrameFormat( struct v4l2cam_video_mode vm, int fps )
+{
+    bool ret = false;
+
+    struct v4l2_format fmt;
+
+    if( -1 == m_fid ) log( "Unable to call setFrameFormat() as device is NOT open", warning );
+    else 
+    {
+        fmt.type                = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+        fmt.fmt.pix.pixelformat = vm.fourcc;
+        fmt.fmt.pix.width       = vm.width;
+        fmt.fmt.pix.height      = vm.height;
+
+        if( -1 == ioctl(m_fid, VIDIOC_S_FMT, &fmt) ) 
+        {
+            log( "ioctl(VIDIOC_S_FMT) failed : " + std::string(strerror(errno)), error );
+            m_healthCounter++;
+        }
+        else
+        {
+            m_currentMode = vm;
+            ret = true;
+            m_healthCounter = 0;
+        }
+
+        // now set the frame rate, if  requested
+        if( fps > 0 )
+        {
+            struct v4l2_streamparm streamparm;
+            memset(&streamparm, 0, sizeof(streamparm));
+            streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+            if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
+            {
+                log( "ioctl(VIDIOC_G_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
+                m_healthCounter++;
+
+            } else {
+                streamparm.parm.capture.capturemode |= V4L2_CAP_TIMEPERFRAME;
+                streamparm.parm.capture.timeperframe.numerator = 1;
+                streamparm.parm.capture.timeperframe.denominator = fps;
+                if( -1 == ioctl( m_fid,VIDIOC_S_PARM, &streamparm) !=0) 
+                {
+                    log( "ioctl(VIDIOC_S_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
+                    m_healthCounter++;
+                } else m_healthCounter = 0;
+            }
+        }
+    }
+    
+    return ret;
+}
+
+bool LinuxCamera::setFrameRate( int fps )
+{
+    bool ret = false;
+
+    if( -1 == m_fid ) log( "Unable to call setFrameFormat() as device is NOT open", warning );
+    else 
+    {
+        // set the frame rate, if  requested
+        if( fps > 0 )
+        {
+            struct v4l2_streamparm streamparm;
+            memset(&streamparm, 0, sizeof(streamparm));
+            streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+            if( -1 == ioctl( m_fid, VIDIOC_G_PARM, &streamparm) )
+            {
+                log( "ioctl(VIDIOC_G_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
+                m_healthCounter++;
+
+            } else {
+                streamparm.parm.capture.capturemode |= V4L2_CAP_TIMEPERFRAME;
+                streamparm.parm.capture.timeperframe.numerator = 1;
+                streamparm.parm.capture.timeperframe.denominator = fps;
+                if( -1 == ioctl( m_fid,VIDIOC_S_PARM, &streamparm) !=0) 
+                {
+                    log( "ioctl(VIDIOC_S_PARM - FrameRate) failed : " + std::string(strerror(errno)), error );
+                    m_healthCounter++;
+                } else  m_healthCounter = 0;
+            }
+        } else log( "Invalid frame rate requested : " + std::to_string(fps), error );
+
+    }
+    
+    return ret;
+}
 
 
 struct v4l2cam_metadata_buffer * LinuxCamera::fetchMetaData()
@@ -783,8 +758,6 @@ struct v4l2cam_metadata_buffer * LinuxCamera::fetchMetaData()
                             }
                             else
                             {
-                                log( "ioctl(VIDIOC_DQBUF) success", info );
-
                                 retBuffer = new struct v4l2cam_metadata_buffer;
                                 // this should have de-queued into the previous buffer we allocated
                                 retBuffer->buffer = m_dataBuffer->buffer;
@@ -820,16 +793,12 @@ bool LinuxCamera::enumVideoModes()
         memset( &tmpS, 0, sizeof(tmpS) );
         memset( &tmpI, 0, sizeof(tmpS) );
 
-        log( "ioctl(VIDIOC_ENUM_FMT) for : " + m_userName, info );
-
         // walk the list of pixel formats, for each format, walk the list of video modes (sizes)
         tmpF.index = 0;
         tmpF.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 
         while( -1 != ioctl(m_fid, VIDIOC_ENUM_FMT, &tmpF ) )
         {
-            log( "ioctl(VIDIOC_ENUM_FRAMESIZES) for : " + std::string((char*)(tmpF.description)), info );
-
             // walk the frame sizes for this pixel format
             tmpS.index = 0;
             tmpS.pixel_format = tmpF.pixelformat;
@@ -838,8 +807,6 @@ bool LinuxCamera::enumVideoModes()
                 // make sure the discrete type is set
                 if((0 == tmpS.index) && (tmpS.type != V4L2_FRMSIZE_TYPE_DISCRETE) ) break;
                 if( tmpS.type != V4L2_FRMSIZE_TYPE_DISCRETE ) continue;
-
-                log( "Size : " + std::to_string(tmpS.discrete.width) + " x " + std::to_string(tmpS.discrete.height), info );
 
                 // save all the info
                 struct v4l2cam_video_mode tmpVM;
@@ -866,9 +833,6 @@ bool LinuxCamera::enumVideoModes()
                     // save the frame rate
                     int fps = tmpI.discrete.denominator / tmpI.discrete.numerator;
                     tmpVM.fps.insert(fps);
-
-                    log( "FPS : " + std::to_string(fps), info );
-
                     tmpI.index++;
                 }
 
@@ -909,9 +873,7 @@ bool LinuxCamera::enumMetadataModes()
         tmpF.type = V4L2_BUF_TYPE_META_CAPTURE;
 
         if( -1 != ioctl(m_fid, VIDIOC_G_FMT, &tmpF ) )
-        {
-            log( "ioctl(VIDIOC_G_FMT metadata) success", info );
-            
+        {            
             // log the return values
             m_metamode = tmpF.fmt.meta.dataformat;
             m_metasize = tmpF.fmt.meta.buffersize;
@@ -919,9 +881,6 @@ bool LinuxCamera::enumMetadataModes()
             char tmp[5];
             fourcc_int_to_charArray( m_metamode, tmp );
             tmp[4] = 0;
-
-            log( "Found MetaData Mode: " + std::string(tmp) + " x " + std::to_string(m_metasize), info );
-
             ret = true;
 
         } else log( "ioctl(VIDIOC_G_FMT metadata) failed", warning );
@@ -941,8 +900,6 @@ bool LinuxCamera::enumControls()
     if( !isOpen() ) log( "Unable to call enumControls() as device is NOT open", warning );
     else
     {
-        log( "ioctl(VIDIOC_QUERY_EXT_CTRL) for : " + m_userName, info );
-
         // walk all the private extended controls starting at V4L2_CID_PRIVATE_BASE
         // call should fail when there are no more private controls
         struct v4l2_query_ext_ctrl query_ext_ctrl;
@@ -956,8 +913,6 @@ bool LinuxCamera::enumControls()
             {
                 if( query_ext_ctrl.type != V4L2_CTRL_TYPE_CTRL_CLASS )
                 {
-                    log( "Found : " + std::string(query_ext_ctrl.name) );
-
                     m_controls[query_ext_ctrl.id].name = (char*)(query_ext_ctrl.name);
                     m_controls[query_ext_ctrl.id].id = query_ext_ctrl.id;
                     m_controls[query_ext_ctrl.id].value = query_ext_ctrl.default_value;
@@ -972,18 +927,15 @@ bool LinuxCamera::enumControls()
                     memset (&querymenu, 0, sizeof (querymenu));
                     querymenu.id = query_ext_ctrl.id;
 
-                    log( "ioctl(VIDIOC_QUERYMENU) for : " + std::to_string(querymenu.id), info );
-
                     for (querymenu.index = query_ext_ctrl.minimum; querymenu.index <= query_ext_ctrl.maximum; querymenu.index++)
                     {
                         if (-1 != ioctl (m_fid, VIDIOC_QUERYMENU, &querymenu))
                         {
-                            log( "Menu item : " + std::string((char*)(querymenu.name)) );
                             m_controls[query_ext_ctrl.id].menuItems[querymenu.index] = std::string((char*)(querymenu.name));
                         }
                     }
 
-                } else log( "Skipping : " + std::string(query_ext_ctrl.name), info );
+                }
             }
 
             query_ext_ctrl.id |= V4L2_CTRL_FLAG_NEXT_CTRL;

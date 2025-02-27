@@ -37,8 +37,8 @@ int main( int argc, char** argv )
     if( !silentMode ) outinfo( "Welcome to " + std::string(argv[0]) + "   ...using V4l2Camera " + V4l2Camera::getVersionString() + " " + V4l2Camera::getCodeName() );
     else 
     {
-        outerr( "Welcome to " + std::string(argv[0]) + "   ...using V4l2Camera " + V4l2Camera::getVersionString() + " " + V4l2Camera::getCodeName() );
-        outerr( "...running in silent mode" );
+        outinfo( "Welcome to " + std::string(argv[0]) + "   ...using V4l2Camera " + V4l2Camera::getVersionString() + " " + V4l2Camera::getCodeName() );
+        outinfo( "...running in silent mode" );
     }
 
     //
@@ -53,19 +53,21 @@ int main( int argc, char** argv )
     // always print the version, if requested
 	if (cmdLine["v"] == "1") printVersionInfo();
 
-    // Exclusive Commands
+    // Exclusive Commands, execute and return
 
     // show example commands
-	if (cmdLine["x"] == "1") printExamples();
+	if (cmdLine["x"] == "1") { printExamples(); return 0; }
 
     // list of USB Cameras in the system
-	else if (cmdLine["l"] == "1") listUSBCameras();
+	if (cmdLine["l"] == "1") { listUSBCameras(); return 0; }
 
 	// list all devices
-	else if (cmdLine["i"] == "1") listAllDevices();
+	if (cmdLine["i"] == "1") { listAllDevices(); return 0; }
+
+
 
     // Video Modes, requires device indicator
-    else if( cmdLine["m"] == "1" )
+    if( cmdLine["m"] == "1" )
     {
         if( cmdLine["d"].length() > 0 ) listVideoModes( cmdLine["d"] ) ;
         else outerr( "Must provide a device number to list video modes : -d [0..63]" );

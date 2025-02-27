@@ -81,7 +81,7 @@ void listUSBCameras()
                     for( const auto &y : x->capabilitiesToStr() ) { outln ( "     > " + y ); }
                     outln( "" );
                 }
-            } else outerr( "Failed to open device : " + x->getDevName() );
+            }
             // close the camera now that we are done with it
             x->close();
         } else outerr( "Invalid V4l2Camera pointer in list" );

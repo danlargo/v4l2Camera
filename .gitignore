@@ -34,6 +34,7 @@
 
 # Ignore Specific LInux Executable
 v4l2cam
+decodeMP4
 
 # include the two redist windows obj files
 !wincamera.obj
