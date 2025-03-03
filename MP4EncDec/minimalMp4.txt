@@ -1,0 +1,114 @@
+Minimal MP4 Atom Structure
+ftyp (File Type Box):
+Declares the file’s compatibility.
+
+Required at the start.
+
+moov (Movie Box):
+Container for all metadata.
+
+Sub-atoms:
+mvhd (Movie Header Box): Overall movie metadata (duration, timescale).
+
+trak (Track Box): Describes the video track.
+tkhd (Track Header Box): Track properties (ID, duration).
+
+mdia (Media Box):
+mdhd (Media Header Box): Media timescale and duration.
+
+hdlr (Handler Reference Box): Declares track type (video).
+
+minf (Media Information Box):
+vmhd (Video Media Header Box): Video-specific header.
+
+dinf (Data Information Box):
+dref (Data Reference Box): Points to data location (self-contained).
+
+stbl (Sample Table Box):
+stsd (Sample Description Box): H.264 codec info (SPS/PPS).
+
+stts (Time-to-Sample Box): Frame timing.
+
+stsc (Sample-to-Chunk Box): Maps samples to chunks.
+
+stsz (Sample Size Box): Size of each sample.
+
+stco (Chunk Offset Box): Offsets to data in mdat.
+
+mdat (Media Data Box):
+Holds the raw H.264 NAL units (SPS, PPS, frames) with length prefixes.
+
+Detailed Minimal Structure
+1. ftyp (File Type Box)
+Size: 20 bytes (example).
+
+Structure:
+Size (4): 0x00000014.
+
+Type (4): 0x66747970 (ftyp).
+
+Major Brand (4): 0x69736F6D (isom, ISO base media).
+
+Minor Version (4): 0x00000000.
+
+Compatible Brands (4): 0x69736F6D (just isom for minimal).
+
+Hex:
+
+Minimal MP4 Atom Structure
+ftyp (File Type Box):
+Declares the file’s compatibility.
+
+Required at the start.
+
+moov (Movie Box):
+Container for all metadata.
+
+Sub-atoms:
+mvhd (Movie Header Box): Overall movie metadata (duration, timescale).
+
+trak (Track Box): Describes the video track.
+tkhd (Track Header Box): Track properties (ID, duration).
+
+mdia (Media Box):
+mdhd (Media Header Box): Media timescale and duration.
+
+hdlr (Handler Reference Box): Declares track type (video).
+
+minf (Media Information Box):
+vmhd (Video Media Header Box): Video-specific header.
+
+dinf (Data Information Box):
+dref (Data Reference Box): Points to data location (self-contained).
+
+stbl (Sample Table Box):
+stsd (Sample Description Box): H.264 codec info (SPS/PPS).
+
+stts (Time-to-Sample Box): Frame timing.
+
+stsc (Sample-to-Chunk Box): Maps samples to chunks.
+
+stsz (Sample Size Box): Size of each sample.
+
+stco (Chunk Offset Box): Offsets to data in mdat.
+
+mdat (Media Data Box):
+Holds the raw H.264 NAL units (SPS, PPS, frames) with length prefixes.
+
+Detailed Minimal Structure
+1. ftyp (File Type Box)
+Size: 20 bytes (example).
+
+Structure:
+Size (4): 0x00000014.
+
+Type (4): 0x66747970 (ftyp).
+
+Major Brand (4): 0x69736F6D (isom, ISO base media).
+
+Minor Version (4): 0x00000000.
+
+Compatible Brands (4): 0x69736F6D (just isom for minimal).
+
+Hex:
+

@@ -330,7 +330,7 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
                 // check the return buffers
                 if( inB && inB->buffer )
                 {
-                    // check for invalid JPG file (if MOtion-JPEG selected)
+                    // check for invalid JPG file (if Motion-JPEG selected)
                     if( "MJPG" == data->format_str )
                     {
                         // check the header, should be 0xFF 0xD8 0xFF 

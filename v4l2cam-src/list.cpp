@@ -23,7 +23,7 @@
 // Functional demonstration functions
 void listUSBCameras()
 {
-    // very run silent
+    // never run silent
     //
     outln( "" );
     outln( "USB camera discovery starting..." );

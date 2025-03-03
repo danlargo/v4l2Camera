@@ -32,9 +32,12 @@
 *.out
 *.app
 
-# Ignore Specific Linux Executable
+# Ignore Specific Linux Executable and binaries
 v4l2cam
 decodeMP4
+*.mp4
+*.mov
+*.h264
 
 # include the two redist windows obj files
 !wincamera.obj

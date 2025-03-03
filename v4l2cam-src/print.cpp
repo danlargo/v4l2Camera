@@ -59,6 +59,7 @@ int printBasicHelp()
     outln( "-V          :   operate in verbose mode (lots of information messages from low level functions)");
     outln( "-S          :   run totally silent so that this app will not be chatty when used in scripts");
     outln( "-x          :   display some sample commands");
+    outln( "-!          :   display information about h264 encapulation mode" );
     outln( "---" );
     #ifdef __linux__
     outln( "-i          :   identify all openable devices in /dev/videoX driver space" );
@@ -79,6 +80,7 @@ int printBasicHelp()
     outln( "-f fmt      :   specify output format for image, no attempt will be made to ensure the format matches the requested file extension");
     outln( "            :   ...   jpg - only supported if video mode is MJPEG");
     outln( "            :   ...   bmp - supported from all video modes except MJPEG");
+    outln( "            :   ...   h264 - special encapulation for H264 video data, only supported in video capture mode");
     outln( "            :   ...   raw - output raw image data captured from camera, including MJPEG");
     outln( "            :   ...   any other fmt, image will be output as raw image data");
     outln( "            :   ...   if no fmt specified or not flag, image will be output as raw image data");
