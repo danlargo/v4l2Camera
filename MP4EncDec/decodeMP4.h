@@ -42,11 +42,19 @@ void parseGMINatom( std::ifstream &file, unsigned long len );
 void parseTMCDatom( std::ifstream &file, unsigned long len );
 void parseTCMIatom( std::ifstream &file, unsigned long len );
 void parseSTBLatom( std::ifstream &file, unsigned long len );
+void parseSTSDatom( std::ifstream &file, unsigned long len );
 
 void parseUNKNatom( std::ifstream &file, unsigned long len );
 
 bool checkKnownVariant( std::string name, int ver );
 void getKLVData( std::ifstream &file, unsigned long len );
+
+void parseH264codec( std::ifstream &file, unsigned int size );
+void parseAACcodec( std::ifstream &file, unsigned int size );
+void parseCOLRconfig( std::ifstream &file, unsigned int size );
+void parseAVCCconfig( std::ifstream &file, unsigned int size );
+void parseESDSconfig( std::ifstream &file, unsigned int size );
+
 
 void parseTIMEhdr( std::ifstream &file, unsigned char version, std::string padding );
 struct atom_t getATOMhdr( std::ifstream &file );

@@ -8,6 +8,9 @@
 
 void parseTCMIatom( std::ifstream &file, unsigned long len )
 {
+    m_depth++;
+    std::string padding = calcPadding( m_depth );
+
     struct version_t ver;
 
     file.read( (char *)&ver , 4 );
@@ -105,8 +108,12 @@ void parseTCMIatom( std::ifstream &file, unsigned long len )
     len -= font_name_len;
 
     std::cout << " font <" << swapShort(font) << ", \033[1;36m" << fontStr << "\033[0m>, face <" << swapShort(face) << ", \033[1;36m" << faceStr << "\033[0m>, size <\033[1;36m" << swapShort(size) << " pts\033[0m>," << std::endl;
-    std::cout << std::hex << "                                              colors <r: 0x" << swapShort(color[0]) << " g: 0x" << swapShort(color[1]) << " b: 0x" << swapShort(color[2]) << ">,"
+    std::cout << padding << std::hex << "  colors <r: 0x" << swapShort(color[0]) << " g: 0x" << swapShort(color[1]) << " b: 0x" << swapShort(color[2]) << ">,"
                 << " bcolors <r: 0x" << swapShort(bcolor[0]) << " g: 0x" << swapShort(bcolor[1]) << " b: 0x" << swapShort(bcolor[2]) << ">"
                 << ", font name <" << font_name << ">" << std::dec << std::endl;
+
+    delete [] font_name;
+
+    m_depth--;
 
 }
