@@ -28,6 +28,8 @@ void parseSTBLatom(  std::ifstream &file, unsigned long len )
         if( atom.tag == "FREE" ) parseFREEatom( file, atom.size );
         else if( atom.tag == "META" ) parseMETAatom( file, atom.size, true );
         else if( atom.tag == "STSD" ) parseSTSDatom( file, atom.size );
+        else if( atom.tag == "STTS" ) parseSTTSatom( file, atom.size );
+        else if( atom.tag == "STSC" ) parseSTSCatom( file, atom.size );
 
         else parseUNKNatom( file, atom.size );
         

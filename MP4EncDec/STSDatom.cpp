@@ -78,26 +78,9 @@ void parseSTSDatom( std::ifstream &file, unsigned long len )
                 std::cout << "\033[1;35mH.264 codec\033[0m" << std::endl;
                 parseH264codec( file, real_size );
 
-            } else if( toUpper(type) == "MP4A" )
-            {
-                std::cout << "\033[1;35mAAC codec\033[0m" << std::endl;
-                parseAACcodec( file, real_size );
-
-            } else
-            {
-                // display the data
-                if( real_size > 0 )
-                {
-                    unsigned char * fld = new unsigned char[real_size];
-                    file.read( (char *)fld, real_size);
-
-                    std::cout << "data < ";
-                    for( int i = 0; i < real_size; i++ ) std::cout << std::hex << (int)fld[i] << " ";
-                    std::cout << std::dec << ">" << std::endl;
-
-                    delete [] fld;
-                }
-            }
+            } 
+            
+            else parseUNKNatom( file, real_size );
         }
 
         len -= real_size;
@@ -174,19 +157,11 @@ void parseAACcodec( std::ifstream &file, unsigned int size )
         c_size = swapOrder(c_size)-8;
 
         std::cout << padding << "[\033[1;32m" << toUpper(type) << "\033[0m] " << c_size << " bytes,";
-        if( toUpper(type) == "ESDS" ) parseESDSconfig( file, c_size );
-        else
-        {
-            unsigned char * fld = new unsigned char[c_size];
-            file.read( (char *)fld, c_size);
-            std::cout << std::endl << padding << "remaining data < ";
-            for( int i = 0; i < c_size; i++ ) std::cout << std::hex << (int)fld[i] << std::dec << " ";
-            std::cout << ">" << std::endl;
-            delete [] fld;
-        }
+        if( toUpper(type) == "ESD" ) parseESDSconfig( file, c_size );   // ESDS
+
+        else parseUNKNatom( file, c_size );
 
         size -= c_size;
-
     }
 }
 
@@ -273,28 +248,24 @@ void parseH264codec( std::ifstream &file, unsigned int size )
     while( size > 0 )
     {
         unsigned int c_size;
-        char type[5]; type[4] = 0;
         file.read( (char *)&c_size, 4 );
+        size -= 4;
+
+        if( c_size == 0 || size == 0 ) break;
+        
+        char type[5]; type[4] = 0;
         file.read( (char *)type, 4 );
-        size -= 8;
+        size -= 4;
 
         c_size = swapOrder(c_size)-8;
 
-        std::cout << padding << "[\033[1;32m" << toUpper(type) << "\033[0m] " << c_size << " bytes,";
+        std::cout << padding << "[\033[1;32m" << toUpper(type) << "\033[0m] ";
 
         // check the configuration block type
         if( toUpper(type) == "COLR" ) parseCOLRconfig( file, c_size );
         else if( toUpper(type) == "AVCC" ) parseAVCCconfig( file, c_size );
 
-        else
-        {
-            unsigned char * fld = new unsigned char[size];
-            file.read( (char *)fld, size);
-            std::cout << padding << "remaining data < ";
-            for( int i = 0; i < size; i++ ) std::cout << std::hex << (int)fld[i] << std::dec << " ";
-            std::cout << ">" << std::endl;
-            delete [] fld;
-        }
+        else parseUNKNatom( file, c_size );
 
         size -= c_size;
     }
@@ -355,65 +326,70 @@ void parseESDSconfig( std::ifstream &file, unsigned int size )
         file.read( (char *)&tag, 1 );
         size -= 1;
 
-        unsigned char reserved[2];
-        file.read( (char *)reserved, 2 );
-        size -= 2;
+        unsigned char len[3];
+        file.read( (char *)&len, 3 );
+        size -= 3;
 
-        unsigned char len;
-        file.read( (char *)&len, 1 );
-        size -= 1;
+        int real_len = 0;
 
-        std::cout << padding << "  tag <0x" << std::hex << (int)tag << std::dec << ">, len <" << (int)len << " bytes>";
+        if( len[0] != 0x80 ) real_len += len[0];
+        if( len[1] != 0x80 ) real_len += len[1] << 8;
+        if( len[2] != 0x80 ) real_len += len[2] << 16;
 
-        if( tag == 0x03 )
+        std::cout << padding << "  tag <0x" << std::hex << (int)tag << std::dec << ">, len <" << real_len << " bytes>";
+
+        if( real_len > 0 )
         {
-            unsigned short es_id;
-            file.read( (char *)&es_id, 2 );
-            size -= 2;
-            es_id = swapShort(es_id);
+            if( tag == 0x03 )
+            {
+                unsigned short es_id;
+                file.read( (char *)&es_id, 2 );
+                size -= 2;
+                es_id = swapShort(es_id);
 
-            unsigned char flags;
-            file.read( (char *)&flags, 1 );
-            size -= 1;
+                unsigned char flags;
+                file.read( (char *)&flags, 1 );
+                size -= 1;
 
-            std::cout << ", es_id <" << es_id << ">, flags <" << (int)flags << ">" << std::endl;
+                std::cout << ", es_id <" << es_id << ">, flags <" << (int)flags << ">" << std::endl;
 
-        } else if( tag == 0x04 )
-        {
-            unsigned char obj_type;
-            file.read( (char *)&obj_type, 1 );
-            size -= 1;
+            } else if( tag == 0x04 )
+            {
+                unsigned char obj_type;
+                file.read( (char *)&obj_type, 1 );
+                size -= 1;
 
-            unsigned char stream_type;
-            file.read( (char *)&stream_type, 1 );
-            size -= 1;
+                unsigned char stream_type;
+                file.read( (char *)&stream_type, 1 );
+                size -= 1;
 
-            unsigned int buffer_size;
-            file.read( (char *)&buffer_size, 3 );
-            size -= 3;
-            buffer_size = swapOrder(buffer_size);
+                unsigned int buffer_size;
+                file.read( (char *)&buffer_size, 3 );
+                size -= 3;
+                buffer_size = swapOrder(buffer_size);
 
-            unsigned int max_bitrate;
-            file.read( (char *)&max_bitrate, 4 );
-            size -= 4;
-            max_bitrate = swapOrder(max_bitrate);
+                unsigned int max_bitrate;
+                file.read( (char *)&max_bitrate, 4 );
+                size -= 4;
+                max_bitrate = swapOrder(max_bitrate);
 
-            unsigned int avg_bitrate;
-            file.read( (char *)&avg_bitrate, 4 );
-            size -= 4;
-            avg_bitrate = swapOrder(avg_bitrate);
+                unsigned int avg_bitrate;
+                file.read( (char *)&avg_bitrate, 4 );
+                size -= 4;
+                avg_bitrate = swapOrder(avg_bitrate);
 
-            std::cout << ", obj_type <0x" << std::hex << (int)obj_type << std::dec << ">, stream_type <0x" << std::hex << (int)stream_type << std::dec << ">, buffer_size <" << buffer_size << ">, max_bitrate <" << max_bitrate << ">, avg_bitrate <" << avg_bitrate << ">" << std::endl;
+                std::cout << ", obj_type <0x" << std::hex << (int)obj_type << std::dec << ">, stream_type <0x" << std::hex << (int)stream_type << std::dec << ">, buffer_size <" << buffer_size << ">, max_bitrate <" << max_bitrate << ">, avg_bitrate <" << avg_bitrate << ">" << std::endl;
 
-        } else 
-        {
-            unsigned char * data = new unsigned char[len];
-            file.read( (char *)data, len );
-            size -= len;
+            } else 
+            {
+                unsigned char * data = new unsigned char[real_len];
+                file.read( (char *)data, real_len );
+                size -= real_len;
 
-            std::cout << "  data <";
-            for( int i = 0; i < len; i++ ) std::cout << std::hex << (int)data[i] << std::dec << " ";
-            std::cout << ">" << std::endl;
+                std::cout << "  data <";
+                for( int i = 0; i < real_len; i++ ) std::cout << std::hex << (int)data[i] << std::dec << " ";
+                std::cout << ">" << std::endl;
+            }
         }
     }
 
@@ -422,6 +398,7 @@ void parseESDSconfig( std::ifstream &file, unsigned int size )
 
 void parseCOLRconfig( std::ifstream &file, unsigned int size )
 {
+    int disp_len = size;
     // colr (Color Information Box):Payload
     //
     //  The payload depends on the Colour Type, a 4-byte FourCC that follows the header. Three types are defined:
@@ -434,7 +411,7 @@ void parseCOLRconfig( std::ifstream &file, unsigned int size )
     //
     //      Since nclx is the standard for H.264 video today, I’ll assume this type unless your hex dump suggests otherwise.
     //
-    //      nclx Payload (11 bytes)
+    //      nclx Payload
     //          Colour Type (4 bytes): 0x6E636C78 (nclx).
     //          Colour Primaries (2 bytes): Defines the chromaticity coordinates (e.g., BT.709).
     //          Transfer Characteristics (2 bytes): Gamma/transfer function (e.g., sRGB, BT.709).
@@ -444,6 +421,14 @@ void parseCOLRconfig( std::ifstream &file, unsigned int size )
     //          Bits 6-0: Reserved (0).
     //
     //          Total Size: 19 bytes (8 header + 11 payload).
+    //
+    //      nclc Payload 
+    //          Colour Type (4 bytes): 0x6E636C63 (nclc).
+    //          Colour Primaries (1 byte): 0x01 (BT.709).
+    //          Transfer Characteristics (1 byte): 0x01 (BT.709).
+    //          Matrix Coefficients (1 byte): 0x01 (BT.709).
+    //
+    //          Total Size: 18 bytes (8 header + 10 payload).
 
     char type[5]; type[4] = 0;
     file.read( (char *)type, 4 );
@@ -464,17 +449,26 @@ void parseCOLRconfig( std::ifstream &file, unsigned int size )
     size -= 2;
     matrix = swapShort(matrix);
 
-    unsigned char range;
-    file.read( (char *)&range, 1 );
-    size -= 1;
+    if( toUpper(type) == "NCLX" )
+    {
+        unsigned char range;
+        file.read( (char *)&range, 1 );
+        size -= 1;
 
-    // display the data
-    std::cout << " type <\033[1;32m" << toUpper(type) << "\033[0m>, primaries <0x" << std::hex << primaries << ">, transfer <0x" << transfer << ">, matrix <0x" << matrix << std::dec << ">, range <" << (int)range << ">" << std::endl;
+        // display the data
+        std::cout << disp_len << " bytes, type <\033[1;32m" << toUpper(type) << "\033[0m>, primaries <0x" << std::hex << primaries << ">, transfer <0x" << transfer << ">, matrix <0x" << matrix << std::dec << ">, range <" << (int)range << ">" << std::endl;
 
+    } else {
+        // display the data, without the range field
+        std::cout << disp_len << " bytes, type <\033[1;32m" << toUpper(type) << "\033[0m>, primaries <0x" << std::hex << primaries << ">, transfer <0x" << transfer << ">, matrix <0x" << matrix << ">" << std::dec << std::endl;
+    }
+ 
 }
 
 void parseAVCCconfig( std::ifstream &file, unsigned int size )
 {
+    int disp_len = size;
+
     m_depth++;
     std::string padding = calcPadding(m_depth);
 
@@ -557,7 +551,7 @@ void parseAVCCconfig( std::ifstream &file, unsigned int size )
         size -= pps_len;
     }
 
-    std::cout << " ver <0x" << std::hex << (int)ver << std::dec << ">, profile <0x" << std::hex << (int)profile << std::dec << ", " << profile_str << ">, compat <" << (int)compatibility << ">, level <" << (int)level << ">" << std::endl;
+    std::cout << std::dec << disp_len << " bytes, ver <0x" << std::hex << (int)ver << std::dec << ">, profile <0x" << std::hex << (int)profile << std::dec << ", " << profile_str << ">, compat <" << (int)compatibility << ">, level <" << (int)level << ">" << std::endl;
     std::cout << padding << "  num_sps <" << (int)num_sps << ">, sps_len <" << sps_len << ">, data <";
     for( int i = 0; i < sps_len; i++ ) std::cout << std::hex << (int)sps[i] << std::dec << " ";
     std::cout << ">" << std::endl;
@@ -568,6 +562,17 @@ void parseAVCCconfig( std::ifstream &file, unsigned int size )
 
     delete [] sps;
     if( pps_len > 0 ) delete [] pps;
+
+    // check for spare data
+    if( size > 0 )
+    {
+        unsigned char * fld = new unsigned char[size];
+        file.read( (char *)fld, size);
+        std::cout << padding << "  remaining data < ";
+        for( int i = 0; i < size; i++ ) std::cout << std::hex << (int)fld[i] << std::dec << " ";
+        std::cout << ">" << std::endl;
+        delete [] fld;
+    }
 
     m_depth--;
 

@@ -8,16 +8,14 @@
 
 // known MP4 variants we can parse
 //
-const int num_known_mp4 = 7;
+const int num_known_mp4 = 5;
 struct known_variant_t known_mp4[num_known_mp4] = 
 { 
-    {"isom", 0}, 
-    {"isom",1},
-    {"isom",0x200},
-    {"mp42",0},
-    {"mp42",1},
+    {"isom", -1}, 
+    {"mp42",-1},
     {"mp41",-1},
-    {"qt  ",0}
+    {"qt  ",0},
+    {"3gp4", 0x300}
 };
 
 // FTYP atom

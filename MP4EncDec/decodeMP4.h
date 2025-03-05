@@ -43,7 +43,8 @@ void parseTMCDatom( std::ifstream &file, unsigned long len );
 void parseTCMIatom( std::ifstream &file, unsigned long len );
 void parseSTBLatom( std::ifstream &file, unsigned long len );
 void parseSTSDatom( std::ifstream &file, unsigned long len );
-
+void parseSTTSatom( std::ifstream &file, unsigned long len );
+void parseSTSCatom( std::ifstream &file, unsigned long len );
 void parseUNKNatom( std::ifstream &file, unsigned long len );
 
 bool checkKnownVariant( std::string name, int ver );
