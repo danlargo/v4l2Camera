@@ -64,7 +64,7 @@ int main( int argc, char** argv )
     // Parse the dictionary
     //
     std::cout << std::endl;
-    std::map<std::string, struct node_t> dictionary = parseDictionary( "./walkMP4_dictionary.dat" );
+    std::map<std::string, struct node_t> dictionary = parseDictionary( "./walkMP4_dictionary.json" );
 
     if( dictionary.size() == 0 )
     {

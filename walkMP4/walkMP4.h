@@ -15,10 +15,15 @@ struct node_t
     std::string type;
     std::string description;
     std::map<std::string, struct node_t> parts;
+    std::string raw_data;
+    std::string raw_parts;
 };
 
 std::map<std::string, struct node_t> parseDictionary( std::string fid );
 void printDictionary( std::map<std::string, struct node_t> dictionary );
+struct node_t getNode( std::string buf, int &offset );
+std::string getRawData( std::string buf, int &offset );
+std::string getVal( std::string buf, std::string key );
 
 // parsers
 //

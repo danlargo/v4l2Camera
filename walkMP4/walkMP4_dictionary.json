@@ -1,0 +1,20 @@
+{
+    "TOP" : { "Type" : "ATOM_LIST", "Description" : "Top Level of MP4/MOV/3GP file" },
+    
+    "FTYP" : { "Type" : "STRUCT", "Description" : "File Type and Compatibility", 
+                "PARTS" : {} },
+    "MOOV" : { "Type" : "ATOM_LIST", "Description" : "Top Level Container" },
+    "TRAK" : { "Type" : "ATOM_LIST", "Description" : "Single Track Details" },
+    "META" : { "Type" : "ATOM_LIST", "Description" : "Movie Meta Data" },
+    "UDTA" : { "Type" : "ATOM_LIST", "Description" : "User Data" },
+    "MDIA" : { "Type" : "ATOM_LIST", "Description" : "Media Details" },
+    "MINF" : { "Type" : "ATOM_LIST", "Description" : "Media Information" },
+    "STBL" : { "Type" : "ATOM_LIST", "Description" : "Sample Table" },
+    "DINF" : { "Type" : "ATOM_LIST", "Description" : "Textual Information" },
+    "EDTS" : { "Type" : "ATOM_LIST", "Description" : "Track Edits" },
+    "FREE" : { "Type" : "BYTES", "Description" : "Free Space / Padding" },
+    "MDAT" : { "Type" : "BINARY", "Description" : "Media Data" },
+    "SDLN" : { "Type" : "CHARS", "Description" : "Sound Description" },
+    "STSD" : { "Type" : "ATOM_LIST", "Description" : "Sample Description" },
+    "SMRD" : { "Type" : "ATOM_LIST", "Description" : "Sound Media" }
+}
