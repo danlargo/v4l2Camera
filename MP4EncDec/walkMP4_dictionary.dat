@@ -1,0 +1,16 @@
+TOP { ATOM_LIST } Top Level of MP4/MOV/3GP file
+MOOV { ATOM_LIST } Movie Information
+TRAK { ATOM_LIST } Track Details
+META { ATOM_LIST } Movie Meta Data
+UDTA { ATOM_LIST } User Data
+MDIA { ATOM_LIST } Media Details
+MINF { ATOM_LIST } Media Information
+STBL { ATOM_LIST } Sample Table
+DINF { ATOM_LIST } Textual Information
+EDTS { ATOM_LIST } Track Edits
+FREE { BYTES } Free Space / Padding
+MDAT { BINARY } Raw Data
+SDLN { CHARS } Sound Description
+SMRD { CHARS } Sound Media
+
+FTYP { PARTS [ TAG4:Type, INT4:Version, m:TAG4:Alias ] } MP4 File Type and Version

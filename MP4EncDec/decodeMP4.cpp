@@ -167,6 +167,15 @@ int main( int argc, char** argv )
         std::cout << "free : Free Space" << std::endl;
         std::cout << "mdat : Media Data" << std::endl;
         std::cout << "cmov : Compressed Movie" << std::endl;
+        std::cout << "skip : Skip" << std::endl;
+        std::cout << "wide : Wide" << std::endl;
+        std::cout << "edts : Edit List" << std::endl;
+        std::cout << "elst : Edit List" << std::endl;
+        std::cout << "keys : Keys" << std::endl;
+        std::cout << "ilst : Item List" << std::endl;
+        std::cout << "sdln : Sound Description" << std::endl;
+        std::cout << "smrd : Sound Media" << std::endl;
+        std::cout << "smta : Sound Media" << std::endl;
     }
 
     // indicate done
