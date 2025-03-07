@@ -65,6 +65,12 @@ int main( int argc, char** argv )
 	if (cmdLine["i"] == "1") { listAllDevices(); return 0; }
 
 
+    // Test Mode, requires device indicator
+    if( cmdLine["T"] == "1" )
+    {
+        if( cmdLine["d"].length() > 0 ) runTimingTest( cmdLine["d"] ) ;
+        else outerr( "Must provide a device number to run timing tests : -d [0..63]" );
+    }
 
     // Video Modes, requires device indicator
     if( cmdLine["m"] == "1" )
@@ -217,6 +223,9 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
         // List all user controls
         if( argS == "-u" ) { cmdLine["u"] = "1"; continue; }
         
+        // Run timing tests at current resolution and frame rate
+        if( argS == "-T" ) { cmdLine["T"] = "1"; continue; }
+
         // Grab an Image
         if( argS == "-g" ) { cmdLine["g"] = "1"; continue; }
         

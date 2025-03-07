@@ -90,6 +90,7 @@ int printBasicHelp()
     outln( "-g          :   grab an image from camera -d ##" );
     outln( "-c          :   capture video from camera -d ##, for time -t [val] seconds, default is 10 seconds" );
     outln( "-t [val]    :   specify a time duration [val] for video capture, default is 10 seconds" );
+    outln( "-T          :   run timing tests on current camera (-d #), with current video mode" );
     outln( "" );
 
     return 1;

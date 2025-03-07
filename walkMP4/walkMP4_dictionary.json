@@ -1,20 +1,41 @@
 {
-    "TOP" : { "Type" : "ATOM_LIST", "Description" : "Top Level of MP4/MOV/3GP file" },
+    "TOP" : {   "Type" : "ATOM_LIST", "Count" : "1", "Description" : "Top Level of MP4/MOV/3GP file" },
     
-    "FTYP" : { "Type" : "STRUCT", "Description" : "File Type and Compatibility", 
-                "PARTS" : {} },
-    "MOOV" : { "Type" : "ATOM_LIST", "Description" : "Top Level Container" },
-    "TRAK" : { "Type" : "ATOM_LIST", "Description" : "Single Track Details" },
-    "META" : { "Type" : "ATOM_LIST", "Description" : "Movie Meta Data" },
-    "UDTA" : { "Type" : "ATOM_LIST", "Description" : "User Data" },
-    "MDIA" : { "Type" : "ATOM_LIST", "Description" : "Media Details" },
-    "MINF" : { "Type" : "ATOM_LIST", "Description" : "Media Information" },
-    "STBL" : { "Type" : "ATOM_LIST", "Description" : "Sample Table" },
-    "DINF" : { "Type" : "ATOM_LIST", "Description" : "Textual Information" },
-    "EDTS" : { "Type" : "ATOM_LIST", "Description" : "Track Edits" },
-    "FREE" : { "Type" : "BYTES", "Description" : "Free Space / Padding" },
-    "MDAT" : { "Type" : "BINARY", "Description" : "Media Data" },
-    "SDLN" : { "Type" : "CHARS", "Description" : "Sound Description" },
-    "STSD" : { "Type" : "ATOM_LIST", "Description" : "Sample Description" },
-    "SMRD" : { "Type" : "ATOM_LIST", "Description" : "Sound Media" }
+    "FTYP" : {  "Type" : "STRUCT", "Description" : "File Type and Compatibility", 
+                "Parts" : [     
+                            { "Type" : "TAG4", "Description" : "MP4 Variant" },
+                            { "Type" : "HEX32", "Description" : "Ver" },
+                            { "Type" : "TAG4_LIST", "Description" : "Compatible With" } 
+                          ]
+    },
+
+    "MVHD" : {  "Type" : "STRUCT", "Description" : "Movie Header",
+                "Parts" : [     
+                            { "Type" : "VER8", "Description" : "Ver" },
+                            { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+                            { "Type" : "MP4TIME", "Description" : "Created" },
+                            { "Type" : "MP4TIME", "Description" : "Modified" },
+                            { "Type" : "INT32", "Description" : "Timescale" },
+                            { "Type" : "INT32", "Description" : "Duration" },
+                            { "Type" : "INT16.2", "Description" : "Playback Rate" },
+                            { "Type" : "UINT8.2", "Description" : "Volume" },
+                            { "Type" : "RSRVD", "Count" : "10", "Description" : "Res1" },
+                            { "Type" : "RSRVD", "Count" : "36", "Description" : "Matrix" },
+                            { "Type" : "RSRVD", "Count" : "24", "Description" : "Res2" },
+                            { "Type" : "INT32", "Description" : "Next Track ID" }
+                          ]
+    },
+
+    "MOOV" : {  "Type" : "ATOM_LIST", "Description" : "Top Level Container" },
+    "TRAK" : {  "Type" : "ATOM_LIST", "Description" : "Single Track Details" },
+    "UDTA" : {  "Type" : "ATOM_LIST", "Description" : "User Data" },
+    "MDIA" : {  "Type" : "ATOM_LIST", "Description" : "Media Details" },
+    "MINF" : {  "Type" : "ATOM_LIST", "Description" : "Media Information" },
+    "STBL" : {  "Type" : "ATOM_LIST", "Description" : "Sample Table" },
+    "DINF" : {  "Type" : "ATOM_LIST", "Description" : "Textual Information" },
+    "EDTS" : {  "Type" : "ATOM_LIST", "Description" : "Track Edits" },
+    "FREE" : {  "Type" : "BYTES", "Description" : "Free Space / Padding" },
+    "MDAT" : {  "Type" : "BINARY", "Description" : "Media Data" },
+    "SDLN" : {  "Type" : "CHARS", "Description" : "Sound Description" },
+    "SMRD" : {  "Type" : "ATOM_LIST", "Description" : "Sound Media" }
 }

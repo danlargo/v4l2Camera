@@ -31,6 +31,8 @@ void listUserControls( std::string deviceID );
 void fetchMetaData( std::string deviceID );
 void getVideoFormat( std::string deviceID );
 
+void runTimingTest( std::string deviceID );
+
 void captureImage(std::string deviceID, std::string fileName = "", std::string format = "" );
 void captureVideo( std::string deviceID, std::string timeInSeconds = "10", std::string fileName = "");
 void setVideoFormat( std::string deviceID, std::string videoMode, std::string fps );

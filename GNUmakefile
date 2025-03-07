@@ -144,8 +144,8 @@ endif
 #
 # v4l2cam command line tool targets
 #
-v4l2cam: dist main.o utils.o print.o list.o capture.o control.o fromYUV.o greyScale.o interleavedYUV420.o planarYUV420.o saveRGB24ToBMP.o yuv422.o
-	$(CXX) $(LDFLAGS) -o v4l2cam build/main.o build/utils.o build/print.o build/list.o build/capture.o build/control.o \
+v4l2cam: dist main.o utils.o print.o list.o capture.o control.o timing.o fromYUV.o greyScale.o interleavedYUV420.o planarYUV420.o saveRGB24ToBMP.o yuv422.o
+	$(CXX) $(LDFLAGS) -o v4l2cam build/main.o build/utils.o build/print.o build/list.o build/capture.o build/control.o build/timing.o \
 	build/fromYUV.o build/greyScale.o build/interleavedYUV420.o build/planarYUV420.o build/saveRGB24ToBMP.o build/yuv422.o  \
 	$(LDLIBS) $(STATIC_LIBS)
 
@@ -174,6 +174,9 @@ capture.o: includes v4l2cam-src/capture.cpp fromYUV.o greyScale.o interleavedYUV
 
 control.o: includes v4l2cam-src/control.cpp
 	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/control.o -c v4l2cam-src/control.cpp
+
+timing.o: includes v4l2cam-src/timing.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) -o build/timing.o -c v4l2cam-src/timing.cpp
 
 #
 # Image Utility Targets

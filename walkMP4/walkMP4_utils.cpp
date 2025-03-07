@@ -17,20 +17,42 @@ std::string toUpper(std::string str)
     return result;
 }
 
+std::string toLower(std::string str) 
+{
+    std::string result = "";
+    for( unsigned int i = 0; i < str.length(); i++ ) { result += std::tolower(str[i]); }
+    return result;
+}
+
 // Trim from start (in place)
 void ltrim(std::string &s) 
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }));
+    bool done = false;
+
+    while( !done )
+    {
+        if( s[0] == ' ' ) s.erase(0, 1);
+        else if( s[0] == '\t' ) s.erase(0, 1);
+        else if( s[0] == '\n' ) s.erase(0, 1);
+        else if( s[0] == '\r' ) s.erase(0, 1);
+        else break;
+    }
 }
 
 // Trim from end (in place)
 void rtrim(std::string &s) 
 {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
-        return !std::isspace(ch);
-    }).base(), s.end());
+    bool done = false;
+
+    while( !done )
+    {
+        int i = s.length()-1;
+        if( s[i] == ' ' ) s.erase(i, 1);
+        else if( s[i] == '\t' ) s.erase(i, 1);
+        else if( s[i] == '\n' ) s.erase(i, 1);
+        else if( s[i] == '\r' ) s.erase(i, 1);
+        else break;
+    }
 }
 
 // Trim from both ends (in place)
@@ -56,6 +78,11 @@ std::string getVersionString()
 // Endian Functions
 //
 unsigned int swapEndian( unsigned int in )
+{
+    return (in >> 24) | ((in << 8) & 0x00FF0000) | ((in >> 8) & 0x0000FF00) | (in << 24);
+}
+
+int swapEndian( int in )
 {
     return (in >> 24) | ((in << 8) & 0x00FF0000) | ((in >> 8) & 0x0000FF00) | (in << 24);
 }
