@@ -32,9 +32,11 @@ void ltrim(std::string &s)
     while( !done )
     {
         if( s[0] == ' ' ) s.erase(0, 1);
-        else if( s[0] == '\t' ) s.erase(0, 1);
-        else if( s[0] == '\n' ) s.erase(0, 1);
-        else if( s[0] == '\r' ) s.erase(0, 1);
+        else if( s[0] == '\t' ) s.erase(0, 1);      // tab
+        else if( s[0] == '\n' ) s.erase(0, 1);      // new line
+        else if( s[0] == '\r' ) s.erase(0, 1);      // carriage return
+        else if( s[0] == '\v' ) s.erase(0, 1);      // vertical tab
+        else if( s[0] == '\f' ) s.erase(0, 1);      // form feed
         else break;
     }
 }
@@ -51,6 +53,8 @@ void rtrim(std::string &s)
         else if( s[i] == '\t' ) s.erase(i, 1);
         else if( s[i] == '\n' ) s.erase(i, 1);
         else if( s[i] == '\r' ) s.erase(i, 1);
+        else if( s[i] == '\v' ) s.erase(i, 1);
+        else if( s[i] == '\f' ) s.erase(i, 1);
         else break;
     }
 }

@@ -15,7 +15,8 @@ const int s_minorVersion = 1;
 const int s_revision = 10;
 
 // Formatting depth counter
-unsigned int m_depth;
+unsigned int m_depth = 0;
+unsigned int m_struct_depth = 0;
 
 int main( int argc, char** argv )
 {

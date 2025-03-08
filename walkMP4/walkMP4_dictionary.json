@@ -1,41 +1,270 @@
 {
-    "TOP" : {   "Type" : "ATOM_LIST", "Count" : "1", "Description" : "Top Level of MP4/MOV/3GP file" },
-    
-    "FTYP" : {  "Type" : "STRUCT", "Description" : "File Type and Compatibility", 
-                "Parts" : [     
-                            { "Type" : "TAG4", "Description" : "MP4 Variant" },
-                            { "Type" : "HEX32", "Description" : "Ver" },
-                            { "Type" : "TAG4_LIST", "Description" : "Compatible With" } 
-                          ]
-    },
 
-    "MVHD" : {  "Type" : "STRUCT", "Description" : "Movie Header",
-                "Parts" : [     
-                            { "Type" : "VER8", "Description" : "Ver" },
-                            { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
-                            { "Type" : "MP4TIME", "Description" : "Created" },
-                            { "Type" : "MP4TIME", "Description" : "Modified" },
-                            { "Type" : "INT32", "Description" : "Timescale" },
-                            { "Type" : "INT32", "Description" : "Duration" },
-                            { "Type" : "INT16.2", "Description" : "Playback Rate" },
-                            { "Type" : "UINT8.2", "Description" : "Volume" },
-                            { "Type" : "RSRVD", "Count" : "10", "Description" : "Res1" },
-                            { "Type" : "RSRVD", "Count" : "36", "Description" : "Matrix" },
-                            { "Type" : "RSRVD", "Count" : "24", "Description" : "Res2" },
-                            { "Type" : "INT32", "Description" : "Next Track ID" }
-                          ]
-    },
+"TOP" : {   "Type" : "ATOM_LIST", "Count" : "1", "Description" : "Top Level of MP4/MOV/3GP file" },
 
-    "MOOV" : {  "Type" : "ATOM_LIST", "Description" : "Top Level Container" },
-    "TRAK" : {  "Type" : "ATOM_LIST", "Description" : "Single Track Details" },
-    "UDTA" : {  "Type" : "ATOM_LIST", "Description" : "User Data" },
-    "MDIA" : {  "Type" : "ATOM_LIST", "Description" : "Media Details" },
-    "MINF" : {  "Type" : "ATOM_LIST", "Description" : "Media Information" },
-    "STBL" : {  "Type" : "ATOM_LIST", "Description" : "Sample Table" },
-    "DINF" : {  "Type" : "ATOM_LIST", "Description" : "Textual Information" },
-    "EDTS" : {  "Type" : "ATOM_LIST", "Description" : "Track Edits" },
-    "FREE" : {  "Type" : "BYTES", "Description" : "Free Space / Padding" },
-    "MDAT" : {  "Type" : "BINARY", "Description" : "Media Data" },
-    "SDLN" : {  "Type" : "CHARS", "Description" : "Sound Description" },
-    "SMRD" : {  "Type" : "ATOM_LIST", "Description" : "Sound Media" }
+"ALIS" : {  "Type" : "STRUCT", "Description" : "Alias Data",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "CHARS", "Description" : "Name" }
+  ]
+},
+
+"AUTH" : {  "Type" : "STRUCT", "Description" : "Authoring Device",
+  "Parts" : [     
+    { "Type" : "FLAGS", "Count" : "4", "Description" : "Flags" },
+    { "Type" : "LANG16", "Description" : "Language" },
+    { "Type" : "STRING", "Description" : "Value" }
+  ]
+},
+
+"CLEF" : {  "Type" : "STRUCT", "Description" : "Clean Aperture Dimensions",
+  "Parts" : [
+    { "Type" : "INT32", "Description" : "Width" },
+    { "Type" : "INT32", "Description" : "Height" },
+    { "Type" : "INT32", "Description" : "Horz-Offset" } 
+  ] 
+},
+
+"DINF" : {  "Type" : "ATOM_LIST", "Description" : "Textual Information" },
+
+"DREF" : {  "Type" : "STRUCT", "Description" : "Media Data Source",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "INT32", "Description" : "Num Entries" },
+    { "Type" : "ATOM_LIST", "Description" : "References" }
+  ]
+},
+
+"EDTS" : {  "Type" : "ATOM_LIST", "Description" : "Track Edits" },
+
+"ENOF" : {  "Type" : "STRUCT", "Description" : "Encoded Aperture Dimensions",
+  "Parts" : [
+    { "Type" : "INT32", "Description" : "Width" },
+    { "Type" : "INT32", "Description" : "Height" },
+    { "Type" : "INT32", "Description" : "Horz-Offset" } 
+  ]  
+},
+
+"FIRM" : {  "Type" : "CHARS", "Description" : "Firmware Version" },
+
+"FREE" : {  "Type" : "BYTES", "Description" : "Free Space / Padding" },
+
+"FTYP" : {  "Type" : "STRUCT", "Description" : "File Type and Compatibility", 
+  "Parts" : [
+    { "Type" : "TAG4", "Description" : "MP4 Variant" },
+    { "Type" : "HEX32", "Description" : "Ver" },
+    { "Type" : "TAG4_LIST", "Description" : "Compatible With" } 
+  ]
+},
+
+"HDLR" : {  "Type" : "STRUCT", "Description" : "Track Handler",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "IGNORE", "Count" : "4", "Description" : "Res" },
+    { "Type" : "TAG4", "Description" : "Type" },
+    { "Type" : "IGNORE", "Count" : "12", "Description" : "Res" },
+    { "Type" : "STRING", "Description" : "Name" }
+  ]
+},
+
+"KEYS" : {  "Type" : "STRUCT", "Description" : "Device Keys",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "INT32", "Description" : "Num" },
+    { "Type" : "ATOM_LIST", "Description" : "Keys" }
+  ]
+},
+
+"LENS" : {  "Type" : "CHARS", "Description" : "Lense Used" },
+
+"MDAT" : {  "Type" : "BINARY", "Description" : "Media Data" },
+
+"MDHD" : {  "Type" : "STRUCT", "Description" : "Media Header",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "MP4TIME", "Description" : "Created" },
+    { "Type" : "MP4TIME", "Description" : "Modified" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT32", "Description" : "Timescale", "Units" : "ticks per sec" },
+    { "Type" : "MP4TICKS", "Description" : "Duration", "Units" : "ticks" },
+    { "Type" : "LANG16", "Description" : "Language" },
+    { "Type" : "IGNORE", "Count" : "2", "Description" : "Res" }
+  ]
+},
+
+"MDIA" : {  "Type" : "ATOM_LIST", "Description" : "Media Details" },
+
+"MDLN" : {  "Type" : "CHARS", "Description" : "Model Number" },
+
+"MDTA" : {  "Type" : "CHARS", "Description" : "Keys" },
+
+"META" : {  "Type" : "ATOM_LIST", "Description" : "Movie MetaData" },
+
+"MINF" : {  "Type" : "ATOM_LIST", "Description" : "Media Information" },
+
+"MOOV" : {  "Type" : "ATOM_LIST", "Description" : "Movie Details" },
+
+"MVHD" : { "Type" : "STRUCT", "Description" : "Movie Header",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "MP4TIME", "Description" : "Created" },
+    { "Type" : "MP4TIME", "Description" : "Modified" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT32", "Description" : "Timescale", "Units" : "ticks per sec" },
+    { "Type" : "UINT32", "Description" : "Duration", "Units" : "ticks" },
+    { "Type" : "UINT16.2", "Description" : "Playback Rate" },
+    { "Type" : "INT8.2", "Description" : "Volume" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "IGNORE", "Count" : "10", "Description" : "Res" },
+    { "Type" : "INT16.2", "Count" : "3", "Description" : "Matrix Row 1" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "INT16.2", "Count" : "3", "Description" : "Matrix Row 2" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "INT16.2", "Count" : "3", "Description" : "Matrix Row 3" },
+    { "Type" : "IGNORE", "Count" : "24", "Description" : "Res" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT32", "Description" : "Next Track ID" }
+  ]
+},
+
+"PROF" : {  "Type" : "STRUCT", "Description" : "Production Aperture Dimensions",
+  "Parts" : [
+    { "Type" : "UINT32", "Description" : "Width" },
+    { "Type" : "UINT32", "Description" : "Height" },
+    { "Type" : "UINT32", "Description" : "Horz-Offset" } 
+  ]  
+},
+
+"SAUT" : {  "Type" : "CHARS", "Description" : "Authoring Software" },
+
+"SDLN" : {  "Type" : "CHARS", "Description" : "Sound Description" },
+
+"SMHD" : {  "Type" : "STRUCT", "Description" : "Sound Media Header",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "INT8.2", "Description" : "Sound Balance (left.right)" },
+    { "Type" : "IGNORE", "Count" : "2", "Description" : "Res" }
+  ]
+},
+
+"SMRD" : {  "Type" : "CHARS", "Description" : "Sound Media" },
+
+"SMTA" : {  "Type" : "STRUCT", "Description" : "Software Media Type",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "ATOM_LIST", "Description" : "Keys" }
+  ]
+},
+
+"STBL" : {  "Type" : "ATOM_LIST", "Description" : "Sample Table" },
+
+"TAPT" : {  "Type" : "ATOM_LIST", "Description" : "Track Aperture Mode Dimensions" },
+
+"TKHD" : {  "Type" : "STRUCT", "Description" : "Track Header",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "MP4TIME", "Description" : "Created" },
+    { "Type" : "MP4TIME", "Description" : "Modified" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "INT32", "Description" : "Track ID" },
+    { "Type" : "IGNORE", "Count" : "4", "Description" : "Res" },
+    { "Type" : "MP4TICKS", "Description" : "Duration", "Units" : "ticks" },
+    { "Type" : "IGNORE", "Count" : "8", "Description" : "Res" },
+    { "Type" : "HEX16", "Description" : "Layer" },
+    { "Type" : "HEX16", "Description" : "Alternate Group" },
+    { "Type" : "INT8.2", "Description" : "Volume" },
+    { "Type" : "IGNORE", "Count" : "2", "Description" : "Res" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "INT16.2", "Count" : "3", "Description" : "Matrix Row 1" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "INT16.2", "Count" : "3", "Description" : "Matrix Row 2" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "INT16.2", "Count" : "3", "Description" : "Matrix Row 3" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT16.2", "Description" : "Width", "Units" : "pixels" },
+    { "Type" : "UINT16.2", "Description" : "Height", "Units" : "pixels" }
+  ]
+},
+
+"TRAK" : {  "Type" : "ATOM_LIST", "Description" : "Single Track Details" },
+
+"TREF" : {  "Type" : "ATOM_LIST", "Description" : "Track Reference" },
+
+"UDTA" : {  "Type" : "ATOM_LIST", "Description" : "User Data" },
+
+"URL" : {  "Type" : "STRUCT", "Description" : "Info URL",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "CHARS", "Description" : "Name" }
+  ]
+},
+
+"URN" : {  "Type" : "STRUCT", "Description" : "Info URN",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "CHARS", "Description" : "Name" }
+  ]
+},
+
+"VMHD" : {  "Type" : "STRUCT", "Description" : "Video Media Header",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "HEX16", "Description" : "Graphics Mode" },
+    { "Type" : "LABEL", "Description" : "Operation Colors : " },
+    { "Type" : "HEX16", "Description" : "Red" },
+    { "Type" : "HEX16", "Description" : "Green" },
+    { "Type" : "HEX16", "Description" : "Blue" }
+  ]
+},
+
+"WIDE" : {  "Type" : "BYTES", "Description" : "QuickTime Expansion Space" },
+
+"(c)MOD" : {  "Type" : "STRUCT", "Description" : "Model",
+  "Parts" : [     
+    { "Type" : "UINT16", "Description" : "Size" },
+    { "Type" : "LANG16", "Description" : "Language" },
+    { "Type" : "STRING", "Description" : "Value" }
+  ]
+},
+"(c)SWR" : {  "Type" : "STRUCT", "Description" : "Version",
+  "Parts" : [     
+    { "Type" : "UINT16", "Description" : "Size" },
+    { "Type" : "LANG16", "Description" : "Language" },
+    { "Type" : "STRING", "Description" : "Value" }
+  ]
+},
+"(c)DAY" : {  "Type" : "STRUCT", "Description" : "Timestamp",
+  "Parts" : [     
+    { "Type" : "UINT16", "Description" : "Size" },
+    { "Type" : "LANG16", "Description" : "Language" },
+    { "Type" : "STRING", "Description" : "Value" }
+  ]
+},
+"(c)XYZ" : {  "Type" : "STRUCT", "Description" : "Location (lat/long/elevation)",
+  "Parts" : [     
+    { "Type" : "UINT16", "Description" : "Size" },
+    { "Type" : "LANG16", "Description" : "Language" },
+    { "Type" : "STRING", "Description" : "Value" }
+  ]
+},
+"(c)MAK" : {  "Type" : "STRUCT", "Description" : "Manufacturer",
+  "Parts" : [     
+    { "Type" : "UINT16", "Description" : "Size" },
+    { "Type" : "LANG16", "Description" : "Language" },
+    { "Type" : "STRING", "Description" : "Value" }
+  ]
+}
+
 }

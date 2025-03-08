@@ -27,17 +27,13 @@ void parseATOM( std::ifstream &file, std::map<std::string, struct node_t*> dicti
             printATOMhdr( atom, node->description );
                         
             // check for nested atoms
-            //if( atom.size > 0 )
-            //{
-                if( node->type == "ATOM_LIST" ) parseATOM( file, dictionary, (int)atom.size );
-                else if( node->type == "BYTES" ) printFREEatom( file, atom );
-                else if( node->type == "BINARY" ) printRAWatom( file, atom );
-                else if( node->type == "CHARS" ) printCHARSatom( file, atom );
-                else if( node->type == "STRUCT" ) parseSTRUCT( file, node, atom );
+            if( node->type == "ATOM_LIST" ) parseATOM( file, dictionary, (int)atom.size );
+            else if( node->type == "BYTES" ) printFREEatom( file, atom );
+            else if( node->type == "BINARY" ) printRAWatom( file, atom );
+            else if( node->type == "CHARS" ) printCHARSatom( file, atom );
+            else if( node->type == "STRUCT" ) parseSTRUCT( file, dictionary, node, atom );
 
-                else printUNKNatom( file, atom );
-
-            //}
+            else printUNKNatom( file, atom );
 
         } else {
             printATOMhdr( atom, "" );
@@ -70,8 +66,17 @@ struct atom_t readATOM( std::ifstream &file )
     file.read( (char *)&atom.orig, 4 );
     atom.bytes_read += 4;
 
-    std::string tmp = (char *)atom.orig;
-    atom.tag = toUpper(tmp);
+    // check if there is a copyright symbol
+    std::string tmp = "";
+    std::string tmp2 = (char*)atom.orig;
+    if( atom.orig[0] == 0xA9 ) 
+    {
+        tmp = "(c)" + toUpper(tmp2.substr(1, 3));
+    }
+    else tmp = toUpper(tmp2);
+
+    atom.tag = tmp;
+    trim(atom.tag);
 
     if( real_size == 1 )
     {
@@ -91,10 +96,12 @@ struct atom_t readATOM( std::ifstream &file )
 // Parse the STRUCT type
 // - list of basic types
 //
-void parseSTRUCT( std::ifstream &file, struct node_t * node, struct atom_t atom )
+void parseSTRUCT( std::ifstream &file, std::map<std::string, struct node_t *> dictionary, struct node_t * node, struct atom_t atom )
 {
     m_depth++;
-    std::cout << calcPadding() << "  ";
+    m_struct_depth++;
+
+    std::cout << calcPadding() << " ";
 
     int remaining = atom.size;
 
@@ -103,41 +110,53 @@ void parseSTRUCT( std::ifstream &file, struct node_t * node, struct atom_t atom 
 
     for( auto it = node->parts.begin(); it != node->parts.end(); it++ )
     {
-        struct node_t * n = it->second;
+        struct node_t * n = *it;
 
-        if( n->type == "ATOM_LIST" ) parseATOM( file, node->parts, remaining );
+        if( n->type == "ATOM_LIST" ) { std::cout << std::endl; parseATOM( file, dictionary, remaining ); }
 
-        else if( n->type == "VER8" ) { ver = printVER8data( file, n->description ); remaining -= 1; }
-        else if( n->type == "FLAGS" ) { printFLAGSdata( file, n->description, n->count ); remaining -= n->count; }
+        else if( n->type == "VER8" ) { ver = printVER8data( file, n ); remaining -= 1; }
+        else if( n->type == "FLAGS" ) { printFLAGSdata( file, n ); remaining -= n->count; }
 
-        else if( n->type == "INT8" ) { printINT8data( file, n->description ); remaining -= 1; }
-        else if( n->type == "UINT8" ) { printUINT8data( file, n->description ); remaining -= 1; }
+        else if( n->type == "INT8" ) { printINTEGERdata( file, n, false, false, 1 ); remaining -= 1; }
+        else if( n->type == "UINT8" ) { printINTEGERdata( file, n, true, false, 1 ); remaining -= 1; }
 
-        else if( n->type == "INT16" ) { printINT16data( file, n->description ); remaining -= 2; }
-        else if( n->type == "UINT16" ) { printUINT16data( file, n->description ); remaining -= 2; }
+        else if( n->type == "INT16" ) { printINTEGERdata( file, n, false, false, 2 ); remaining -= 2; }
+        else if( n->type == "UINT16" ) { printINTEGERdata( file, n, true, false, 2 ); remaining -= 2; }
 
-        else if( n->type == "INT32" ) { printINT32data( file, n->description ); remaining -= 4; }
-        else if( n->type == "UINT32" ) { printUINT32data( file, n->description ); remaining -= 4; }
+        else if( n->type == "INT32" ) { printINTEGERdata( file, n, false, false, 4 ); remaining -= 4; }
+        else if( n->type == "UINT32" ) { printINTEGERdata( file, n, true, false, 4 ); remaining -= 4; }
         
-        else if( n->type == "HEX32" ) { printHEX32data( file, n->description ); remaining -= 4; }
-        else if( n->type == "TAG4" ) { printTAG4data( file, n->description ); remaining -= 4; }
+        else if( n->type == "HEX8" ) { printINTEGERdata( file, n, true, true, 1 ); remaining -= 1; }
+        else if( n->type == "HEX16" ) { printINTEGERdata( file, n, true, true, 2 ); remaining -= 2; }
+        else if( n->type == "HEX32" ) { printINTEGERdata( file, n, true, true, 4 ); remaining -= 4; }
+
+        else if( n->type == "LANG16" ) { printLANGdata( file, n ); remaining -= 2; }
+
+        else if( n->type == "TAG4" ) { printTAG4data( file, n ); remaining -= 4; }
+        else if( n->type == "TAG4_LIST" ) { printTAG4LISTdata( file, n, remaining ); remaining = 0; }
+
+        else if( n->type == "INT16.2" ) { printINT1616data( file, n, false ); remaining -= 4; }
+        else if( n->type == "UINT16.2" ) { printINT1616data( file, n, true ); remaining -= 4; }
+        else if( n->type == "INT8.2" ) { printINT88data( file, n, false ); remaining -= 2; }
+        else if( n->type == "UINT8.2" ) { printINT88data( file, n, true ); remaining -= 2; }
         
-        else if( n->type == "INT16.2" ) { printINT1616data( file, n->description ); remaining -= 4; }
-        else if( n->type == "INT8.2" ) { printINT88data( file, n->description ); remaining -= 2; }
-        
-        else if( n->type == "INT32COUNT" ) { printINT32COUNTdata( file, n->description, n->count ); remaining = (4*n->count); }
-        else if( n->type == "TAG4_LIST" ) { printTAG4LISTdata( file, n->description, remaining ); remaining = 0; }
-        
-        else if( n->type == "RSVRD" ) { printRSRVDdata( file, n->description, n->count ); remaining -= (4*n->count); }
-        else if( n->type == "MP4TIME" ) { int num = printMP4TIMEdata( file, n->description, ver ); remaining -= num; }
+        else if( n->type == "IGNORE" ) { skipIGNOREdata( file, n->count ); remaining -= n->count; }
+        else if( n->type == "MP4TIME" ) { int num = printMP4TIMEdata( file, n, ver ); remaining -= num; }
+        else if( n->type == "MP4TICKS" ) { int num = printMP4TICKSdata( file, n, ver ); remaining -= num; }
+
+        else if( n->type == "STRING" ) { int num = printSTRINGdata( file, n, remaining ); remaining -= num; }
+
+        else if( n->type == "NEWLINE" ) { printFORMAT( n ); }
+        else if( n->type == "LABEL" ) { printFORMAT( n ); }
 
         else { printREMAININGdata( file, remaining ); remaining = 0; }
         if( remaining <= 0 ) break;
     }
 
-    std::cout << std::endl;
+    if( m_struct_depth == 1 ) std::cout << std::endl;
 
     m_depth--;
+    m_struct_depth--;
 }
 //
 // Parse the MP4 dictionary file
@@ -254,11 +273,12 @@ struct node_t * getNode( std::string buf, int &offset )
                 catch(const std::exception& e) { std::cerr << "Invalid count in dictionary : " << tmp << " " << e.what() << '\n'; }
             }
             n->description = getVal( n->raw_data, "Description", '"', '"' );
+            n->units = getVal( n->raw_data, "Units", '"', '"' );
             n->raw_parts = getVal( n->raw_data, "Parts", '[', ']' );
         }
 
         // if there are parts, extract those
-        if( n->raw_parts.length() > 0 ) n->parts = getParts( n->raw_parts);
+        if( n->raw_parts.length() > 0 ) n->parts = getParts( n->raw_parts );
         else n->parts.clear();
     }
 
@@ -335,9 +355,9 @@ std::string getVal( std::string buf, std::string key, char start_del, char stop_
     return ret;
 }
 
-std::map<std::string, struct node_t*> getParts( std::string buf )
+std::vector<struct node_t*> getParts( std::string buf )
 {
-    std::map<std::string, struct node_t*> ret;
+    std::vector<struct node_t*> ret;
     int offset = 0;
     int count = 1;
 
@@ -371,8 +391,10 @@ std::map<std::string, struct node_t*> getParts( std::string buf )
             catch(const std::exception& e) { std::cerr << "Invalid count in dictionary : " << tmp << " " << e.what() << '\n'; }
         }
         n->description = getVal( n->raw_data, "Description", '"', '"' );
+        n->units = getVal( n->raw_data, "Units", '"', '"' );
 
-        ret[n->name] = n;
+        // add to the list
+        ret.push_back(n);
     }
 
     return ret;
