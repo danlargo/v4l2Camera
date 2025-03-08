@@ -19,7 +19,6 @@ V4l2Camera is an attempt to abstract the video4linux2 api into something more ea
 - Example code provided for command line application, sample application (binary-only) provided for GUI based application
 - Distributed as open-source under the [MIT License](./LICENSE)
 
-
 <br/><br/><hr/>
 
 # Index
