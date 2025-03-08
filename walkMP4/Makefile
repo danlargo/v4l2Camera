@@ -15,13 +15,13 @@ SRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp, build/%.o, $(SRCS))
 
 # Default target
-all: walkMP4
+all: ../bin/walkMP4
 
 # Ensure the build directory exists
 $(shell $(MD) build)
 
 # Link the target executable
-walkMP4: $(OBJS)
+../bin/walkMP4: $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 # Pattern rule to compile .cpp files to .o files
@@ -30,7 +30,7 @@ build/%.o: %.cpp
 
 # Clean target
 clean:
-	$(RM) $(TARGET) $(OBJS)
+	$(RM) ../bin/walkMP4 $(OBJS)
 	$(RRM) build
 
 .PHONY: all clean

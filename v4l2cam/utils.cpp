@@ -10,7 +10,7 @@
 
 #ifdef __linux__
     #include <unistd.h>
-    #include "linux/linuxcamera.h"
+    #include "linuxcamera.h"
 #elif __APPLE__
     #include <unistd.h>
     #include "macos/accamera.h"
