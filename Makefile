@@ -2,7 +2,7 @@
 #
 # NOTE TO DEVELOPER
 #
-# This is an NMAKE style makefile, specificc to Windows namek, which is installed by the Visual Studio build tools.
+# This is an NMAKE style makefile, specificc to Windows nmake, which is installed by the Visual Studio build tools.
 #
 #
 #
