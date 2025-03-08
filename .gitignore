@@ -46,3 +46,4 @@ bin/*
 # include the two redist windows obj files
 !wincamera.obj
 !v4l2camera-win.obj
+!README.md
