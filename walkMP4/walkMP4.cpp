@@ -18,6 +18,9 @@ const int s_revision = 10;
 unsigned int m_depth = 0;
 unsigned int m_struct_depth = 0;
 
+// variable list to use for calculated variabled
+std::map<std::string, std::string> m_vars;
+
 int main( int argc, char** argv )
 {
     // set the flags

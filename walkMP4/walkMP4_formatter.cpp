@@ -217,14 +217,44 @@ void printINTEGERdata( std::ifstream &file, struct node_t * n, bool unSigned, bo
 
         if( unSigned )
         {
-            if( width == 1 ) std::cout << (int)val_uchar[i];
-            else if( width == 2 ) std::cout << swapEndian(val_ushort[i]);
-            else std::cout << swapEndian(val_uint[i]);
+            if( width == 1 ) 
+            {
+                std::cout << (int)val_uchar[i];
+                // check if we need to assign this to a variable
+                if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string((int)val_uchar[i]);
+            }
+            else if( width == 2 ) 
+            {
+                std::cout << swapEndian(val_ushort[i]);
+                // check if we need to assign this to a variable
+                if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(swapEndian(val_ushort[i]));
+            }
+            else 
+            {
+                std::cout << swapEndian(val_uint[i]);
+                // check if we need to assign this to a variable
+                if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(swapEndian(val_uint[i]));
+            }
         } else
         {
-            if( width == 1 ) std::cout << (int)val_char[i];
-            else if( width == 2 ) std::cout << swapEndian(val_short[i]);
-            else std::cout << swapEndian(val_int[i]);
+            if( width == 1 ) 
+            {
+                std::cout << (int)val_char[i];
+                // check if we need to assign this to a variable
+                if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string((int)val_char[i]);
+            }
+            else if( width == 2 ) 
+            {
+                std::cout << swapEndian(val_short[i]);
+                // check if we need to assign this to a variable
+                if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(swapEndian(val_short[i]));
+            }
+            else 
+            {
+                std::cout << swapEndian(val_int[i]);
+                // check if we need to assign this to a variable
+                if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(swapEndian(val_int[i]));
+            }
         }
 
         if( i < n->count-1 ) std::cout << ", ";
@@ -256,12 +286,12 @@ int printMP4TIMEdata( std::ifstream &file, struct node_t * n, int ver )
 
         struct tm *time_info;
         char buffer[80];
-        if( s_time == 0 ) std::cout << " " << toLower(n->description) << " < - >";
+        if( s_time == 0 ) std::cout << " " << toLower(n->description) << " [ - ]";
         else 
         {
             time_info = gmtime(&tmp_time);
             strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S UTC", time_info);
-            std::cout << " " << toLower(n->description) << " <\033[38;5;1m" << buffer << "\033[0m>";
+            std::cout << " " << toLower(n->description) << " [\033[38;5;1m" << buffer << "\033[0m]";
         }
 
     } else
@@ -273,7 +303,7 @@ int printMP4TIMEdata( std::ifstream &file, struct node_t * n, int ver )
         struct tm *time_info = gmtime(&tmp_time);
         char buffer[80];
         strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S UTC", time_info);
-        std::cout << " " << toLower(n->description) << " <\033[38;5;1m" << buffer << "\033[0m>";
+        std::cout << " " << toLower(n->description) << " [\033[38;5;1m" << buffer << "\033[0m]";
 
         ret = 8;
     }
@@ -296,21 +326,27 @@ int printMP4TICKSdata( std::ifstream &file, struct node_t * n, int ver )
         file.read( (char *)&s_dur, 4 );
         s_dur = swapEndian(s_dur);
 
-        std::cout << " " << toLower(n->description) << " <\033[1;33m" << s_dur;
+        std::cout << " " << toLower(n->description) << " [\033[1;33m" << s_dur;
+
+        // check if we need to assign this to a variable
+        if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(s_dur);
 
     } else
     {
         file.read( (char *)&l_dur, 8 );
         l_dur = swapEndian(l_dur);
 
-        std::cout << " " << toLower(n->description) << " <\033[1;33m" << l_dur ;
+        std::cout << " " << toLower(n->description) << " [\033[1;33m" << l_dur ;
+
+        // check if we need to assign this to a variable
+        if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(s_dur);
 
         ret = 8;
     }
 
     std::string units = "";
     if( n->units.length() > 0 ) units = " " + toLower(n->units);
-    std::cout << units << "\033[0m>";
+    std::cout << units << "\033[0m]";
 
     std::cout.imbue(std::locale::classic());
 
@@ -510,6 +546,36 @@ void printFORMAT( struct node_t * n )
     else if( n->type == "LABEL" ) std::cout << " " << toLower(n->description);
 }
 
+void printMATHdata( struct node_t * n )
+{
+    // check what type we need to do
+    if( n->type == "MATH_DIV" )
+    {
+        // get the variables
+        std::string var1 = m_vars[n->var1];
+        std::string var2 = m_vars[n->var2];
+
+        // do the operation
+        std::string units = "";
+        if( n->units.length() > 0 ) units = " " + toLower(n->units);
+
+        // fix up the description, in case it is blank
+        std::string desc = "";
+        if( n->description.length() > 0 ) desc = " " + toLower(n->description);
+
+        try
+        {
+            double result = std::stod(var1) / std::stod(var2);
+            std::cout << desc << " [\033[1;33m" << std::fixed << std::setprecision(2) << result << units << "\033[0m]";
+        }
+        catch(const std::exception& e)
+        {
+            std::cout << desc << " MathDiv operation failed : " << e.what();
+        }
+        
+
+    } else std::cout << "unknown math operation requested : " << n->type;
+}
 
 std::string calcPadding()
 {

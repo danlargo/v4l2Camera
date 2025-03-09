@@ -10,7 +10,7 @@
   ]
 },
 
-"AUTH" : {  "Type" : "STRUCT", "Description" : "Authoring Device",
+"AUTH" : {  "Type" : "STRUCT", "Description" : "Authoring Software",
   "Parts" : [     
     { "Type" : "FLAGS", "Count" : "4", "Description" : "Flags" },
     { "Type" : "LANG16", "Description" : "Language" },
@@ -38,6 +38,16 @@
 },
 
 "EDTS" : {  "Type" : "ATOM_LIST", "Description" : "Track Edits" },
+
+"ELST" : {  "Type" : "STRUCT", "Description" : "Edit List",
+  "Parts" : [
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "UINT32", "Description" : "Num Entries" },
+    { "Type" : "BYTES", "Description" : "data" }
+
+  ]  
+},
 
 "ENOF" : {  "Type" : "STRUCT", "Description" : "Encoded Aperture Dimensions",
   "Parts" : [
@@ -70,6 +80,7 @@
   ]
 },
 
+
 "KEYS" : {  "Type" : "STRUCT", "Description" : "Device Keys",
   "Parts" : [     
     { "Type" : "VER8", "Description" : "Ver" },
@@ -90,8 +101,9 @@
     { "Type" : "MP4TIME", "Description" : "Created" },
     { "Type" : "MP4TIME", "Description" : "Modified" },
     { "Type" : "NEWLINE" },
-    { "Type" : "UINT32", "Description" : "Timescale", "Units" : "ticks per sec" },
-    { "Type" : "MP4TICKS", "Description" : "Duration", "Units" : "ticks" },
+    { "Type" : "UINT32", "Description" : "Timescale", "Units" : "ticks per sec", "Var1" : "v1" },
+    { "Type" : "MP4TICKS", "Description" : "Duration", "Units" : "ticks", "Var1" : "v2" },
+    { "Type" : "MATH_DIV", "Description" : "", "Units" : "secs", "Var1" : "v2", "Var2" : "v1" },
     { "Type" : "LANG16", "Description" : "Language" },
     { "Type" : "IGNORE", "Count" : "2", "Description" : "Res" }
   ]
@@ -101,7 +113,7 @@
 
 "MDLN" : {  "Type" : "CHARS", "Description" : "Model Number" },
 
-"MDTA" : {  "Type" : "CHARS", "Description" : "Keys" },
+"MDTA" : {  "Type" : "CHARS", "Description" : "Key" },
 
 "META" : {  "Type" : "ATOM_LIST", "Description" : "Movie MetaData" },
 
@@ -116,8 +128,9 @@
     { "Type" : "MP4TIME", "Description" : "Created" },
     { "Type" : "MP4TIME", "Description" : "Modified" },
     { "Type" : "NEWLINE" },
-    { "Type" : "UINT32", "Description" : "Timescale", "Units" : "ticks per sec" },
-    { "Type" : "UINT32", "Description" : "Duration", "Units" : "ticks" },
+    { "Type" : "UINT32", "Description" : "Timescale", "Units" : "ticks per sec", "Var1" : "v1" },
+    { "Type" : "UINT32", "Description" : "Duration", "Units" : "ticks", "Var1" : "v2" },
+    { "Type" : "MATH_DIV", "Description" : "", "Units" : "secs", "Var1" : "v2", "Var2" : "v1" },
     { "Type" : "UINT16.2", "Description" : "Playback Rate" },
     { "Type" : "INT8.2", "Description" : "Volume" },
     { "Type" : "NEWLINE" },
@@ -177,7 +190,8 @@
     { "Type" : "NEWLINE" },
     { "Type" : "INT32", "Description" : "Track ID" },
     { "Type" : "IGNORE", "Count" : "4", "Description" : "Res" },
-    { "Type" : "MP4TICKS", "Description" : "Duration", "Units" : "ticks" },
+    { "Type" : "MP4TICKS", "Description" : "Duration", "Units" : "ticks", "Var1" : "v2" },
+    { "Type" : "MATH_DIV", "Description" : "", "Units" : "secs", "Var1" : "v2", "Var2" : "v1" },
     { "Type" : "IGNORE", "Count" : "8", "Description" : "Res" },
     { "Type" : "HEX16", "Description" : "Layer" },
     { "Type" : "HEX16", "Description" : "Alternate Group" },

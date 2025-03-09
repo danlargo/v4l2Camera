@@ -16,6 +16,8 @@ struct node_t
     std::string type;
     std::string description;
     std::string units;
+    std::string var1;
+    std::string var2;
     int count;
     std::vector<struct node_t*> parts;
     std::string raw_data;
@@ -67,6 +69,8 @@ void printINT88data( std::ifstream &file, struct node_t * n, bool unSigned );
 
 void printFORMAT( struct node_t * n );
 
+void printMATHdata( struct node_t * n );
+
 
 
 // Outout Formatting
@@ -81,6 +85,8 @@ std::string calcPadding();
 extern const int s_majorVersion;
 extern const int s_minorVersion;
 extern const int s_revision;
+
+extern std::map<std::string, std::string> m_vars;
 
 std::string getVersionString();
 

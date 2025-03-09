@@ -144,6 +144,8 @@ void parseSTRUCT( std::ifstream &file, std::map<std::string, struct node_t *> di
         else if( n->type == "MP4TIME" ) { int num = printMP4TIMEdata( file, n, ver ); remaining -= num; }
         else if( n->type == "MP4TICKS" ) { int num = printMP4TICKSdata( file, n, ver ); remaining -= num; }
 
+        else if( n->type == "MATH_DIV" ) { printMATHdata( n ); }
+
         else if( n->type == "STRING" ) { int num = printSTRINGdata( file, n, remaining ); remaining -= num; }
 
         else if( n->type == "NEWLINE" ) { printFORMAT( n ); }
@@ -274,6 +276,8 @@ struct node_t * getNode( std::string buf, int &offset )
             }
             n->description = getVal( n->raw_data, "Description", '"', '"' );
             n->units = getVal( n->raw_data, "Units", '"', '"' );
+            n->var1 = getVal( n->raw_data, "Var1", '"', '"' );
+            n->var2 = getVal( n->raw_data, "Var2", '"', '"' );
             n->raw_parts = getVal( n->raw_data, "Parts", '[', ']' );
         }
 
@@ -392,6 +396,8 @@ std::vector<struct node_t*> getParts( std::string buf )
         }
         n->description = getVal( n->raw_data, "Description", '"', '"' );
         n->units = getVal( n->raw_data, "Units", '"', '"' );
+        n->var1 = getVal( n->raw_data, "Var1", '"', '"' );
+        n->var2 = getVal( n->raw_data, "Var2", '"', '"' );
 
         // add to the list
         ret.push_back(n);

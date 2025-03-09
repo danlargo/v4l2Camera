@@ -40,6 +40,7 @@
 *.bmp
 *.raw
 *.png
+*.3gp
 
 bin/*
 
