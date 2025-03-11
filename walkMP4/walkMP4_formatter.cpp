@@ -11,34 +11,43 @@ void printATOMhdr( struct atom_t atom, std::string descrip )
 {
     std::cout << calcPadding();
     trim(descrip);
-    if( descrip.length() > 0 ) std::cout << "[\033[1;32m" << atom.tag << "\033[0m] \033[1;37m" << descrip << "\033[0m" << std::endl;
+    
+    if( !std::isprint(atom.tag[0] ) ) 
+    {
+        std::cout << "[\033[1;32m" << std::hex << std::setw(2) << std::setfill('0') 
+        << (unsigned int)(unsigned char)atom.tag[0] << " " << (unsigned int)(unsigned char)atom.tag[1] << " "
+        << (unsigned int)(unsigned char)atom.tag[2] << " " << (unsigned int)(unsigned char)atom.tag[3] << " "
+        << std::dec << "\033[0m] \033[1;37m" << descrip << "\033[0m" << std::endl;
+    } else std::cout << "[\033[1;32m" << atom.tag << "\033[0m]";
+
+    if( descrip.length() > 0 )  std::cout << " \033[1;37m" << descrip << "\033[0m" << std::endl;
     else 
     {
         std::cout.imbue(std::locale(""));
-        std::cout << std::dec << "[\033[1;32m" << atom.tag << "\033[0m] \033[1;33m(" << atom.size << " bytes)  ...not in dictionary\033[0m" << std::endl;
+        std::cout << std::dec << "\033[1;33m(" << atom.size << " bytes)  ...not in dictionary\033[0m" << std::endl;
         std::locale::classic();
     }
 
 }
 
 
-void printFREEatom( std::ifstream &file, struct atom_t atom )
+void printFREEdata( std::ifstream &file, int size )
 {
     m_depth++;
 
     unsigned int dump_len = 64;
-    if( atom.size < dump_len ) dump_len = atom.size;
+    if( size < dump_len ) dump_len = size;
 
     // we can grab this all at once as it is not likely to be fucking huge
-    char * buffer = new char[atom.size];
-    file.read( buffer, atom.size );
+    char * buffer = new char[size];
+    file.read( buffer, size );
 
     // dump up to 80 chars that we find in the data
     std::cout << std::dec << calcPadding();
 
-    std::cout << "  (" << atom.size << " bytes) ";
+    std::cout << "  (" << size << " bytes) ";
 
-    if( atom.size > 0 )
+    if( size > 0 )
     {
         // now dump the raw bytes
         for( int i = 0; i < (dump_len/2); i++ )
@@ -47,12 +56,12 @@ void printFREEatom( std::ifstream &file, struct atom_t atom )
         }
 
         // dump any printable characters
-        std::cout << " : \033[38;5;12m";
+        std::cout << std::endl << std::dec << calcPadding() << "  [\033[38;5;12m";
         for( int i = 0; i < dump_len; i++ )
         {
             if( isprint(buffer[i]) ) std::cout << buffer[i];
         }
-        std::cout << "\033[0m";
+        std::cout << "\033[0m]";
     }
 
     delete [] buffer;
@@ -62,15 +71,15 @@ void printFREEatom( std::ifstream &file, struct atom_t atom )
     m_depth--;
 }
 
-void printRAWatom( std::ifstream &file, struct atom_t atom )
+void printRAWdata( std::ifstream &file, int size )
 {
     m_depth++;
 
     int chunk = 2048;
-    int grab_size = atom.size;
+    int grab_size = size;
 
     std::cout.imbue(std::locale(""));
-    std::cout << calcPadding() << std::dec << "  (binary data) " << atom.size << " bytes" << std::endl;
+    std::cout << calcPadding() << std::dec << "  (binary data) " << size << " bytes" << std::endl;
     std::locale::classic();
 
     // grab a chunk at a time as it could be gigabytes long
@@ -88,17 +97,17 @@ void printRAWatom( std::ifstream &file, struct atom_t atom )
 }
 
 
-void printCHARSatom( std::ifstream &file, struct atom_t atom )
+void printCHARSdata( std::ifstream &file, int size)
 {
     m_depth++;
 
     std::cout.imbue(std::locale(""));
-    std::cout << calcPadding() << std::dec << "  (chars) " << atom.size << " bytes";
+    std::cout << calcPadding() << std::dec << "  (chars) " << size << " bytes";
     std::locale::classic();
 
-    char * buffer = new char[atom.size+1];
-    file.read( buffer, atom.size );
-    buffer[atom.size] = 0;
+    char * buffer = new char[size+1];
+    file.read( buffer, size );
+    buffer[size] = 0;
 
     std::cout << " : \033[0;36m" << buffer << "\033[0m" << std::endl;
 
@@ -107,13 +116,13 @@ void printCHARSatom( std::ifstream &file, struct atom_t atom )
     m_depth--;
 }
 
-void printUNKNatom( std::ifstream &file, struct atom_t atom )
+void printUNKNdata( std::ifstream &file, int size )
 {
     m_depth++;
     int chunk = 16;
     int num_lines = 2;
 
-    int grab_size = atom.size;
+    int grab_size = size;
 
     // grab a chunk at a time as it could be gigabytes long
     while( grab_size > 0 )

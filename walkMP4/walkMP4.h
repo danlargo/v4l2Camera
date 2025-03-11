@@ -27,23 +27,27 @@ struct node_t
 std::map<std::string, struct node_t*> parseDictionary( std::string fid );
 void printDictionary( std::map<std::string, struct node_t*> dictionary );
 struct node_t * getNode( std::string buf, int &offset );
-std::string getRawData( std::string buf, int &offset );
+std::string getNodeData( std::string buf, int &offset );
+std::string getNodeName( std::string buf, int &offset );
 std::string getVal( std::string buf, std::string key, char start_del, char stop_del );
 std::vector<struct node_t*> getParts( std::string buf );
+std::string getInner( std::string in );
+std::string removeInner( std::string in );
 
 // parsers
 //
 void parseATOM( std::ifstream &file, std::map<std::string, struct node_t*> dictionary, int size );
-void parseSTRUCT( std::ifstream &file, std::map<std::string, struct node_t*> dictionary, struct node_t * node, struct atom_t atom );
+void parseSTRUCT( std::ifstream &file, std::map<std::string, struct node_t*> dictionary, struct node_t * node, int size );
+void parseLISTdata( std::ifstream &file, std::map<std::string, struct node_t*> dictionary, struct node_t * node, int size );
 
 void printATOMhdr( struct atom_t atom, std::string descrip );
 struct atom_t readATOM( std::ifstream &file );
 
-void printFREEatom( std::ifstream &file, struct atom_t atom );
+void printFREEdata( std::ifstream &file, int size );
 
-void printRAWatom( std::ifstream &file, struct atom_t atom );
-void printCHARSatom( std::ifstream &file, struct atom_t atom );
-void printUNKNatom( std::ifstream &file, struct atom_t atom );
+void printRAWdata( std::ifstream &file, int size );
+void printCHARSdata( std::ifstream &file, int size );
+void printUNKNdata( std::ifstream &file, int size );
 
 int printVER8data( std::ifstream &file, struct node_t * n );
 void printFLAGSdata( std::ifstream &file, struct node_t * n );
@@ -70,8 +74,6 @@ void printINT88data( std::ifstream &file, struct node_t * n, bool unSigned );
 void printFORMAT( struct node_t * n );
 
 void printMATHdata( struct node_t * n );
-
-
 
 // Outout Formatting
 //

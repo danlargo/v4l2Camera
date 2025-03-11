@@ -1,8 +1,14 @@
 {
 
-"TOP" : {   "Type" : "ATOM_LIST", "Count" : "1", "Description" : "Top Level of MP4/MOV/3GP file" },
+"TOP" : { 
+  "Type" : "ATOM_LIST", 
+  "Count" : "1", 
+  "Description" : "Top Level of MP4/MOV/3GP file" 
+},
 
-"ALIS" : {  "Type" : "STRUCT", "Description" : "Alias Data",
+"ALIS" : { 
+  "Type" : "STRUCT", 
+  "Description" : "Alias Data",
   "Parts" : [     
     { "Type" : "VER8", "Description" : "Ver" },
     { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
@@ -10,7 +16,7 @@
   ]
 },
 
-"AUTH" : {  "Type" : "STRUCT", "Description" : "Authoring Software",
+"AUTH" : { "Type" : "STRUCT", "Description" : "Authoring Software",
   "Parts" : [     
     { "Type" : "FLAGS", "Count" : "4", "Description" : "Flags" },
     { "Type" : "LANG16", "Description" : "Language" },
@@ -18,7 +24,7 @@
   ]
 },
 
-"CLEF" : {  "Type" : "STRUCT", "Description" : "Clean Aperture Dimensions",
+"CLEF" : { "Type" : "STRUCT", "Description" : "Clean Aperture Dimensions",
   "Parts" : [
     { "Type" : "INT32", "Description" : "Width" },
     { "Type" : "INT32", "Description" : "Height" },
@@ -44,8 +50,15 @@
     { "Type" : "VER8", "Description" : "Ver" },
     { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
     { "Type" : "UINT32", "Description" : "Num Entries" },
-    { "Type" : "BYTES", "Description" : "data" }
-
+    { "Type" : "LIST", "Description" : "Edits",
+      "Parts" : [
+        { "Type" : "MP4TICKS", "Description" : "Duration", "Var1" : "v2", "Units" : "ticks" },
+        { "Type" : "MATH_DIV", "Description" : "", "Units" : "secs", "Var1" : "v2", "Var2" : "v1" },
+        { "Type" : "MP4TICKS", "Description" : "@ time", "Units" : "ticks", "Var1" : "v2" },
+        { "Type" : "MATH_DIV", "Description" : "", "Units" : "secs", "Var1" : "v2", "Var2" : "v1" },
+        { "Type" : "UINT16.2", "Description" : "Rate" }
+      ]
+    }
   ]  
 },
 
@@ -56,6 +69,8 @@
     { "Type" : "INT32", "Description" : "Horz-Offset" } 
   ]  
 },
+
+"FDSC" : {  "Type" : "CHARS", "Description" : "Descriptor" },
 
 "FIRM" : {  "Type" : "CHARS", "Description" : "Firmware Version" },
 
@@ -69,6 +84,28 @@
   ]
 },
 
+"GMHD" : {  "Type" : "ATOM_LIST", "Description" : "Generic Media Header" },
+
+"GMIN" : {  "Type" : "STRUCT", "Description" : "Generic Media Information",
+  "Parts" : [
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "HEX16", "Description" : "Graphics Mode" },
+    { "Type" : "LABEL", "Description" : "Operation Colors : " },
+    { "Type" : "HEX16", "Description" : "Red" },
+    { "Type" : "HEX16", "Description" : "Green" },
+    { "Type" : "HEX16", "Description" : "Blue" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "LABEL", "Description" : "Audio Balance" },
+    { "Type" : "HEX8", "Description" : "Left" },
+    { "Type" : "HEX8", "Description" : "Right" },
+    { "Type" : "IGNORE", "Count" : "2", "Description" : "Res" }
+  ]  
+},
+
+"GPMD" : {  "Type" : "BYTES", "Description" : "GoPro MetaData" },
+
 "HDLR" : {  "Type" : "STRUCT", "Description" : "Track Handler",
   "Parts" : [     
     { "Type" : "VER8", "Description" : "Ver" },
@@ -80,6 +117,7 @@
   ]
 },
 
+"ILST" : {  "Type" : "BYTES", "Description" : "Generic Media Header" },
 
 "KEYS" : {  "Type" : "STRUCT", "Description" : "Device Keys",
   "Parts" : [     
