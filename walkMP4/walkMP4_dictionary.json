@@ -123,7 +123,7 @@
   "Parts" : [     
     { "Type" : "VER8", "Description" : "Ver" },
     { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
-    { "Type" : "INT32", "Description" : "Num" },
+    { "Type" : "INT32", "Description" : "number of keys" },
     { "Type" : "ATOM_LIST", "Description" : "Keys" }
   ]
 },

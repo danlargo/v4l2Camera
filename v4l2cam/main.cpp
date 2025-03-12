@@ -111,7 +111,7 @@ int main( int argc, char** argv )
                 else setVideoFormat(cmdLine["d"], cmdLine["w"], "30" );
             } else if( cmdLine["p"].length() > 0 ) setFrameRate(cmdLine["d"], cmdLine["p"]);
 
-            captureImage(cmdLine["d"], cmdLine["o"], cmdLine["f"]);
+            captureImage(cmdLine["d"], cmdLine["o"], cmdLine["f"], cmdLine["H"]);
         }
         else outerr("Must provide a device number to grab an image : -d [0..63]");
     }
@@ -130,7 +130,7 @@ int main( int argc, char** argv )
                 else setVideoFormat(cmdLine["d"], cmdLine["w"], "30");
             } else if( cmdLine["p"].length() > 0 ) setFrameRate(cmdLine["d"], cmdLine["p"]);
 
-            captureVideo(cmdLine["d"], cmdLine["t"], cmdLine["o"]);
+            captureVideo(cmdLine["d"], cmdLine["t"], cmdLine["o"], cmdLine["H"]);
         }
         else outerr("Must provide a device number to start video capture : -d [0..63]");
     }
@@ -213,6 +213,9 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
 
         // Discover USB Cameras
         if( argS == "-l" ) { cmdLine["l"] = "1"; continue; }
+
+        // Add header to output H264 frames
+        if( argS == "-H" ) { cmdLine["H"] = "1"; continue; }
 
         // Identify all Devices query
         if( argS == "-i" ) { cmdLine["i"] = "1"; continue; }

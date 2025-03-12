@@ -233,6 +233,8 @@ void parseLISTdata( std::ifstream &file, std::map<std::string, struct node_t *> 
             else { printREMAININGdata( file, remaining ); remaining = 0; }
             if( remaining <= 0 ) break;
         }
+
+        std::cout << std::endl;
     }
 
     if( m_struct_depth == 1 ) std::cout << std::endl;

@@ -22,9 +22,10 @@
 #endif
 
 
-void captureImage( std::string deviceID, std::string fileName, std::string format )
+void captureImage( std::string deviceID, std::string fileName, std::string format, std::string addHeader )
 {
     bool sendToStdout = true;
+
     std::ofstream outFile;
 
     // validate imag format
@@ -201,9 +202,21 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
                             else outFile.write((char*)inB->buffer, inB->length);
                         }
                     }  else {
-                        // output as raw image data
-                        if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
-                        else outFile.write((char*)inB->buffer, inB->length);
+                        // output as raw image data, add header if requested and this is an H264 frame
+                        if( (addHeader.length() > 0) && (data->format_str == "H264") )
+                        {
+                            outinfo( "Adding H264 header to frame" );
+                            char * h264Buffer = addH264Header( inB->buffer, inB->length) ;
+                            if( h264Buffer )
+                            {
+                                if (sendToStdout) std::cout.write( h264Buffer, inB->length + sizeof( h264FrameHeader_t) );
+                                else outFile.write( h264Buffer, inB->length + sizeof( h264FrameHeader_t) );
+                                delete h264Buffer;
+                            }
+                        } else {
+                            if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
+                            else outFile.write((char*)inB->buffer, inB->length);
+                        }
                     }
 
                     // delete the returned data
@@ -228,7 +241,7 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
 
 }
 
-void captureVideo( std::string deviceID, std::string timeDuration, std::string fileName )
+void captureVideo( std::string deviceID, std::string timeDuration, std::string fileName, std::string addHeader )
 {
     bool sendToStdout = true;
     std::ofstream outFile;
@@ -340,9 +353,22 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
 
                     if( goodFrame )
                     {
-                        // write the buffer out to the file
-                        if( sendToStdout ) std::cout.write( (char*)inB->buffer, inB->length );
-                        else outFile.write( (char *)inB->buffer, inB->length );
+                        // add header if requested and this is an H264 frame
+                        if( (addHeader.length() > 0) && (data->format_str == "H264") )
+                        {
+                            outinfo( "Adding H264 header to frame" );
+                            char * h264Buffer = addH264Header( inB->buffer, inB->length) ;
+                            if( h264Buffer )
+                            {
+                                if (sendToStdout) std::cout.write( h264Buffer, inB->length + sizeof( h264FrameHeader_t) );
+                                else outFile.write( h264Buffer, inB->length + sizeof( h264FrameHeader_t) );
+                                delete h264Buffer;
+                            }
+                        } else {
+                            // write the buffer out to the file
+                            if( sendToStdout ) std::cout.write( (char*)inB->buffer, inB->length );
+                            else outFile.write( (char *)inB->buffer, inB->length );
+                        }
                     }
 
                     // delete the returned data
@@ -377,4 +403,105 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
     if( sendToStdout ) std::cout.flush();
     else outFile.close();
 
+}
+
+char * addH264Header( unsigned char * buffer, int length )
+{
+
+    struct h264FrameHeader_t frameHeader;
+
+    // H264 header
+    frameHeader.delimiter[0] = 's';
+    frameHeader.delimiter[1] = 'l';
+    frameHeader.delimiter[2] = 'a';
+    frameHeader.delimiter[3] = 'p';
+
+    frameHeader.frame_size = length;
+
+    // walk the buffer to determine the type and offsets
+    int i = 0;
+    while( i < length )
+    {
+        // find the start of the next frame
+        if( (buffer[i] == 0x00) && (buffer[i+1] == 0x00) && (buffer[i+2] == 0x00) && (buffer[i+3] == 0x01) )
+        {
+            switch( buffer[i+4] )
+            {
+                case 0x67: // SPS
+                    frameHeader.sps_offset = i;
+                    break;
+                case 0x68: // PPS
+                    frameHeader.pps_offset = i;
+                    break;
+                case 0x65: // IDR
+                    frameHeader.frame_type = H264_FRAME_I;
+                    frameHeader.frame_offset = i;
+                    break;
+                case 0x61: // NDR
+                    frameHeader.frame_type = H264_FRAME_P;
+                    frameHeader.frame_offset = i;
+                    break;
+            }
+        }
+        i++;
+    }
+
+    // allocate a new buffer
+    char * newBuffer = new char[ length + sizeof( h264FrameHeader_t ) ];
+    if( newBuffer )
+    {
+        // copy the header
+        unsigned char delimiter[4];
+        unsigned int frame_type;
+        unsigned int sps_offset;
+        unsigned int pps_offset;
+        unsigned int frame_offset;
+        unsigned int frame_size;
+        unsigned int tmp;
+        memcpy( newBuffer, (char*)&frameHeader.delimiter, 4 );
+        tmp = swapEndian( frameHeader.frame_type );
+        memcpy( newBuffer + 4, (char*)&tmp, 4 );
+        tmp = swapEndian( frameHeader.sps_offset );
+        memcpy( newBuffer + 8, (char*)&tmp, 4 );
+        tmp = swapEndian( frameHeader.pps_offset );
+        memcpy( newBuffer + 12, (char*)&tmp, 4 );
+        tmp = swapEndian( frameHeader.frame_offset );
+        memcpy( newBuffer + 16, (char*)&tmp, 4 );
+        tmp = swapEndian( frameHeader.frame_size );
+        memcpy( newBuffer + 20, (char*)&tmp, 4 );
+
+        // copy the data
+        memcpy( newBuffer + 24, buffer, length );
+    }
+
+    return newBuffer;
+}
+
+// Endian Functions
+//
+unsigned int swapEndian( unsigned int in )
+{
+    return (in >> 24) | ((in << 8) & 0x00FF0000) | ((in >> 8) & 0x0000FF00) | (in << 24);
+}
+
+int swapEndian( int in )
+{
+    return (in >> 24) | ((in << 8) & 0x00FF0000) | ((in >> 8) & 0x0000FF00) | (in << 24);
+}
+
+unsigned short swapEndian( unsigned short in )
+{
+    return (in >> 8) | (in << 8);
+}
+
+unsigned long swapEndian( unsigned long in )
+{
+    return ((in >> 56) & 0x00000000000000FF) |
+           ((in >> 40) & 0x000000000000FF00) |
+           ((in >> 24) & 0x0000000000FF0000) |
+           ((in >> 8)  & 0x00000000FF000000) |
+           ((in << 8)  & 0x000000FF00000000) |
+           ((in << 24) & 0x0000FF0000000000) |
+           ((in << 40) & 0x00FF000000000000) |
+           ((in << 56) & 0xFF00000000000000);
 }
