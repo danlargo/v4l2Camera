@@ -69,14 +69,14 @@ int main( int argc, char** argv )
     if( cmdLine["T"] == "1" )
     {
         if( cmdLine["d"].length() > 0 ) runTimingTest( cmdLine["d"] ) ;
-        else outerr( "Must provide a device number to run timing tests : -d [0..63]" );
+        else outwarn( "Must provide a device number to run timing tests : -d [0..63]" );
     }
 
     // Video Modes, requires device indicator
     if( cmdLine["m"] == "1" )
     {
         if( cmdLine["d"].length() > 0 ) listVideoModes( cmdLine["d"] ) ;
-        else outerr( "Must provide a device number to list video modes : -d [0..63]" );
+        else outwarn( "Must provide a device number to list video modes : -d [0..63]" );
     }
 
     // User Controls, requires device indicator
@@ -84,7 +84,7 @@ int main( int argc, char** argv )
     {
         // make sure there is a device specified
         if (cmdLine["d"].length() > 0) listUserControls(cmdLine["d"]);
-        else outerr("Must provide a device number to list user controls : -d [0..63]");
+        else outwarn("Must provide a device number to list user controls : -d [0..63]");
     }
             
     // Try to Grab Meta Data, requires device indicator
@@ -92,7 +92,7 @@ int main( int argc, char** argv )
     {
         // make sure there is a device specified
         if (cmdLine["d"].length() > 0) fetchMetaData(cmdLine["d"]);
-        else outerr("Must provide a device number to grab meta data : -d [0..63]");
+        else outwarn("Must provide a device number to grab meta data : -d [0..63]");
     }
         
     //Get Video Format and FPS rate, must have a device as second parameter
@@ -113,7 +113,7 @@ int main( int argc, char** argv )
 
             captureImage(cmdLine["d"], cmdLine["o"], cmdLine["f"], cmdLine["H"]);
         }
-        else outerr("Must provide a device number to grab an image : -d [0..63]");
+        else outwarn("Must provide a device number to grab an image : -d [0..63]");
     }
                     
     // Capture Video, will set video mode and frame rate first if requested
@@ -132,7 +132,7 @@ int main( int argc, char** argv )
 
             captureVideo(cmdLine["d"], cmdLine["t"], cmdLine["o"], cmdLine["H"]);
         }
-        else outerr("Must provide a device number to start video capture : -d [0..63]");
+        else outwarn("Must provide a device number to start video capture : -d [0..63]");
     }
                         
     // Get Control Value, must have a device and a control number
@@ -148,7 +148,7 @@ int main( int argc, char** argv )
     {
         // make sure there is a device specified
         if (cmdLine["d"].length() > 0) setControlValue(cmdLine["d"], cmdLine["s"], cmdLine["s2"]);
-        else outerr("Must provide a device number to set a control : -d [0..63]");
+        else outwarn("Must provide a device number to set a control : -d [0..63]");
     }
 
     // Set Video Mode, requires device indicator and video mode, optional frame rate
@@ -161,7 +161,7 @@ int main( int argc, char** argv )
             if( cmdLine["p"].length() > 0 ) setVideoFormat(cmdLine["d"], cmdLine["w"], cmdLine["p"]);
             else setVideoFormat(cmdLine["d"], cmdLine["w"], "30");
         }
-        else outerr("Must provide a device number to set video mode : -d [0..63]");
+        else outwarn("Must provide a device number to set video mode : -d [0..63]");
     }
 
     // Set Frame Rate, requires device indicator and rate (> 0 and < 60)
@@ -169,7 +169,7 @@ int main( int argc, char** argv )
     {
         // make sure there is a device specified
         if (cmdLine["d"].length() > 0) setFrameRate(cmdLine["d"], cmdLine["p"]);
-        else outerr("Must provide a device number to set frame rate : -d [0..63]");
+        else outwarn("Must provide a device number to set frame rate : -d [0..63]");
     }
 
         

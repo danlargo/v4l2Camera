@@ -37,11 +37,8 @@ int getControlValue( std::string deviceID, std::string cntrlID )
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
-    if( !silentMode )
-    {
-        outln( "------------------------------");
-        outln( "Get Control value from : " + tmp->getDevName() + " : " + tmp->getUserName() );
-    }
+    outinfo( "" );
+    outinfo( "Get Control value from : " + tmp->getDevName() + " : " + tmp->getUserName() );
 
     if( verbose ) tmp->setLogMode( v4l2cam_logging_mode::logToStdOut );
     else tmp->setLogMode( v4l2cam_logging_mode::logOff );
@@ -55,24 +52,19 @@ int getControlValue( std::string deviceID, std::string cntrlID )
             int cID = std::stoi(cntrlID);
             cntrl = tmp->getOneCntrl( cID );
             int getVal = tmp->getValue( cID, true );
-            if( silentMode ) outln( std::to_string(getVal) );
-            else 
+            if( !silentMode )
             {
-                outln( "" );
-                outln( "Control " + cntrl.name + " [" + cntrlID + "] = " + std::to_string(getVal) );
-                outln( "   ...min : " + std::to_string(cntrl.min) + "  max : " + std::to_string(cntrl.max) + " step : " + std::to_string(cntrl.step) );
+                outinfo( "" );
+                outinfo( "Control " + cntrl.name + " [" + cntrlID + "] = " + std::to_string(getVal) );
+                outinfo( "   ...min : " + std::to_string(cntrl.min) + "  max : " + std::to_string(cntrl.max) + " step : " + std::to_string(cntrl.step) );
             }
-        } catch(...)
-        {
-            outerr( "Control ID " + cntrlID + " not found or invalid" );
-            if( silentMode ) outln( "-" );          // output error indicator, to trigger scripts, better than returning nothing
-        }
+        } catch(...) { outerr( "Control ID " + cntrlID + " not found or invalid" ); }
     }
 
     if( !silentMode )
     {
-        outln( "");
-        outln( "...operation complete" );
+        outinfo( "");
+        outinfo( "...operation complete" );
     }
 
     return ret;
@@ -100,11 +92,8 @@ bool setControlValue( std::string deviceID, std::string cntrlID, std::string new
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
-    if( !silentMode )
-    {
-        outln( "------------------------------");
-        outln( "Setting Control Value for " + tmp->getDevName() + " : " + tmp->getUserName() );
-    }
+    outinfo( "" );
+    outinfo( "Setting Control Value for " + tmp->getDevName() + " : " + tmp->getUserName() );
 
     if( verbose ) tmp->setLogMode( v4l2cam_logging_mode::logToStdOut );
     else tmp->setLogMode( v4l2cam_logging_mode::logOff );
@@ -130,29 +119,21 @@ bool setControlValue( std::string deviceID, std::string cntrlID, std::string new
                 resStr = "success";
             }
 
-            if( silentMode )
+            if( !silentMode )
             {
-                if( ret ) outln( "1" );
-                else outln( "0" );
+                outinfo( "" );
+                outinfo( "Control " + cntrl.name + " [" + cntrlID + "] set to : " + newVal );
+                outinfo( "" );
+                outinfo( "   ...validation read = "  + std::to_string(con) + " : " + resStr );
+                outinfo( "   ...max : " + std::to_string(cntrl.max) + " min : " + std::to_string(cntrl.min) + " step : " + std::to_string(cntrl.step) );
             }
-            else
-            {
-                outln( "" );
-                outln( "Control " + cntrl.name + " [" + cntrlID + "] set to : " + newVal );
-                outln( "   ...validation read = "  + std::to_string(con) + " : " + resStr );
-                outln( "   ...max : " + std::to_string(cntrl.max) + " min : " + std::to_string(cntrl.min) + " step : " + std::to_string(cntrl.step) );
-            }
-        } catch(...)
-        {
-            outerr( "Control ID " + cntrlID + " not found or invalid" );
-            outln( "-" );          // output error indicator, to trigger scripts, better than returning nothing
-        }
+        } catch(...) { outerr( "Control ID " + cntrlID + " not found or invalid" ); }
     }
 
     if( !silentMode )
     {
-        outln( "");
-        outln( "...operation complete" );
+        outinfo( "");
+        outinfo( "...operation complete" );
     }
 
     return ret;
@@ -179,13 +160,8 @@ void getVideoFormat( std::string deviceID )
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
-    if( !silentMode )
-    {
-        outln( "" );
-        outln( "------------------------------");
-        outln( "Current Video Format for " + tmp->getDevName() + " : " + tmp->getUserName() );
-        outln( "" );
-    }
+    outinfo( "" );
+    outinfo( "Current Video Format for " + tmp->getDevName() + " : " + tmp->getUserName() );
 
     if( verbose ) tmp->setLogMode( v4l2cam_logging_mode::logToStdOut );
     else tmp->setLogMode( v4l2cam_logging_mode::logOff );
@@ -203,22 +179,14 @@ void getVideoFormat( std::string deviceID )
                 {
                     if( !silentMode )
                     {
-                        outln( "...format    : " + data->format_str );
-                        outln( "...size      : " + std::to_string(data->width) + " x " + std::to_string(data->height) );
-                        outln( "...fps       : " + std::to_string(data2) + " fps" );
+                        outinfo( "...format    : " + data->format_str );
+                        outinfo( "...size      : " + std::to_string(data->width) + " x " + std::to_string(data->height) );
+                        outinfo( "...fps       : " + std::to_string(data2) + " fps" );
 
                     } else std::cout << data->format_str << ", " << data->width << ", " << data->height << ", " << data2 << std::endl;
 
-                } else 
-                {
-                    outerr( "Failed to fetch frame rate for : " + tmp->getDevName() + " " + tmp->getUserName() );
-                    if( silentMode ) outln( "-" );          // output error indicator, to trigger scripts, better than returning nothing
-                }
-            } else 
-            {
-                outerr( "Failed to fetch video format for : " + tmp->getDevName() + " " + tmp->getUserName() );
-                if( silentMode ) outln( "-" );          // output error indicator, to trigger scripts, better than returning nothing
-            }
+                } else outwarn( "Failed to fetch frame rate for : " + tmp->getDevName() + " " + tmp->getUserName() );
+            } else  outerr( "Failed to fetch video format for : " + tmp->getDevName() + " " + tmp->getUserName() );
 
             tmp->close();
         }
@@ -228,8 +196,8 @@ void getVideoFormat( std::string deviceID )
 
     if( !silentMode )
     {
-        outln( "");
-        outln( "...discovery complete" );
+        outinfo( "");
+        outinfo( "...discovery complete" );
     }
 }
 
@@ -254,13 +222,8 @@ void setVideoFormat( std::string deviceID, std::string videoMode, std::string fp
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
-    if( !silentMode )
-    {
-        outln( "" );
-        outln( "------------------------------");
-        outln( "Setting Video Format / Frame Rate for " + tmp->getDevName() + " : " + tmp->getUserName() );
-        outln( "" );
-    }
+    outinfo( "" );
+    outinfo( "Setting Video Format / Frame Rate for " + tmp->getDevName() + " : " + tmp->getUserName() );
 
     if( verbose ) tmp->setLogMode( v4l2cam_logging_mode::logToStdOut );
     else tmp->setLogMode( v4l2cam_logging_mode::logOff );
@@ -271,8 +234,7 @@ void setVideoFormat( std::string deviceID, std::string videoMode, std::string fp
     try { vm = tmp->getOneVM( std::stoi(videoMode) ); }
     catch(const std::exception& e) 
     { 
-        outerr( "Invalid Video Format - operation aborted " + std::string(e.what()) );
-        if( silentMode ) outln( "0" );          // indicate FALSE, failure
+        outinfo( "Invalid Video Format - operation aborted " + std::string(e.what()) );
         return; 
     }
 
@@ -284,9 +246,9 @@ void setVideoFormat( std::string deviceID, std::string videoMode, std::string fp
         if( tmp->open() )
         {
             // set the video mode
-            if( !silentMode ) outln(    "...setting video format to : " + vm.format_str +  
-                                        " @ " + std::to_string(vm.width) + " x " + std::to_string(vm.height) +
-                                        " : " + std::to_string(fpsI) + " fps" );
+            outinfo(    "...setting video format to : " + vm.format_str +  
+                        " @ " + std::to_string(vm.width) + " x " + std::to_string(vm.height) +
+                        " : " + std::to_string(fpsI) + " fps" );
 
             if( tmp->setFrameFormat( vm, fpsI ) )
             {
@@ -295,12 +257,12 @@ void setVideoFormat( std::string deviceID, std::string videoMode, std::string fp
                 if( data )
                 {
                     int val = tmp->getFrameRate();
-                    if( !silentMode ) outln(    "...video format set to : " + data->format_str +  
-                                                " @ " + std::to_string(data->width) + " x " + std::to_string(data->height) +
-                                                " : " + std::to_string(val) + " fps" );
-                    else outln( "1" );          // indicate TRUE, success
+                    outinfo( "" );
+                    outinfo(    "...video format set to : " + data->format_str +  
+                                " @ " + std::to_string(data->width) + " x " + std::to_string(data->height) +
+                                " : " + std::to_string(val) + " fps" );
 
-                } else outerr( "Failed to fetch current video mode" );
+                } else outwarn( "Failed to fetch current video mode" );
             } else outerr( "Failed to set video mode to : " + videoMode );
 
             tmp->close();
@@ -330,13 +292,8 @@ void setFrameRate( std::string deviceID, std::string fps  )
         WinCamera * tmp = camList[std::stoi(deviceID)];
     #endif
 
-    if( !silentMode )
-    {
-        outln( "" );
-        outln( "------------------------------");
-        outln( "Setting Frame Rate for " + tmp->getDevName() + " : " + tmp->getUserName() );
-        outln( "" );
-    }
+    outinfo( "" );
+    outinfo( "Setting Frame Rate for " + tmp->getDevName() + " : " + tmp->getUserName() );
 
     if( verbose ) tmp->setLogMode( v4l2cam_logging_mode::logToStdOut );
     else tmp->setLogMode( v4l2cam_logging_mode::logOff );
@@ -350,7 +307,6 @@ void setFrameRate( std::string deviceID, std::string fps  )
     } catch(const std::exception& e) 
     { 
         outerr( "Invalid frame rate " + std::string(e.what()) );
-        if( silentMode ) outln( "0" );          // indicate FALSE, failure
         return;
     }
 
@@ -363,10 +319,9 @@ void setFrameRate( std::string deviceID, std::string fps  )
             {
                 // verify setting
                 int val = tmp->getFrameRate();
-                if( !silentMode ) outln( "...frame rate set to : " + std::to_string(val) + " fps" );
-                else outln( "1" );          // indicate TRUE, success
+                outinfo( "...frame rate set to : " + std::to_string(val) + " fps" );
 
-            } else outerr( "Failed to set frame rate to : " + fps );
+            } else outwarn( "Failed to set frame rate to : " + fps );
 
             tmp->close();
 

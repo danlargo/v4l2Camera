@@ -39,6 +39,7 @@ extern bool silentMode;
 //
 void outln( std::string );
 void outerr( std::string );
+void outwarn( std::string );
 void outinfo( std::string );
 
 // Command processors

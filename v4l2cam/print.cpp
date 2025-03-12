@@ -25,9 +25,9 @@ void printSudoHint( int numCameras )
     #ifdef __APPLE__
     if(  numCameras == 0 )
     {
-        outln( "Hint : v4l2cam, may have to be run as root on MACOS to access USB cameras" );
-        outln( "...it is not possible to ask for Camera permissions from a command line app on MACOS");
-        outln( "...see Readme file for instructions on adding V4l2Camera to GUI app on MACOS" );
+        outwarn( "Hint : v4l2cam, may have to be run as root on MACOS to access USB cameras" );
+        outwarn( "...it is not possible to ask for Camera permissions from a command line app on MACOS");
+        outwarn( "...see Readme file for instructions on adding V4l2Camera to GUI app on MACOS" );
     }
     #endif
 
@@ -84,6 +84,7 @@ int printBasicHelp()
     outln( "            :   ...   raw - output raw image data captured from camera, including MJPEG");
     outln( "            :   ...   any other fmt, image will be output as raw image data");
     outln( "            :   ...   if no fmt specified or not flag, image will be output as raw image data");
+    outln( "-H          :   add header to H264 frames, only supported in video capture mode");
     outln( "---" );
     outln( "-w [val]    :   set the video mode for camera -d ##, to [val]" );
     outln( "-p [val]    :   set the frame rate for camera -d ##, to [val]" );

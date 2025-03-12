@@ -35,16 +35,16 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
 		else 
         {
             format = "raw";
-            outerr("Invalid image format specified, defaulting to <raw>");
+            outwarn("Invalid image format specified, defaulting to <raw>");
 		}
     } else {
         format = "raw";
-        outerr("No format specified, writing raw output data");
+        outwarn("No format specified, writing raw output data");
     }
 
     // check if filename is specified
     if( fileName.length() > 0 ) sendToStdout = false;
-    else outerr( "No filename specified, writing raw output data (image frame) to STDOUT");
+    else outwarn( "No filename specified, writing raw output data (image frame) to STDOUT");
 
     // open the output file
     if( !sendToStdout ) 
@@ -82,7 +82,7 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
     #endif
 
     // initiate image (one frame) capture
-    outerr( "Using " + cam->getDevName() + " : " + cam->getUserName() + " for image capture");
+    outinfo( "Using " + cam->getDevName() + " : " + cam->getUserName() + " for image capture");
 
     if( verbose ) cam->setLogMode( v4l2cam_logging_mode::logToStdOut );
     else cam->setLogMode( v4l2cam_logging_mode::logOff );
@@ -95,11 +95,11 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
         {
             // grab the frame format
             int data2 = cam->getFrameRate();
-            outerr( "   ...using format : " + data->format_str + 
+            outinfo( "   ...using format : " + data->format_str + 
                     " @ " + std::to_string(data->width) + " x " + std::to_string(data->height) + 
                     " : " + std::to_string(data2) + " fps" );
 
-        } else outerr( "Failed to fetch current video format for : " + cam->getDevName() + " " + cam->getUserName() );
+        } else outwarn( "Failed to fetch current video format for : " + cam->getDevName() + " " + cam->getUserName() );
 
         // initialize the camera
         if( cam->init( v4l2cam_fetch_mode::userPtrMode ) )
@@ -115,11 +115,11 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
                     if( (inB->buffer[0] == 0xff) && (inB->buffer[1] == 0xd8) && ((int)inB->buffer[2] == 0xff) ) 
                     {} else
                     {
-                        outerr( "Invalid JPG header, should be [FFD8FF], it is actually [" 
+                        outwarn( "Invalid JPG header, should be [FFD8FF], it is actually [" 
                                     + makeHexString(inB->buffer, 3, true )
                                     + "] : buflen is " 
                                     + std::to_string(inB->length) );
-                        outerr( "...repeating fetch" );
+                        outwarn( "...repeating fetch" );
 
                         // retry the fetch (10 times at most)
                         int tries = 0;
@@ -143,7 +143,7 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
                                         break;
                                     }
                                     // do it again
-                                    outerr( "...and again" );
+                                    outwarn( "...and again" );
                                     tries ++;
                                 } else {
                                     outerr( "...re-fetch failed, giving up" );
@@ -154,7 +154,7 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
                                 break;
                             }
                         }
-                        if( goodFrame ) outerr( "...got good frame" );
+                        if( goodFrame ) outinfo( "...got good frame" );
                     }
                 }
 
@@ -164,7 +164,7 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
                     //
                     if ("MJPG" == data->format_str)
                     {
-                        if (format != "jpg")  outerr("Invalid format specified for Motion-JPEG capture, defaulting to <jpg> format");
+                        if (format != "jpg")  outwarn("Invalid format specified for Motion-JPEG capture, defaulting to <jpg> format");
 
                         // output as native JPEG (basically raw output)
                         if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
@@ -196,7 +196,7 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
                         }
                         else {
                             // unable to convert, output as raw
-                            outerr("Unable to convert to RGB format, outputting raw image data");
+                            outwarn("Unable to convert to RGB format, outputting raw image data");
                             // output as raw image data
                             if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
                             else outFile.write((char*)inB->buffer, inB->length);
@@ -224,7 +224,7 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
                     delete inB;
                 }
 
-            } else outerr( "Nothing returned from fetch call for : " + cam->getDevName() + " " + cam->getUserName() );
+            } else outwarn( "Nothing returned from fetch call for : " + cam->getDevName() + " " + cam->getUserName() );
         } else outerr( "Failed to initilize fetch mode for : " + cam->getDevName() + " " + cam->getUserName() );
 
         // close the camera
@@ -270,25 +270,25 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
     // check if filename is specified
     if( fileName.length() > 0 ) 
     {
-        outerr( "Using " + cam->getDevName() + " : " + cam->getUserName() +  " for video capture" );
+        outinfo( "Using " + cam->getDevName() + " : " + cam->getUserName() +  " for video capture" );
         sendToStdout = false;
     }
-    else outerr( "No filename specified, writing output data (video frames) to STDOUT");
+    else outinfo( "No filename specified, writing output data (video frames) to STDOUT");
 
     // check the time duration
     if( timeDuration.length() > 0 ) timeToCapture = std::stoi( timeDuration );
-    else outerr( "No time duration specified");
+    else outinfo( "No time duration specified, defaulting to 10 secs");
 
     // check for max duration
     if( timeToCapture > 60 )
     {
-        outerr( "Max capture time is 60 secs" );
+        outwarn( "Max capture time is 60 secs, setting to 60 secs" );
         timeToCapture = 60;
     }
     
     // initiate video (multiple frame) capture
     framesToCapture = timeToCapture * fpsVideo;
-    outerr( "Video capture duration is : " + std::to_string(timeToCapture) + " seconds, " + std::to_string(framesToCapture) + " frames" );
+    outinfo( "Video capture duration is : " + std::to_string(timeToCapture) + " seconds, " + std::to_string(framesToCapture) + " frames" );
 
     // open the output file
     if( !sendToStdout ) 
@@ -318,11 +318,11 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
         {
             // grab the frame format
             int data2 = cam->getFrameRate();
-            outerr( "   ...using format : " + data->format_str + 
+            outinfo( "   ...using format : " + data->format_str + 
                     " @ " + std::to_string(data->width) + " x " + std::to_string(data->height) + 
                     " : " + std::to_string(data2) + " fps" );
 
-        } else outerr( "Failed to fetch current video format for : " + cam->getDevName() + " " + cam->getUserName() );
+        } else outwarn( "Failed to fetch current video format for : " + cam->getDevName() + " " + cam->getUserName() );
 
         // initialize the camera
         if( cam->init( v4l2cam_fetch_mode::userPtrMode ) )
@@ -375,7 +375,7 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
                     delete inB->buffer;
                     delete inB;
 
-                } else outerr( "Nothing returned from fetch call for : /dev/video" + deviceID );
+                } else outwarn( "Nothing returned from fetch call for : /dev/video" + deviceID );
 
                 framesToCapture--;
 

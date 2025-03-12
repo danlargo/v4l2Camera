@@ -54,7 +54,7 @@ void runTimingTest( std::string deviceID )
     #endif
 
     // initiate image (one frame) capture
-    outerr( "Using " + cam->getDevName() + " : " + cam->getUserName() + " for timing test");
+    outinfo( "Using " + cam->getDevName() + " : " + cam->getUserName() + " for timing test");
 
     if( verbose ) cam->setLogMode( v4l2cam_logging_mode::logToStdOut );
     else cam->setLogMode( v4l2cam_logging_mode::logOff );
@@ -68,11 +68,11 @@ void runTimingTest( std::string deviceID )
         {
             // grab the frame format
             data2 = cam->getFrameRate();
-            outerr( "   ...using format : " + data->format_str + 
+            outinfo( "   ...using format : " + data->format_str + 
                     " @ " + std::to_string(data->width) + " x " + std::to_string(data->height) + 
                     " : " + std::to_string(data2) + " fps" );
 
-        } else outerr( "Failed to fetch current video format for : " + cam->getDevName() + " " + cam->getUserName() );
+        } else outwarn( "Failed to fetch current video format for : " + cam->getDevName() + " " + cam->getUserName() );
 
         // initialize the camera
         if( cam->init( v4l2cam_fetch_mode::userPtrMode ) )
@@ -124,16 +124,19 @@ void runTimingTest( std::string deviceID )
             std::cout.imbue(loc);
 
             // output the results
-            outerr( "" );
-            outerr( "Timing Test Results for : " + cam->getDevName() + " " + cam->getUserName() );
-            outerr( "   ...good frames : " + std::to_string(good_frames) );
-            outerr( "   ...bad frames : " + std::to_string(bad_frames) );
-            outerr( "   ...total bytes : " + std::to_string(total_bytes) );
-            outerr( "   ...average bytes per frame : " + std::to_string(total_bytes / good_frames) );
-            outerr( "   ...average frame time : " + std::to_string((total_time / good_frames)/1000) + " ms" );
-            outerr( "   ...average frame rate : " + std::to_string(1000000 / (total_time / good_frames)) + " fps, versus " + std::to_string(data2) + " fps" );
+            outinfo( "" );
+            outinfo( "Timing Test Results for : " + cam->getDevName() + " " + cam->getUserName() );
+            outinfo( "   ...good frames : " + std::to_string(good_frames) );
+            outinfo( "   ...bad frames : " + std::to_string(bad_frames) );
+            outinfo( "   ...total bytes : " + std::to_string(total_bytes) );
+            outinfo( "   ...average bytes per frame : " + std::to_string(total_bytes / good_frames) );
+            outinfo( "   ...average frame time : " + std::to_string((total_time / good_frames)/1000) + " ms" );
+            outinfo( "" );
+            int calc_fps = 1000000 / (total_time / good_frames);
+            if( calc_fps < (.8*data2) ) outwarn( "   ...average frame rate : " + std::to_string(calc_fps) + " fps, versus " + std::to_string(data2) + " fps" );
+            else outinfo( "   ...average frame rate : " + std::to_string(calc_fps) + " fps, requested " + std::to_string(data2) + " fps" );
 
-        } else outerr( "Failed to initilize fetch mode for : " + cam->getDevName() + " " + cam->getUserName() );
+        } else outwarn( "Failed to initilize fetch mode for : " + cam->getDevName() + " " + cam->getUserName() );
 
         // close the camera
         cam->close();

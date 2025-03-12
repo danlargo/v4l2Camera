@@ -21,18 +21,24 @@
 
 void outln( std::string line )
 {
-    std::cout << "   " << line << std::endl;
+    std::cout << line << std::endl;
 }
 
 void outerr( std::string line )
 {
     // always print the error messages
-    std::cerr << "[\x1b[1;31mwarning\x1b[0m] " << line << std::endl;
+    std::cerr << "[\x1b[1;31merror\x1b[0m] " << line << std::endl;
+}
+
+void outwarn( std::string line )
+{
+    // always print the error messages
+    std::cerr << "[\x1b[0;31mwarn \x1b[0m] " << line << std::endl;
 }
 
 void outinfo( std::string line )
 {
-    std::cerr << "[\x1b[1;33minfo\x1b[0m] " << line << std::endl;
+    std::cerr << "[\x1b[1;33minfo \x1b[0m] " << line << std::endl;
 }
 
 bool is_number(const std::string& s)
