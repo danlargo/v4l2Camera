@@ -16,7 +16,10 @@ enum h264FrameType_t
 struct h264FrameHeader_t
 {
     unsigned char delimiter[4];
-    unsigned int frame_type;
+    unsigned int rate;
+    unsigned int width;
+    unsigned int height;
+    unsigned int h264_frame_type;
     unsigned int sps_offset;
     unsigned int pps_offset;
     unsigned int frame_offset;
@@ -56,7 +59,7 @@ void runTimingTest( std::string deviceID );
 void captureImage(std::string deviceID, std::string fileName = "", std::string format = "", std::string addHeader = "" );
 void captureVideo( std::string deviceID, std::string timeInSeconds = "10", std::string fileName = "", std::string addHeader = "" );   
 
-char * addH264Header( unsigned char * buffer, int length );
+char * addH264Header( unsigned char * buffer, int length, int rate, int width, int height );
 
 void setVideoFormat( std::string deviceID, std::string videoMode, std::string fps );
 void setFrameRate( std::string deviceID, std::string fps );

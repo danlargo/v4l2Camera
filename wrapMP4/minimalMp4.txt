@@ -1,0 +1,55 @@
+Minimal MP4 Atom Structure
+
+ATOM Structure : UINT32 size, UCHAR tag[4] ="ftyp";
+
+--------
+[FTYP] (File Type Box)
+    { "Type" : "TAG4", "Description" : "MP4 Variant" },
+    { "Type" : "HEX32", "Description" : "Ver" },
+    { "Type" : "TAG4_LIST", "Description" : "Compatible With" }
+
+
+Tag = "isom"
+Ver = 0x00000001
+Compatible WITH = "mp41", "iso2", "avc1", "mp41"
+
+-------
+[UDTA] [META] [STRING] "Created with wrapMP4 v0.1.10, by slapfrog Labs, 2025"
+
+
+-------
+[MOOV] (Movie Box):
+Container for all metadata.
+
+Sub-atoms:
+mvhd (Movie Header Box): Overall movie metadata (duration, timescale).
+
+trak (Track Box): Describes the video track.
+tkhd (Track Header Box): Track properties (ID, duration).
+
+mdia (Media Box):
+mdhd (Media Header Box): Media timescale and duration.
+
+hdlr (Handler Reference Box): Declares track type (video).
+
+minf (Media Information Box):
+vmhd (Video Media Header Box): Video-specific header.
+
+dinf (Data Information Box):
+dref (Data Reference Box): Points to data location (self-contained).
+
+stbl (Sample Table Box):
+stsd (Sample Description Box): H.264 codec info (SPS/PPS).
+
+stts (Time-to-Sample Box): Frame timing.
+
+stsc (Sample-to-Chunk Box): Maps samples to chunks.
+
+stsz (Sample Size Box): Size of each sample.
+
+stco (Chunk Offset Box): Offsets to data in mdat.
+
+
+----------
+[MDAT] (Media Data Box):
+Holds the raw H.264 NAL units (SPS, PPS, frames) with length prefixes.

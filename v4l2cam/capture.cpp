@@ -91,10 +91,11 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
     {
         // display the current video mode and frame rate
         struct v4l2cam_video_mode * data = cam->getFrameFormat();
+        int data2 = -1;
         if( data )
         {
             // grab the frame format
-            int data2 = cam->getFrameRate();
+            data2 = cam->getFrameRate();
             outinfo( "   ...using format : " + data->format_str + 
                     " @ " + std::to_string(data->width) + " x " + std::to_string(data->height) + 
                     " : " + std::to_string(data2) + " fps" );
@@ -206,7 +207,7 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
                         if( (addHeader.length() > 0) && (data->format_str == "H264") )
                         {
                             outinfo( "Adding H264 header to frame" );
-                            char * h264Buffer = addH264Header( inB->buffer, inB->length) ;
+                            char * h264Buffer = addH264Header( inB->buffer, inB->length, data2, data->width, data->height ); ;
                             if( h264Buffer )
                             {
                                 if (sendToStdout) std::cout.write( h264Buffer, inB->length + sizeof( h264FrameHeader_t) );
@@ -314,10 +315,11 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
     {
         // display the current video mode and frame rate
         struct v4l2cam_video_mode * data = cam->getFrameFormat();
+        int data2 = -1;
         if( data )
         {
             // grab the frame format
-            int data2 = cam->getFrameRate();
+            data2 = cam->getFrameRate();
             outinfo( "   ...using format : " + data->format_str + 
                     " @ " + std::to_string(data->width) + " x " + std::to_string(data->height) + 
                     " : " + std::to_string(data2) + " fps" );
@@ -335,6 +337,8 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
             start = std::chrono::steady_clock::now();
 
             // grab a a bunch of frames
+            if( (addHeader.length() > 0) && (data->format_str == "H264") ) outinfo( "Adding H264 header to frames" );
+
             while( framesToCapture > 0 )
             {
                 bool goodFrame = false;
@@ -356,8 +360,7 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
                         // add header if requested and this is an H264 frame
                         if( (addHeader.length() > 0) && (data->format_str == "H264") )
                         {
-                            outinfo( "Adding H264 header to frame" );
-                            char * h264Buffer = addH264Header( inB->buffer, inB->length) ;
+                            char * h264Buffer = addH264Header( inB->buffer, inB->length, data2, data->width, data->height ); ;
                             if( h264Buffer )
                             {
                                 if (sendToStdout) std::cout.write( h264Buffer, inB->length + sizeof( h264FrameHeader_t) );
@@ -405,7 +408,7 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
 
 }
 
-char * addH264Header( unsigned char * buffer, int length )
+char * addH264Header( unsigned char * buffer, int length, int rate, int width, int height )
 {
 
     struct h264FrameHeader_t frameHeader;
@@ -417,6 +420,9 @@ char * addH264Header( unsigned char * buffer, int length )
     frameHeader.delimiter[3] = 'p';
 
     frameHeader.frame_size = length;
+    frameHeader.rate = rate;
+    frameHeader.width = width;
+    frameHeader.height = height;
 
     // walk the buffer to determine the type and offsets
     int i = 0;
@@ -434,11 +440,11 @@ char * addH264Header( unsigned char * buffer, int length )
                     frameHeader.pps_offset = i;
                     break;
                 case 0x65: // IDR
-                    frameHeader.frame_type = H264_FRAME_I;
+                    frameHeader.h264_frame_type = H264_FRAME_I;
                     frameHeader.frame_offset = i;
                     break;
                 case 0x61: // NDR
-                    frameHeader.frame_type = H264_FRAME_P;
+                    frameHeader.h264_frame_type = H264_FRAME_P;
                     frameHeader.frame_offset = i;
                     break;
             }
@@ -450,28 +456,29 @@ char * addH264Header( unsigned char * buffer, int length )
     char * newBuffer = new char[ length + sizeof( h264FrameHeader_t ) ];
     if( newBuffer )
     {
-        // copy the header
-        unsigned char delimiter[4];
-        unsigned int frame_type;
-        unsigned int sps_offset;
-        unsigned int pps_offset;
-        unsigned int frame_offset;
-        unsigned int frame_size;
+        // copy the header into the new buffer
         unsigned int tmp;
         memcpy( newBuffer, (char*)&frameHeader.delimiter, 4 );
-        tmp = swapEndian( frameHeader.frame_type );
+        tmp = swapEndian( frameHeader.rate );
         memcpy( newBuffer + 4, (char*)&tmp, 4 );
-        tmp = swapEndian( frameHeader.sps_offset );
+        tmp = swapEndian( frameHeader.width );
         memcpy( newBuffer + 8, (char*)&tmp, 4 );
-        tmp = swapEndian( frameHeader.pps_offset );
+        tmp = swapEndian( frameHeader.height );
         memcpy( newBuffer + 12, (char*)&tmp, 4 );
-        tmp = swapEndian( frameHeader.frame_offset );
+
+        tmp = swapEndian( frameHeader.h264_frame_type );
         memcpy( newBuffer + 16, (char*)&tmp, 4 );
-        tmp = swapEndian( frameHeader.frame_size );
+        tmp = swapEndian( frameHeader.sps_offset );
         memcpy( newBuffer + 20, (char*)&tmp, 4 );
+        tmp = swapEndian( frameHeader.pps_offset );
+        memcpy( newBuffer + 24, (char*)&tmp, 4 );
+        tmp = swapEndian( frameHeader.frame_offset );
+        memcpy( newBuffer + 28, (char*)&tmp, 4 );
+        tmp = swapEndian( frameHeader.frame_size );
+        memcpy( newBuffer + 32, (char*)&tmp, 4 );
 
         // copy the data
-        memcpy( newBuffer + 24, buffer, length );
+        memcpy( newBuffer + 36, buffer, length );
     }
 
     return newBuffer;

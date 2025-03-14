@@ -133,7 +133,7 @@ void runTimingTest( std::string deviceID )
             outinfo( "   ...average frame time : " + std::to_string((total_time / good_frames)/1000) + " ms" );
             outinfo( "" );
             int calc_fps = 1000000 / (total_time / good_frames);
-            if( calc_fps < (.8*data2) ) outwarn( "   ...average frame rate : " + std::to_string(calc_fps) + " fps, versus " + std::to_string(data2) + " fps" );
+            if( calc_fps < (.8*data2) ) outwarn( "   ...average frame rate : " + std::to_string(calc_fps) + " fps, requested " + std::to_string(data2) + " fps" );
             else outinfo( "   ...average frame rate : " + std::to_string(calc_fps) + " fps, requested " + std::to_string(data2) + " fps" );
 
         } else outwarn( "Failed to initilize fetch mode for : " + cam->getDevName() + " " + cam->getUserName() );

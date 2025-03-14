@@ -36,8 +36,6 @@ void parseUDTAatom(  std::ifstream &file, unsigned long len )
             else if( atom.tag == "AUTH" ) parseAUTHatom( file, atom.size );
             else if( atom.tag == "SMTA" ) parseSMTAatom( file, atom.size );
             else if( atom.tag == "CAME" ) parseRAWatom( file, atom.size );
-            else if( atom.tag == "CAME" ) parseRAWatom( file, atom.size );
-            else if( atom.tag == "CAME" ) parseRAWatom( file, atom.size );
             else if( atom.tag == "SETT" ) parseRAWatom( file, atom.size );
             else if( atom.tag == "MUID" ) parseRAWatom( file, atom.size );
             else if( atom.tag == "BCID" ) parseRAWatom( file, atom.size );

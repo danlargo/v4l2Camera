@@ -35,8 +35,10 @@ void printFREEdata( std::ifstream &file, int size )
 {
     m_depth++;
 
-    unsigned int dump_len = 64;
-    if( size < dump_len ) dump_len = size;
+    unsigned int dump_len = 32;
+    unsigned int char_len = 100;
+    if( size < dump_len )dump_len = size;
+    if( size < char_len )char_len = size;
 
     // we can grab this all at once as it is not likely to be fucking huge
     char * buffer = new char[size];
@@ -50,14 +52,14 @@ void printFREEdata( std::ifstream &file, int size )
     if( size > 0 )
     {
         // now dump the raw bytes
-        for( int i = 0; i < (dump_len/2); i++ )
+        for( int i = 0; i < dump_len; i++ )
         {
             std::cout << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)(unsigned char)buffer[i] << " ";
         }
 
         // dump any printable characters
         std::cout << std::endl << std::dec << calcPadding() << "  [\033[38;5;12m";
-        for( int i = 0; i < dump_len; i++ )
+        for( int i = 0; i < char_len; i++ )
         {
             if( isprint(buffer[i]) ) std::cout << buffer[i];
         }
@@ -502,12 +504,12 @@ void printINT1616data( std::ifstream &file, struct node_t * n, bool unSigned )
 
     std::cout << " " << toLower(n->description) << " <\033[1;33m";
 
-    for( int i=0; i<n->count; i++ )
+    for( int i=0; i<n->count*2; i+=2 )
     {
-        if( unSigned ) std::cout << swapEndian(val2[0]) << "." << swapEndian(val2[1]);
-        else std::cout << swapEndian(val[0]) << "." << swapEndian(val[1]);
+        if( unSigned ) std::cout << swapEndian(val2[i]) << "." << swapEndian(val2[i+1]);
+        else std::cout << swapEndian(val[i]) << "." << swapEndian(val[i+1]);
 
-        if( i < n->count-1 ) std::cout << ", ";
+        if( i < (n->count*2)-2 ) std::cout << ", ";
     }
 
     std::string units = "";
@@ -529,12 +531,12 @@ void printINT88data( std::ifstream &file, struct node_t * n, bool unSigned )
 
     std::cout << " " << toLower(n->description) << " <\033[1;33m";
 
-    for( int i=0; i<n->count; i++ )
+    for( int i=0; i<n->count*2; i+=2 )
     {
-        if( unSigned ) std::cout << (unsigned int)(unsigned char)val[0] << "." << (unsigned int)(unsigned char)val[1];
-        else std::cout << (int)val[0] << "." << (int)val[1];
+        if( unSigned ) std::cout << (unsigned int)(unsigned char)val[i] << "." << (unsigned int)(unsigned char)val[i+1];
+        else std::cout << (int)val[i] << "." << (int)val[i+1];
 
-        if( i < n->count-1 ) std::cout << ", ";
+        if( i < (n->count*2)-2 ) std::cout << ", ";
     }
 
     std::cout << units << "\033[0m>";

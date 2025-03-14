@@ -1,4 +1,4 @@
-SUBDIRS := source v4l2cam walkMP4 decodeMP4
+SUBDIRS := source v4l2cam walkMP4 decodeMP4 wrapMP4
 
 .PHONY: all clean $(SUBDIRS)
 
