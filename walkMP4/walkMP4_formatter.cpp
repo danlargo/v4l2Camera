@@ -118,13 +118,20 @@ void printCHARSdata( std::ifstream &file, int size)
     m_depth--;
 }
 
-void printUNKNdata( std::ifstream &file, int size )
+void printUNKNdata( std::ifstream &file, struct atom_t atom )
 {
     m_depth++;
     int chunk = 16;
-    int num_lines = 2;
+    int num_lines = 12;
 
-    int grab_size = size;
+    int grab_size = atom.size;
+
+    // output the length and tag in hex 
+    std::cout << calcPadding()  << "  [0x" << std::hex << std::setw(8) << std::setfill('0') << atom.size << std::dec 
+                                << std::setw(2) << ", " << atom.size << " bytes, " 
+                                << std::hex << (int)atom.orig[0] << " " << (int)atom.orig[01] << " "
+                                << (int)atom.orig[02] << " " << (int)atom.orig[03] << std::dec << " "
+                                << atom.orig << "]" << std::endl;
 
     // grab a chunk at a time as it could be gigabytes long
     while( grab_size > 0 )
@@ -458,10 +465,10 @@ int printSTRINGdata( std::ifstream &file, struct node_t * n, int max_len )
     while( true )
     {
         file.read( &val, 1 );
-        if( val == 0 ) break;
-
         name += val;
         ret++;
+        
+        if( val == 0 ) break;
 
         // check if we have gone too long
         if( ret >= max_len ) break;

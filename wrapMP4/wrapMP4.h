@@ -20,6 +20,24 @@ struct h264FrameHeader_t
 #pragma pack(pop)
 
 
+struct mp4StreamInfo_t
+{
+    unsigned int frame_count;
+    unsigned int width;
+    unsigned int height;
+    unsigned int frame_rate;
+    unsigned char * sps;
+    unsigned char * pps;
+    unsigned short sps_size;
+    unsigned short pps_size;
+    std::vector<unsigned int> frame_sizes;
+    unsigned int timeScale;
+    unsigned int timeScale_swapped;
+    unsigned int videoDuration;
+    unsigned int ticks_per_frame;
+    unsigned int mdatSize;
+};
+
 // Version Utils
 //
 extern const int s_majorVersion;
@@ -27,34 +45,34 @@ extern const int s_minorVersion;
 extern const int s_revision;
 
 struct h264FrameHeader_t * getFrameHeader( std::ifstream & inFile );
-bool writeRawData( std::ofstream & file, char * buf, int len );
+struct mp4StreamInfo_t * getStreamInfo( std::ifstream & inFile );
 
-bool writeMP4Header( std::ofstream & file, int width, int height );
-bool writeFTYPatom( std::ofstream & file );
-bool writeFREEatom( std::ofstream & file );
-bool writeMOOVatom( std::ofstream & file );
-int writeAUTHatom( std::ofstream & file );
-int writeMVHDatom( std::ofstream & file );
-int writeTRAKatom( std::ofstream & file );
-int writeTKHDatom( std::ofstream & file );
+bool writeMP4Header( std::fstream & file, struct mp4StreamInfo_t * info );
+bool writeFTYPatom( std::fstream & file );
+bool writeFREEatom( std::fstream & file );
+bool writeMOOVatom( std::fstream & file );
+int writeAUTHatom( std::fstream & file );
+int writeMVHDatom( std::fstream & file );
+int writeTRAKatom( std::fstream & file );
+int writeTKHDatom( std::fstream & file );
 
-int writeMDIAatom( std::ofstream & file );
-int writeMDHDatom( std::ofstream &file );
-int writeHDLRatom( std::ofstream &file );
-int writeMINFatom( std::ofstream &file );
+int writeMDIAatom( std::fstream & file );
+int writeMDHDatom( std::fstream &file );
+int writeHDLRatom( std::fstream &file );
+int writeMINFatom( std::fstream &file );
 
-int writeVMHDatom( std::ofstream &file );
-int writeDINFatom( std::ofstream &file );
+int writeVMHDatom( std::fstream &file );
+int writeDINFatom( std::fstream &file );
 
-int writeSTBLatom( std::ofstream &file );
-int writeSTSDatom( std::ofstream &file );
-int writeSTTSatom( std::ofstream &file );
-int writeSTSCatom( std::ofstream &file );
-int writeSTSZatom( std::ofstream &file );
-int writeSTCOatom( std::ofstream &file );
+int writeSTBLatom( std::fstream &file );
+int writeSTSDatom( std::fstream &file );
+int writeSTTSatom( std::fstream &file );
+int writeSTSCatom( std::fstream &file );
+int writeSTSZatom( std::fstream &file );
+int writeSTCOatom( std::fstream &file );
 
-bool writeMDATatom( std::ofstream & file );
-bool updateAllSizeAndDuration( std::ofstream & file, int frame_rate, int frame_count );
+bool writeMDATatom( std::ifstream &file, std::fstream & outfile );
+bool verifyMP4Data( std::fstream & file, struct mp4StreamInfo_t * info, int mdatStartLocation );
 
 std::string decode_lang(uint16_t lang);
 uint16_t encode_lang(std::string lang);

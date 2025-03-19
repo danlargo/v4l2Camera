@@ -7,6 +7,7 @@ const std::string appName = "v4l2cam";
 
 enum h264FrameType_t
 {
+    H264_UNKNOWN = 0x99,
     H264_FRAME_I = 0x05,
     H264_FRAME_P = 0x01,
     H264_FRAME_B = 0x02

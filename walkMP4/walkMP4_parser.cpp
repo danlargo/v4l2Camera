@@ -35,11 +35,11 @@ void parseATOM( std::ifstream &file, std::map<std::string, struct node_t*> dicti
             else if( node->type == "STRUCT" ) parseSTRUCT( file, dictionary, node, atom.size );
             else if( node->type == "LIST" ) parseLISTdata( file, dictionary, node, atom.size );
 
-            else printUNKNdata( file, atom.size );
+            else printUNKNdata( file, atom );
 
         } else {
             printATOMhdr( atom, "" );
-            printUNKNdata( file, atom.size );
+            printUNKNdata( file, atom );
         }
 
     }

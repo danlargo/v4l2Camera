@@ -67,7 +67,7 @@ void trim(std::string &s)
 }
 
 
-// Out[put Version Information
+// Output Version Information
 
 std::string getVersionString() 
 { 

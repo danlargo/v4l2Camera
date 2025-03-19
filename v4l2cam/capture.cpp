@@ -424,6 +424,11 @@ char * addH264Header( unsigned char * buffer, int length, int rate, int width, i
     frameHeader.width = width;
     frameHeader.height = height;
 
+    frameHeader.h264_frame_type = H264_UNKNOWN;
+    frameHeader.sps_offset = 0;
+    frameHeader.pps_offset = 0;
+    frameHeader.frame_offset = 0;
+
     // walk the buffer to determine the type and offsets
     int i = 0;
     while( i < length )
@@ -431,20 +436,29 @@ char * addH264Header( unsigned char * buffer, int length, int rate, int width, i
         // find the start of the next frame
         if( (buffer[i] == 0x00) && (buffer[i+1] == 0x00) && (buffer[i+2] == 0x00) && (buffer[i+3] == 0x01) )
         {
-            switch( buffer[i+4] )
+            // decode the format byte
+            uint8_t forbidden = (buffer[i+4] >> 7) & 0x01;
+            uint8_t nri = (buffer[i+4] >> 5) & 0x03;
+            uint8_t type = buffer[i+4] & 0x1F;
+
+            switch( type )
             {
-                case 0x67: // SPS
+                case 0x7: // SPS
                     frameHeader.sps_offset = i;
                     break;
-                case 0x68: // PPS
+                case 0x8: // PPS
                     frameHeader.pps_offset = i;
                     break;
-                case 0x65: // IDR
+                case 0x5: // IDR
                     frameHeader.h264_frame_type = H264_FRAME_I;
                     frameHeader.frame_offset = i;
                     break;
-                case 0x61: // NDR
+                case 0x1: // NDR
                     frameHeader.h264_frame_type = H264_FRAME_P;
+                    frameHeader.frame_offset = i;
+                    break;
+                default:
+                    frameHeader.h264_frame_type = type;
                     frameHeader.frame_offset = i;
                     break;
             }

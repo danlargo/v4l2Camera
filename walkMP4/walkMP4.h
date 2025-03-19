@@ -47,7 +47,7 @@ void printFREEdata( std::ifstream &file, int size );
 
 void printRAWdata( std::ifstream &file, int size );
 void printCHARSdata( std::ifstream &file, int size );
-void printUNKNdata( std::ifstream &file, int size );
+void printUNKNdata( std::ifstream &file, struct atom_t atom );
 
 int printVER8data( std::ifstream &file, struct node_t * n );
 void printFLAGSdata( std::ifstream &file, struct node_t * n );

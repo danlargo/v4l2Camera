@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <map>
 #include <string>
+#include <cstring>
 
 #include "wrapMP4.h"
 
@@ -26,13 +27,8 @@ int main( int argc, char** argv )
     std::string inFilename = "";
     std::string outFilename = "";
 
-    char * buffer;
     std::ifstream inFile;
-    std::ofstream outFile;
-
-    // counters
-    int frame_count = 0;
-    int frame_rate = -1;
+    std::fstream outFile;
 
     // parse the command line
     for( int i = 1; i < argc; i++ )
@@ -49,7 +45,11 @@ int main( int argc, char** argv )
             {
                 inFilename = argv[++i];
                 inFileProvided = true;
-            } else std::cerr << "[\033[0;31mwarning\033[0;31] : invalid filename or filename not provided, defaulting to STDIN" << std::endl;
+            } else 
+            {
+                std::cerr << "[\033[0;31mwarning\033[0;31] : invalid filename or filename not provided, exiting" << std::endl;
+                return 1;
+            }
         }
 
         if( cmp == "-o" ) 
@@ -61,7 +61,7 @@ int main( int argc, char** argv )
                 outFileProvided = true;
             } else 
             {
-                std::cerr << "[\033[0;31mwarning\033[0;31] : invalid filename or filename not provided" << std::endl;
+                std::cerr << "[\033[0;31mwarning\033[0;31] : invalid filename or filename not provided, exiting" << std::endl;
                 return 1;
             }
         }
@@ -79,104 +79,102 @@ int main( int argc, char** argv )
         return 0;
     }
 
-    // No help requested, then open the MP4 file or STDIN
+    // No help requested, then open the MP4 file
     //
     // do the version thing
     //
     if( printVersion ) { std::cout << argv[0] << " Version : " << getVersionString() << ", (c) copyright 2025, All rights reserved, slapfrog Labs" << std::endl; return 0; }
 
-    // try to open the output file
-    //
-    if( !outFileProvided )
+    // check fi both input and output files are provided
+    if( !inFileProvided )
     {
-        std::cerr << "[\033[0;31mwarning\033[0;31] : Output filename not provided" << std::endl;
+        std::cerr << "[\033[0;31mwarning\033[0m] Input filename not provided, exiting" << std::endl;
         return 1;
     }
 
-    outFile.open( outFilename, std::ios::out | std::ios::binary | std::ios::trunc);
+    if( !outFileProvided )
+    {
+        std::cerr << "[\033[0;31mwarning\033[0m] Output filename not provided, using output.mp4" << std::endl;
+        outFilename = "output.mp4";
+        outFileProvided = true;
+    }
+
+    // try to open the output file
+    //
+    outFile.open( outFilename, std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc);
     if( !outFile.is_open() )
     {
-        std::cerr << "[\033[0;31mwarning\033[0m] : could not open file for writing" << outFilename << std::endl;
+        std::cerr << "[\033[0;31mwarning\033[0m] could not open file for writing : " << outFilename << ", exiting" << std::endl;
         return 1;
     }
 
     // try to open the input file
     //
-    if( !inFileProvided ) inFilename = "/dev/stdin";
-
     inFile.open( inFilename, std::ios::in | std::ios::binary );
     if( !inFile.is_open() )
     {
-        std::cerr << "[\033[0;31mwarning\033[0m] : could not open file for reading " << inFilename << std::endl;
+        std::cerr << "[\033[0;31mwarning\033[0m] could not open file for reading : " << inFilename << ", exiting" << std::endl;
         return 1;
     }
 
     // do the work
-    std::cout << "[\033[1;34minfo\033[0m] : Decoding MP4 stream ";
-
-    if( inFileProvided ) std::cout << "from file " << inFilename << std::endl;
-    else std::cout << "from STDIN" << std::endl;
-
-    std::cout << "[\033[1;34minfo\033[0m] : Writing MP4 file " << outFilename << std::endl;
-
+    std::cout << "[\033[1;34minfo\033[0m] Decoding MP4 stream from : " << inFilename << std::endl;
+    std::cout << "[\033[1;34minfo\033[0m] Writing MP4 file to      : " << outFilename << std::endl;
     std::cout << std::endl;
 
-
-    // read the file
-    // MP4 file format defined here https://www.loc.gov/preservation/digital/formats/fdd/fdd000155.shtml
+    // run a pass on the input file, to determine the frame count and sizes
     //
-
-    // read the first frame header to get the width and height
+    // get video parameters (width, height, frame rate etc)
     //
-    int width = 0;
-    int height = 0;
-    
-    struct h264FrameHeader_t * header = getFrameHeader( inFile );
-    if( header != NULL )
+    struct mp4StreamInfo_t * streamInfo = getStreamInfo( inFile );
+    if( streamInfo == NULL )
     {
-        width = header->width;
-        height = header->height;
-        frame_rate = header->rate;
-        delete header;
-    } else
-    {
-        std::cerr << "[\033[0;31mwarning\033[0m] : could not read frame header" << std::endl;
+        std::cerr << "[\033[0;31mwarning\033[0m] could not parse MP4 stream" << std::endl;
         return 1;
     }
+
+    // add more info to the stream header
+    streamInfo->timeScale = 1000;
+    streamInfo->timeScale_swapped = swapEndian(streamInfo->timeScale);
+    streamInfo->ticks_per_frame = (unsigned int)(streamInfo->timeScale / streamInfo->frame_rate);
+
+    float dur_secs = (float)streamInfo->frame_count / (float)streamInfo->frame_rate;
+    unsigned int dur_ticks = (unsigned int)(dur_secs * (float)streamInfo->timeScale);
+
+    std::cout << "[\033[1;34minfo\033[0m] Stream Info : " << "width: " << streamInfo->width << ", height: " << streamInfo->height << ", frame Rate: " << streamInfo->frame_rate << std::endl;
+    std::cout << "[\033[1;34minfo\033[0m] duration: " << dur_secs << " secs, " << dur_ticks << ", frame count = " << streamInfo->frame_count << std::endl;
+    std::cout << "[\033[1;34minfo\033[0m] ticks: " << dur_ticks << " at " << streamInfo->timeScale << " ticks per sec" << std::endl << std::endl;
+
+    streamInfo->videoDuration = dur_ticks;
+
+    // rewind the input stream
+    inFile.clear();
+    inFile.seekg( 0, std::ios::beg );
 
     //
     // Write the minimal MP4 header to contain the H264 stream
     //
-    if( !writeMP4Header( outFile, width, height ) )
+    if( !writeMP4Header( outFile, streamInfo ) )
     {
-        std::cerr << "[\033[0;31mwarning\033[0m] : could not write MP4 header" << std::endl;
+        std::cerr << "[\033[0;31mwarning\033[0m] could not write MP4 header, exiting" << std::endl;
         return 1;
     }
 
-    // now we loop until EOF is detected
-    while( !inFile.eof() )
+    int mdatStartLocation = outFile.tellp();
+
+    if( !writeMDATatom( inFile, outFile ) )
     {
-        unsigned char * buf = new unsigned char[header->frame_size];
-
-        // read the frame
-        inFile.read( (char*)buf, header->frame_size );
-
-        // write the frame
-        writeRawData( outFile, (char*)buf, header->frame_size );
-        delete [] buf;
-
-        frame_count++;
-
-        // check if file is done before waiting on the next header
-        if( inFile.eof() ) break;
-
-        // read the next frame header
-        header = getFrameHeader( inFile );
-        if( header == NULL ) break;
+        std::cerr << "[\033[0;31mwarning\033[0m] could not write MDAT (raw data) atom, exiting" << std::endl;
+        return 1;
     }
 
-    // cleanup
-    updateAllSizeAndDuration( outFile, frame_rate, frame_count );
+    // run a final verification on the file content
+    //
+    if( !verifyMP4Data( outFile, streamInfo, mdatStartLocation ) )
+    {
+        std::cerr << "[\033[0;31mwarning\033[0m] could not verify MP4 header, exiting" << std::endl;
+        return 1;
+    }
 
     // close the file
     //
@@ -184,7 +182,7 @@ int main( int argc, char** argv )
     outFile.close();
 
     // indicate done
-    std::cerr << std::endl << argv[0] << " : done" << std::endl;
+    std::cerr << std::endl << "[\033[1;34minfo\033[0m] " << argv[0] << "....done" << std::endl;
 
     return 0;
 }
