@@ -57,7 +57,7 @@ std::string makeHexString( unsigned char * buf, int len, bool makeCaps )
     while( len > 0 )
     {
         if( makeCaps ) tmp << std::uppercase;
-        tmp << std::setfill('0') << std::setw(2) << std::hex << (int)buf[bufOff++];
+        tmp << std::hex << std::setfill('0') << std::setw(2) << (int)buf[bufOff++];
         len--;
     }
 

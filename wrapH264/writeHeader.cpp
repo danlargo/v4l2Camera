@@ -7,7 +7,7 @@
 #include <string>
 #include <cstring>
 
-#include "wrapMP4.h"
+#include "wrapH264.h"
 
 struct mp4StreamInfo_t * mp4_info;
 
@@ -66,7 +66,7 @@ bool writeFREEatom( std::fstream & file )
     {
         unsigned int size;
         unsigned char tag[4] = { 'f', 'r', 'e', 'e' };
-        unsigned char author[80] = { 'C', 'r', 'e', 'a', 't', 'e', 'd', ' ', 'w', 'i', 't', 'h', ' ', 'w', 'r', 'a', 'p', 'M', 'P', '4', ' ', 'v', '0', '.', '1', '.', '1', '0', ',', ' ', 'b', 'y', ' ', 's', 'l', 'a', 'p', 'f', 'r', 'o', 'g', ' ', 'L', 'a', 'b', 's', ',', ' ', '(', 'c', ')', ' ', '2', '0', '2', '5', ',', ' ', 'a', 'l', 'l', ' ', 'r', 'i', 'g', 'h', 't', 's', ' ', 'r', 'e', 's', 'e', 'r', 'v', 'e', 'd', 0 };
+        unsigned char author[80] = { 'C', 'r', 'e', 'a', 't', 'e', 'd', ' ', 'w', 'i', 't', 'h', ' ', 'w', 'r', 'a', 'p', 'H', '2', '6', '4', ' ', 'v', '0', '.', '1', '.', '1', '0', ',', ' ', 'b', 'y', ' ', 's', 'l', 'a', 'p', 'f', 'r', 'o', 'g', ' ', 'L', 'a', 'b', 's', ',', ' ', '(', 'c', ')', ' ', '2', '0', '2', '5', ',', ' ', 'a', 'l', 'l', ' ', 'r', 'i', 'g', 'h', 't', 's', ' ', 'r', 'e', 's', 'e', 'r', 'v', 'e', 'd', '.' ,0 };
     } free_atom;
     #pragma pack(pop)
     
@@ -186,7 +186,7 @@ int writeAUTHatom( std::fstream & file )
         unsigned char auth_tag[4] = { 'a', 'u', 't', 'h' };
         unsigned int flags = 0;
         unsigned short lang = swapEndian(encode_lang("eng"));
-        unsigned char author[16] = { 'w', 'r', 'a', 'p', 'M', 'P', '4', ' ', 'v', '0', '.', '1', '.', '2', '0', 0};
+        unsigned char author[17] = { 'w', 'r', 'a', 'p', 'H', '2', '6', '4', ' ', 'v', '0', '.', '1', '.', '2', '0', 0};
     } udta_atom;
     #pragma pack(pop)
 

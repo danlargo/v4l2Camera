@@ -20,25 +20,22 @@ void printATOMhdr( struct atom_t atom, std::string descrip )
         << std::dec << "\033[0m] \033[1;37m" << descrip << "\033[0m" << std::endl;
     } else std::cout << "[\033[1;32m" << atom.tag << "\033[0m]";
 
-    if( descrip.length() > 0 )  std::cout << " \033[1;37m" << descrip << "\033[0m" << std::endl;
-    else 
-    {
-        std::cout.imbue(std::locale(""));
-        std::cout << std::dec << "\033[1;33m(" << atom.size << " bytes)  ...not in dictionary\033[0m" << std::endl;
-        std::locale::classic();
-    }
+    std::cout.imbue(std::locale(""));
+    if( descrip.length() > 0 )  std::cout << std::dec << " \033[1;37m" << descrip << "\033[0m (" << atom.size+8 << " bytes)"<< std::endl;
+    else std::cout << std::dec << "\033[1;33m(" << atom.size+8 << " bytes)  ...not in dictionary\033[0m" << std::endl;
+    std::locale::classic();
 
 }
 
 
-void printFREEdata( std::ifstream &file, int size )
+void printFREEdata( std::ifstream &file, unsigned int size )
 {
     m_depth++;
 
     unsigned int dump_len = 32;
     unsigned int char_len = 100;
-    if( size < dump_len )dump_len = size;
-    if( size < char_len )char_len = size;
+    if( size < dump_len ) dump_len = size;
+    if( size < char_len ) char_len = size;
 
     // we can grab this all at once as it is not likely to be fucking huge
     char * buffer = new char[size];
@@ -64,6 +61,94 @@ void printFREEdata( std::ifstream &file, int size )
             if( isprint(buffer[i]) ) std::cout << buffer[i];
         }
         std::cout << "\033[0m]";
+    }
+
+    delete [] buffer;
+
+    std::cout << std::endl;
+
+    m_depth--;
+}
+
+void printBYTEdata( std::ifstream &file, struct node_t * n )
+{
+    m_depth++;
+
+    unsigned int line_size = 16;
+
+    unsigned int size = n->count;
+
+    // we can grab this all at once as it is not likely to be fucking huge
+    char * buffer = new char[size];
+    file.read( buffer, size );
+
+    // write the node label
+    std::cout << std::dec;
+    std::cout << " " << toLower(n->description) << " (" << size << " bytes) " << std::endl << calcPadding();
+
+    int line_cnt = 0;
+    while( size > 0 )
+    {
+        std::cout << "\033[0;32m";
+        for( int i=0; i < line_size; i++ )
+        {
+            if( i < size ) std::cout << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)(unsigned char)buffer[i + (line_cnt*line_size)] << " ";
+            else std::cout << "   ";
+        }
+        std::cout << "  ";
+        // repeat but dump as chars
+        std::cout << "\033[0;36m";
+        for( int i=0; i < line_size; i++ )
+        {
+            if( isprint(buffer[i + (line_cnt*line_size)]) ) std::cout << buffer[i + (line_cnt*line_size)];
+            else std::cout << ".";
+            if( i >= size ) break;
+        }
+        if( size < line_size ) break;
+        size -= line_size;
+        std::cout << std::endl << calcPadding();
+        line_cnt++;
+    }
+
+    std::cout << "\033[0m";
+
+    delete [] buffer;
+
+    m_depth--;
+}
+
+void printBYTEdata( std::ifstream &file, int size )
+{
+    m_depth++;
+
+    unsigned int line_size = 16;
+
+    // we can grab this all at once as it is not likely to be fucking huge
+    char * buffer = new char[size];
+    file.read( buffer, size );
+
+    // write the node label
+    std::cout << std::dec << calcPadding();
+
+    int line_cnt = 0;
+    while( size > 0 )
+    {
+        for( int i=0; i < line_size; i++ )
+        {
+            if( i <= size ) std::cout << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)(unsigned char)buffer[i + (line_cnt*line_size)] << " ";
+            else std::cout << "   ";
+        }
+        // repeat but dump as chars
+        for( int i=0; i < line_size; i++ )
+        {
+            if( isprint(buffer[i + (line_cnt*line_size)]) ) std::cout << buffer[i + (line_cnt*line_size)];
+            else std::cout << ".";
+            if( i > size ) break;
+        }
+        if( size < line_size ) break;
+        size -= line_size;
+        std::cout << std::endl << calcPadding();
+        line_cnt++;
     }
 
     delete [] buffer;
@@ -104,19 +189,54 @@ void printCHARSdata( std::ifstream &file, int size)
     m_depth++;
 
     std::cout.imbue(std::locale(""));
-    std::cout << calcPadding() << std::dec << "  (chars) " << size << " bytes";
+    std::cout << calcPadding() << std::dec << "  " << size << " chars [";
     std::locale::classic();
 
     char * buffer = new char[size+1];
     file.read( buffer, size );
     buffer[size] = 0;
 
-    std::cout << " : \033[0;36m" << buffer << "\033[0m" << std::endl;
+    std::cout << "\033[0;36m";
+
+    for( int i=0;i<size;i++ )
+    {
+        if( isprint(buffer[i]) ) std::cout << buffer[i];
+        else std::cout << ".";
+    }
+    std::cout << "\033[0m]" << std::endl;
 
     delete [] buffer;
 
     m_depth--;
 }
+
+
+void printCHARSdata( std::ifstream &file, struct node_t * n)
+{
+    m_depth++;
+
+    std::cout.imbue(std::locale(""));
+    std::cout << " " << toLower(n->description) << std::dec << " " << n->count << " chars [";
+    std::locale::classic();
+
+    char * buffer = new char[n->count];
+    file.read( buffer, n->count );
+
+    std::cout << "\033[0;36m";
+
+    for( int i=0;i<n->count;i++ )
+    {
+        if( isprint(buffer[i]) ) std::cout << buffer[i];
+        else std::cout << ".";
+    }
+    std::cout << "\033[0m]";
+
+    delete [] buffer;
+
+    m_depth--;
+}
+
+
 
 void printUNKNdata( std::ifstream &file, struct atom_t atom )
 {
@@ -147,6 +267,11 @@ void printUNKNdata( std::ifstream &file, struct atom_t atom )
             for( int i = 0; i < read_size; i++ )
             {
                 std::cout << std::hex << std::setw(2) << std::setfill('0') << (unsigned int)(unsigned char)buffer[i] << " ";
+            }
+            // check if we need padding
+            if( read_size < chunk )
+            {
+                for( int i = 0; i < chunk-read_size; i++ ) std::cout << "   ";
             }
             // print as ascii
             for( int i = 0; i < read_size; i++ )
@@ -199,7 +324,19 @@ void printFLAGSdata( std::ifstream &file, struct node_t * n )
 
 void printINTEGERdata( std::ifstream &file, struct node_t * n, bool unSigned, bool hex, int width )
 {
-    // declare all the data items e might need
+    // check if we should be adding line breaks to long data
+    bool addBreak = false;
+    int breakLen = 8;
+    if( n->addBreak.length() > 0 ) 
+    {   
+        addBreak = true;
+        try { breakLen = std::stoi(n->addBreak); }
+        catch(const std::exception& e) {}
+    }
+
+    // declare all the data items we might need
+    long val_long[n->count];
+    unsigned long val_ulong[n->count];
     int val_int[n->count];
     unsigned int val_uint[n->count];
     char val_char[n->count];
@@ -213,16 +350,24 @@ void printINTEGERdata( std::ifstream &file, struct node_t * n, bool unSigned, bo
     {
         if( width == 1 ) file.read( (char *)&val_uchar, num_to_read );
         else if( width == 2 ) file.read( (char *)&val_ushort, num_to_read );
-        else file.read( (char *)&val_uint, num_to_read );
+        else if( width == 4 ) file.read( (char *)&val_uint, num_to_read );
+        else file.read( (char *)&val_ulong, num_to_read );
 
     } else
     {
         if( width == 1 ) file.read( (char *)&val_char, num_to_read );
         else if( width == 2 ) file.read( (char *)&val_short, num_to_read );
-        else file.read( (char *)&val_int, num_to_read );
+        else if( width == 4 ) file.read( (char *)&val_int, num_to_read );
+        else file.read( (char *)&val_long, num_to_read );
     }
 
-    std::cout << " " << toLower(n->description) << " [";
+    // insert a line break if we are adding breaks
+    if( addBreak ) std::cout << std::endl << calcPadding() << " ";
+
+    // show the description
+    std::cout << " " << toLower(n->description);
+    if( addBreak ) std::cout << std::endl << calcPadding() << " ";
+    std::cout << " [";
 
     // add commas but only if it is not hex
     if( !hex ) std::cout.imbue(std::locale(""));
@@ -230,48 +375,70 @@ void printINTEGERdata( std::ifstream &file, struct node_t * n, bool unSigned, bo
 
     for( int i = 0; i < n->count; i++ )
     {
-        if( hex ) std::cout << std::hex << "\033[0;35m0x";
-        else std::cout << std::dec << "\033[1;33m";
+        if( i % breakLen == 0 && i > 0 && addBreak ) std::cout << "\033[0m]" << std::endl << calcPadding() << "  [";
+
+        if( hex ) std::cout << "\033[0;35m0x" << std::hex << std::setfill('0');
+        else std::cout << "\033[1;33m" << std::dec << std::setw(0);
 
         if( unSigned )
         {
             if( width == 1 ) 
             {
+                if( hex ) std::cout << std::setw(2);
                 std::cout << (int)val_uchar[i];
                 // check if we need to assign this to a variable
                 if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string((int)val_uchar[i]);
             }
             else if( width == 2 ) 
             {
+                if( hex ) std::cout << std::setw(4);
                 std::cout << swapEndian(val_ushort[i]);
                 // check if we need to assign this to a variable
                 if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(swapEndian(val_ushort[i]));
             }
-            else 
+            else if( width == 4 ) 
             {
+                if( hex ) std::cout << std::setw(6);
                 std::cout << swapEndian(val_uint[i]);
                 // check if we need to assign this to a variable
                 if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(swapEndian(val_uint[i]));
+            }
+            else 
+            {
+                if( hex ) std::cout << std::setw(8);
+                std::cout << swapEndian(val_ulong[i]);
+                // check if we need to assign this to a variable
+                if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(swapEndian(val_ulong[i]));
             }
         } else
         {
             if( width == 1 ) 
             {
+                if( hex ) std::cout << std::setw(2);
                 std::cout << (int)val_char[i];
                 // check if we need to assign this to a variable
                 if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string((int)val_char[i]);
             }
             else if( width == 2 ) 
             {
+                if( hex ) std::cout << std::setw(4);
                 std::cout << swapEndian(val_short[i]);
                 // check if we need to assign this to a variable
                 if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(swapEndian(val_short[i]));
             }
-            else 
+            else if( width == 4 ) 
             {
+                if( hex ) std::cout << std::setw(6);
                 std::cout << swapEndian(val_int[i]);
                 // check if we need to assign this to a variable
                 if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(swapEndian(val_int[i]));
+            }
+            else 
+            {
+                if( hex ) std::cout << std::setw(8);
+                std::cout << swapEndian(val_long[i]);
+                // check if we need to assign this to a variable
+                if( n->var1.length() > 0 ) m_vars[n->var1] = std::to_string(swapEndian(val_long[i]));
             }
         }
 
@@ -566,34 +733,80 @@ void printFORMAT( struct node_t * n )
 
 void printMATHdata( struct node_t * n )
 {
-    // check what type we need to do
-    if( n->type == "MATH_DIV" )
+    // check if we are to print results, default to yes
+    bool printRes = true;
+    bool saveRes = false;
+    std::string opLabel = "Undefined";
+
+    if( n->printResult.length() > 0 )
     {
-        // get the variables
-        std::string var1 = m_vars[n->var1];
-        std::string var2 = m_vars[n->var2];
+        if( toLower(n->printResult) == "false" ||  toLower(n->printResult) == "no" ) printRes = false;
+    }
 
-        // do the operation
-        std::string units = "";
-        if( n->units.length() > 0 ) units = " " + toLower(n->units);
+    // get the variables
+    std::string var1 = m_vars[n->var1];
+    std::string var2 = m_vars[n->var2];
+    std::string var3 = m_vars[n->var3];
 
-        // fix up the description, in case it is blank
-        std::string desc = "";
-        if( n->description.length() > 0 ) desc = " " + toLower(n->description);
+    // check if we are supposed to save the result
+    if( n->var3.length() > 0 ) saveRes = true;
 
-        try
+    // grab the units
+    std::string units = "";
+    if( n->units.length() > 0 ) units = " " + toLower(n->units);
+
+    // fix up the description, in case it is blank
+    std::string desc = "";
+    if( n->description.length() > 0 ) desc = " " + toLower(n->description);
+
+    try
+    {
+        // check what type we need to do
+        if( n->type == "MATH_SET" )
         {
+            opLabel = "MathSet";
+            m_vars[n->var1] = n->var2;
+            if( printRes ) std::cout << desc << " [\033[1;33m" << n->var1 << " set to " << n->var2 << units << "\033[0m]";
+
+        } else if( n->type == "MATH_ADD" )
+        {
+            opLabel = "MathAdd";
+            int result = std::stoi(var1) + std::stoi(var2);
+            if( saveRes ) m_vars[n->var3] = std::to_string(result);
+            if( printRes ) std::cout << desc << " [\033[1;33m" << std::fixed << std::setprecision(2) << result << units << "\033[0m]";
+
+        } else if( n->type == "MATH_SUB" )
+        {
+            opLabel = "MathSub";
+            int result = std::stoi(var1) - std::stoi(var2);
+            if( saveRes ) m_vars[n->var3] = std::to_string(result);
+            if( printRes ) std::cout << desc << " [\033[1;33m" << std::fixed << std::setprecision(2) << result << units << "\033[0m]";
+
+        }
+        else if( n->type == "MATH_MUL" )
+        {
+            opLabel = "MathMul";
+            double result = std::stod(var1) * std::stod(var2);
+            if( saveRes ) m_vars[n->var3] = std::to_string(result);
+            if( printRes ) std::cout << desc << " [\033[1;33m" << std::fixed << std::setprecision(2) << result << units << "\033[0m]";
+
+        }
+        else if( n->type == "MATH_DIV" )
+        {
+            opLabel = "MathDiv";
             double result = std::stod(var1) / std::stod(var2);
-            std::cout << desc << " [\033[1;33m" << std::fixed << std::setprecision(2) << result << units << "\033[0m]";
-        }
-        catch(const std::exception& e)
-        {
-            std::cout << desc << " MathDiv operation failed : " << e.what();
-        }
-        
+            if( saveRes ) m_vars[n->var3] = std::to_string(result);
+            if( printRes ) std::cout << desc << " [\033[1;33m" << std::fixed << std::setprecision(2) << result << units << "\033[0m]";
 
-    } else std::cout << "unknown math operation requested : " << n->type;
+        } else std::cout << "unknown math operation requested : " << n->type;
+
+    }
+    catch(const std::exception& e)
+    {
+        std::cout << n->description << " Math operation [" << opLabel << " failed : " << e.what();
+    }
 }
+
 
 std::string calcPadding()
 {

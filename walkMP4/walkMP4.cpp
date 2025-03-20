@@ -18,6 +18,8 @@ const int s_revision = 10;
 unsigned int m_depth = 0;
 unsigned int m_struct_depth = 0;
 
+bool expandLists = false;
+
 // variable list to use for calculated variabled
 std::map<std::string, std::string> m_vars;
 
@@ -60,15 +62,19 @@ int main( int argc, char** argv )
                         " [-h|--help]       : this message" << std::endl <<
                         " [-v]              : print version information" << std::endl <<
                         " [-s]              : show the MP4 data dictionary used for parsing rules" << std::endl <<
-                        " [-i filename]     : MP4 file to process" << std::endl <<
-                        "                     ...default is to decode from std:cin" << std::endl; 
+                        " [-x]              : expand long lists, default is to show first 5" << std::endl <<
+                        " [-i filename]     : MP4 file to process" << std::endl;
         return 0;
     }
 
     // Parse the dictionary
     //
+    // get the dictionary location, in the runtime folder of the executable
+    //
+    std::string dictFile = getExecutablePath() + "/walkMP4_dictionary.json";
+
     std::cout << std::endl;
-    std::map<std::string, struct node_t*> dictionary = parseDictionary( "./walkMP4_dictionary.json" );
+    std::map<std::string, struct node_t*> dictionary = parseDictionary( dictFile );
 
     if( dictionary.size() == 0 )
     {

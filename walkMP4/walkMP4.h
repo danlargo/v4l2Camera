@@ -18,6 +18,10 @@ struct node_t
     std::string units;
     std::string var1;
     std::string var2;
+    std::string var3;
+    std::string varCount;
+    std::string addBreak;
+    std::string printResult;
     int count;
     std::vector<struct node_t*> parts;
     std::string raw_data;
@@ -34,20 +38,26 @@ std::vector<struct node_t*> getParts( std::string buf );
 std::string getInner( std::string in );
 std::string removeInner( std::string in );
 
+std::string getExecutablePath();
+
 // parsers
 //
 void parseATOM( std::ifstream &file, std::map<std::string, struct node_t*> dictionary, int size );
 void parseSTRUCT( std::ifstream &file, std::map<std::string, struct node_t*> dictionary, struct node_t * node, int size );
 void parseLISTdata( std::ifstream &file, std::map<std::string, struct node_t*> dictionary, struct node_t * node, int size );
 
+void printUNKNdata( std::ifstream &file, struct atom_t atom );
+
 void printATOMhdr( struct atom_t atom, std::string descrip );
 struct atom_t readATOM( std::ifstream &file );
 
-void printFREEdata( std::ifstream &file, int size );
-
+void printFREEdata( std::ifstream &file, unsigned int size );
 void printRAWdata( std::ifstream &file, int size );
 void printCHARSdata( std::ifstream &file, int size );
-void printUNKNdata( std::ifstream &file, struct atom_t atom );
+void printBYTEdata( std::ifstream &file, int size );
+
+void printBYTEdata( std::ifstream &file, struct node_t * n );
+void printCHARSdata( std::ifstream &file, struct node_t * n );
 
 int printVER8data( std::ifstream &file, struct node_t * n );
 void printFLAGSdata( std::ifstream &file, struct node_t * n );
@@ -90,6 +100,8 @@ extern const int s_revision;
 
 extern std::map<std::string, std::string> m_vars;
 
+extern bool expandLists;
+
 std::string getVersionString();
 
 // Endian Swapping
@@ -98,6 +110,8 @@ unsigned int swapEndian( unsigned int in );
 int swapEndian( int in );
 unsigned short swapEndian( unsigned short in );
 unsigned long swapEndian( unsigned long in );
+short swapEndian( short in );
+long swapEndian( long in );
 
 // String utils
 //

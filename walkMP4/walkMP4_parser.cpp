@@ -29,9 +29,10 @@ void parseATOM( std::ifstream &file, std::map<std::string, struct node_t*> dicti
             // check for nested atoms
             if( node->type == "ATOM_LIST" ) parseATOM( file, dictionary, (int)atom.size );
 
-            else if( node->type == "BYTES" ) printFREEdata( file, atom.size );
+            else if( node->type == "FREE" ) printFREEdata( file, atom.size );
             else if( node->type == "BINARY" ) printRAWdata( file, atom.size );
             else if( node->type == "CHARS" ) printCHARSdata( file, atom.size );
+            else if( node->type == "BYTES" ) printBYTEdata( file, atom.size );
             else if( node->type == "STRUCT" ) parseSTRUCT( file, dictionary, node, atom.size );
             else if( node->type == "LIST" ) parseLISTdata( file, dictionary, node, atom.size );
 
@@ -112,60 +113,101 @@ void parseSTRUCT( std::ifstream &file, std::map<std::string, struct node_t *> di
     {
         struct node_t * n = *it;
 
-        if( n->type == "ATOM_LIST" ) { std::cout << std::endl; parseATOM( file, dictionary, remaining ); }
+        // check if we are supposed to get the count from a variable
+        if( n->varCount.length() > 0 )
+        {
+            if( m_vars.find(n->varCount) == m_vars.end() )
+            {
+                std::cerr << "[\033[1;31mfatal\033[0m] : variable not found : " << n->varCount << " on node : " << n->description << std::endl;
+                return;
+            }
+            try
+            {
+                n->count = std::stoi(m_vars[n->varCount]);
+            }
+            catch(const std::exception& e)
+            {
+                std::cerr << "[\033[1;31mfatal\033[0m] : variable not an integer : " << n->varCount << " on node : " << n->description << "[" << e.what() << "]" << std::endl;
+                return;
+            }
+            
+        }
 
-        else if( n->type == "LIST" ) { parseLISTdata( file, dictionary, n, remaining ); remaining = 0; }
+        if( n->type == "ATOM_LIST" ) { std::cout << std::endl; parseATOM( file, dictionary, remaining ); remaining = 0;}
 
-        else if( n->type == "VER8" ) { ver = printVER8data( file, n ); remaining -= 1; }
+        else if( n->type == "LIST" ) 
+        {  
+            // special handling for LISTS
+            //
+            // if VarCnt is set then leave count alone as it is a counted list
+            //
+            // else if count is 0, then we are to read until the end of the data
+            //
+            if( n->varCount.length() == 0 ) n->count = 0;
+
+            parseLISTdata( file, dictionary, n, remaining ); remaining = 0; 
+        }
+
+        else if( n->type == "VER8" ) { ver = printVER8data( file, n ); remaining -= n->count; }
         else if( n->type == "FLAGS" ) { printFLAGSdata( file, n ); remaining -= n->count; }
 
-        else if( n->type == "INT8" ) { printINTEGERdata( file, n, false, false, 1 ); remaining -= 1; }
-        else if( n->type == "UINT8" ) { printINTEGERdata( file, n, true, false, 1 ); remaining -= 1; }
+        else if( n->type == "INT8" ) { printINTEGERdata( file, n, false, false, 1 ); remaining -= n->count; }
+        else if( n->type == "UINT8" ) { printINTEGERdata( file, n, true, false, 1 ); remaining -= n->count; }
 
-        else if( n->type == "INT16" ) { printINTEGERdata( file, n, false, false, 2 ); remaining -= 2; }
-        else if( n->type == "UINT16" ) { printINTEGERdata( file, n, true, false, 2 ); remaining -= 2; }
+        else if( n->type == "INT16" ) { printINTEGERdata( file, n, false, false, 2 ); remaining -= (2*n->count); }
+        else if( n->type == "UINT16" ) { printINTEGERdata( file, n, true, false, 2 ); remaining -= (2*n->count); }
 
-        else if( n->type == "INT32" ) { printINTEGERdata( file, n, false, false, 4 ); remaining -= 4; }
-        else if( n->type == "UINT32" ) { printINTEGERdata( file, n, true, false, 4 ); remaining -= 4; }
-        
-        else if( n->type == "HEX8" ) { printINTEGERdata( file, n, true, true, 1 ); remaining -= 1; }
-        else if( n->type == "HEX16" ) { printINTEGERdata( file, n, true, true, 2 ); remaining -= 2; }
-        else if( n->type == "HEX32" ) { printINTEGERdata( file, n, true, true, 4 ); remaining -= 4; }
+        else if( n->type == "INT32" ) { printINTEGERdata( file, n, false, false, 4 ); remaining -= (4*n->count); }
+        else if( n->type == "UINT32" ) { printINTEGERdata( file, n, true, false, 4 ); remaining -= (4*n->count); }
 
-        else if( n->type == "LANG16" ) { printLANGdata( file, n ); remaining -= 2; }
+        else if( n->type == "HEX8" ) { printINTEGERdata( file, n, true, true, 1 ); remaining -= n->count; }
+        else if( n->type == "HEX16" ) { printINTEGERdata( file, n, true, true, 2 ); remaining -= (2*n->count); }
+        else if( n->type == "HEX32" ) { printINTEGERdata( file, n, true, true, 4 ); remaining -= (4*n->count); }
 
-        else if( n->type == "TAG4" ) { printTAG4data( file, n ); remaining -= 4; }
+        else if( n->type == "INT64" ) { printINTEGERdata( file, n, false, false, 8 ); remaining -= (8*n->count); }
+        else if( n->type == "UINT64" ) { printINTEGERdata( file, n, true, false, 8 ); remaining -= (8*n->count); }
+        else if( n->type == "HEX64" ) { printINTEGERdata( file, n, true, true, 8 ); remaining -= (8*n->count); }
+
+        else if( n->type == "LANG16" ) { printLANGdata( file, n ); remaining -= (2*n->count); }
+
+        else if( n->type == "TAG4" ) { printTAG4data( file, n ); remaining -= (4*n->count); }
         else if( n->type == "TAG4_LIST" ) { printTAG4LISTdata( file, n, remaining ); remaining = 0; }
 
-        else if( n->type == "INT16.2" ) { printINT1616data( file, n, false ); remaining -= 4; }
-        else if( n->type == "UINT16.2" ) { printINT1616data( file, n, true ); remaining -= 4; }
-        else if( n->type == "INT8.2" ) { printINT88data( file, n, false ); remaining -= 2; }
-        else if( n->type == "UINT8.2" ) { printINT88data( file, n, true ); remaining -= 2; }
+        else if( n->type == "INT16.2" ) { printINT1616data( file, n, false ); remaining -= (4*n->count); }
+        else if( n->type == "UINT16.2" ) { printINT1616data( file, n, true ); remaining -= (4*n->count); }
+        else if( n->type == "INT8.2" ) { printINT88data( file, n, false ); remaining -= (2*n->count); }
+        else if( n->type == "UINT8.2" ) { printINT88data( file, n, true ); remaining -= (2*n->count); }
         
         else if( n->type == "IGNORE" ) { skipIGNOREdata( file, n->count ); remaining -= n->count; }
         else if( n->type == "MP4TIME" ) { int num = printMP4TIMEdata( file, n, ver ); remaining -= num; }
         else if( n->type == "MP4TICKS" ) { int num = printMP4TICKSdata( file, n, ver ); remaining -= num; }
 
         else if( n->type == "MATH_DIV" ) { printMATHdata( n ); }
+        else if( n->type == "MATH_ADD" ) { printMATHdata( n ); }
+        else if( n->type == "MATH_SUB" ) { printMATHdata( n ); }
+        else if( n->type == "MATH_MUL" ) { printMATHdata( n ); }
+        else if( n->type == "MATH_SET" ) { printMATHdata( n ); }
 
         else if( n->type == "STRING" ) { int num = printSTRINGdata( file, n, remaining ); remaining -= num; }
 
         else if( n->type == "NEWLINE" ) { printFORMAT( n ); }
         else if( n->type == "LABEL" ) { printFORMAT( n ); }
 
-        else if( node->type == "BYTES" ) { printFREEdata( file, remaining ); remaining = 0; }
-        else if( node->type == "BINARY" ) { printRAWdata( file, remaining ); remaining = 0; }
-        else if( node->type == "CHARS" ) { printCHARSdata( file, remaining ); remaining = 0; }
+        else if( n->type == "BYTES" ) { printBYTEdata( file, n ); remaining -= n->count; }
+        else if( n->type == "CHARS" ) { printCHARSdata( file, n ); remaining -= n->count; }
 
         else { printREMAININGdata( file, remaining ); remaining = 0; }
         
         if( remaining <= 0 ) break;
     }
 
-    if( m_struct_depth == 1 ) std::cout << std::endl;
+    std::cout << std::endl;
 
     m_depth--;
     m_struct_depth--;
+
+    // just flag it for now
+    if( remaining > 0 ) std::cout << std::endl << calcPadding() << std::dec << "[\033[1;31m" << remaining << " bytes remaining\033[0m]" << std::endl;
 }
 
 //
@@ -177,67 +219,102 @@ void parseLISTdata( std::ifstream &file, std::map<std::string, struct node_t *> 
     m_depth++;
     m_struct_depth++;
 
-    std::cout << std::endl << calcPadding() << "List of : \033[1;37m" << node->description << "\033[0m" << std::endl;
+    std::cout << " List of : \033[1;37m" << node->description << "\033[0m" << std::endl;
 
     // walk the parts
     int ver = 0;
     int count = 1;
+    // if count is zero, chew up remaining data, else only do count times
+    if( node->count == 0 ) node->count = __INT32_MAX__;
 
     while( remaining > 0 )
     {
+        if( count > node->count) break;
+
         std::cout << calcPadding() << "[\033[1;32m" << count++ << "\033[0m]";
 
         for( auto it = node->parts.begin(); it != node->parts.end(); it++ )
         {
             struct node_t * n = *it;
 
-            if( n->type == "ATOM_LIST" ) { std::cout << std::endl; parseATOM( file, dictionary, remaining ); }
+            // check if we are supposed to get the count from a variable
+            if( n->varCount.length() > 0 )
+            {
+                if( m_vars.find(n->varCount) == m_vars.end() )
+                {
+                    std::cerr << "[\033[1;31mfatal\033[0m] : variable not found : " << n->varCount << " on node : " << n->description << std::endl;
+                    return;
+                }
+                try
+                {
+                    n->count = std::stoi(m_vars[n->varCount]);
+                }
+                catch(const std::exception& e)
+                {
+                    std::cerr << "[\033[1;31mfatal\033[0m] : variable not an integer : " << n->varCount << " on node : " << n->description << "[" << e.what() << "]" << std::endl;
+                    return;
+                }
+                
+            }
 
-            else if( n->type == "VER8" ) { ver = printVER8data( file, n ); remaining -= 1; }
+            if( n->type == "ATOM_LIST" ) { std::cout << std::endl; parseATOM( file, dictionary, remaining ); remaining = 0; }
+
+            else if( n->type == "VER8" ) { ver = printVER8data( file, n ); remaining -= n->count; }
             else if( n->type == "FLAGS" ) { printFLAGSdata( file, n ); remaining -= n->count; }
 
-            else if( n->type == "INT8" ) { printINTEGERdata( file, n, false, false, 1 ); remaining -= 1; }
-            else if( n->type == "UINT8" ) { printINTEGERdata( file, n, true, false, 1 ); remaining -= 1; }
+            else if( n->type == "INT8" ) { printINTEGERdata( file, n, false, false, 1 ); remaining -= n->count; }
+            else if( n->type == "UINT8" ) { printINTEGERdata( file, n, true, false, 1 ); remaining -= n->count; }
 
-            else if( n->type == "INT16" ) { printINTEGERdata( file, n, false, false, 2 ); remaining -= 2; }
-            else if( n->type == "UINT16" ) { printINTEGERdata( file, n, true, false, 2 ); remaining -= 2; }
+            else if( n->type == "INT16" ) { printINTEGERdata( file, n, false, false, 2 ); remaining -= 2*n->count; }
+            else if( n->type == "UINT16" ) { printINTEGERdata( file, n, true, false, 2 ); remaining -= 2*n->count; }
 
-            else if( n->type == "INT32" ) { printINTEGERdata( file, n, false, false, 4 ); remaining -= 4; }
-            else if( n->type == "UINT32" ) { printINTEGERdata( file, n, true, false, 4 ); remaining -= 4; }
+            else if( n->type == "INT32" ) { printINTEGERdata( file, n, false, false, 4 ); remaining -= 4*n->count; }
+            else if( n->type == "UINT32" ) { printINTEGERdata( file, n, true, false, 4 ); remaining -= 4*n->count; }
             
-            else if( n->type == "HEX8" ) { printINTEGERdata( file, n, true, true, 1 ); remaining -= 1; }
-            else if( n->type == "HEX16" ) { printINTEGERdata( file, n, true, true, 2 ); remaining -= 2; }
-            else if( n->type == "HEX32" ) { printINTEGERdata( file, n, true, true, 4 ); remaining -= 4; }
+            else if( n->type == "HEX8" ) { printINTEGERdata( file, n, true, true, 1 ); remaining -= n->count; }
+            else if( n->type == "HEX16" ) { printINTEGERdata( file, n, true, true, 2 ); remaining -= 2*n->count; }
+            else if( n->type == "HEX32" ) { printINTEGERdata( file, n, true, true, 4 ); remaining -= 4*n->count; }
 
-            else if( n->type == "LANG16" ) { printLANGdata( file, n ); remaining -= 2; }
+            else if( n->type == "INT64" ) { printINTEGERdata( file, n, false, false, 8 ); remaining -= (8*n->count); }
+            else if( n->type == "UINT64" ) { printINTEGERdata( file, n, true, false, 8 ); remaining -= (8*n->count); }
+            else if( n->type == "HEX64" ) { printINTEGERdata( file, n, true, true, 8 ); remaining -= (8*n->count); }
+            
+            else if( n->type == "LANG16" ) { printLANGdata( file, n ); remaining -= 2*n->count; }
 
-            else if( n->type == "TAG4" ) { printTAG4data( file, n ); remaining -= 4; }
+            else if( n->type == "TAG4" ) { printTAG4data( file, n ); remaining -= 4*n->count; }
             else if( n->type == "TAG4_LIST" ) { printTAG4LISTdata( file, n, remaining ); remaining = 0; }
 
-            else if( n->type == "INT16.2" ) { printINT1616data( file, n, false ); remaining -= 4; }
-            else if( n->type == "UINT16.2" ) { printINT1616data( file, n, true ); remaining -= 4; }
-            else if( n->type == "INT8.2" ) { printINT88data( file, n, false ); remaining -= 2; }
-            else if( n->type == "UINT8.2" ) { printINT88data( file, n, true ); remaining -= 2; }
+            else if( n->type == "INT16.2" ) { printINT1616data( file, n, false ); remaining -= 4*n->count; }
+            else if( n->type == "UINT16.2" ) { printINT1616data( file, n, true ); remaining -= 4*n->count; }
+            else if( n->type == "INT8.2" ) { printINT88data( file, n, false ); remaining -= 2*n->count; }
+            else if( n->type == "UINT8.2" ) { printINT88data( file, n, true ); remaining -= 2*n->count; }
             
             else if( n->type == "IGNORE" ) { skipIGNOREdata( file, n->count ); remaining -= n->count; }
             else if( n->type == "MP4TIME" ) { int num = printMP4TIMEdata( file, n, ver ); remaining -= num; }
             else if( n->type == "MP4TICKS" ) { int num = printMP4TICKSdata( file, n, ver ); remaining -= num; }
 
             else if( n->type == "MATH_DIV" ) { printMATHdata( n ); }
+            else if( n->type == "MATH_ADD" ) { printMATHdata( n ); }
+            else if( n->type == "MATH_SUB" ) { printMATHdata( n ); }
+            else if( n->type == "MATH_MUL" ) { printMATHdata( n ); }
+            else if( n->type == "MATH_SET" ) { printMATHdata( n ); }
 
             else if( n->type == "STRING" ) { int num = printSTRINGdata( file, n, remaining ); remaining -= num; }
 
             else if( n->type == "NEWLINE" ) { printFORMAT( n ); }
             else if( n->type == "LABEL" ) { printFORMAT( n ); }
 
+            else if( n->type == "BYTES" ) { printBYTEdata( file, n ); remaining -= n->count; }
+            else if( n->type == "CHARS" ) { printCHARSdata( file, n ); remaining -= n->count; }
+
             else { printREMAININGdata( file, remaining ); remaining = 0; }
             if( remaining <= 0 ) break;
         }
 
-        std::cout << std::endl;
+        if( count <= node->count && remaining > 0 ) std::cout << std::endl;
     }
 
-    if( m_struct_depth == 1 ) std::cout << std::endl;
+    //if( m_struct_depth == 1 ) std::cout << std::endl;
 
     m_depth--;
     m_struct_depth--;
@@ -356,6 +433,10 @@ struct node_t * getNode( std::string buf, int &offset )
             n->units = getVal( n->raw_data, "Units", '"', '"' );
             n->var1 = getVal( n->raw_data, "Var1", '"', '"' );
             n->var2 = getVal( n->raw_data, "Var2", '"', '"' );
+            n->var3 = getVal( n->raw_data, "Var3", '"', '"' );
+            n->varCount = getVal( n->raw_data, "VarCnt", '"', '"' );
+            n->addBreak = getVal( n->raw_data, "AddBreak", '"', '"' );
+            n->printResult = getVal( n->raw_data, "PrintRes", '"', '"' );
         }
 
         // if there are parts, extract those
@@ -526,6 +607,10 @@ std::vector<struct node_t*> getParts( std::string buf )
         n->units = getVal( n->raw_data, "Units", '"', '"' );
         n->var1 = getVal( n->raw_data, "Var1", '"', '"' );
         n->var2 = getVal( n->raw_data, "Var2", '"', '"' );
+        n->var3 = getVal( n->raw_data, "Var3", '"', '"' );
+        n->varCount = getVal( n->raw_data, "VarCnt", '"', '"' );
+        n->addBreak = getVal( n->raw_data, "AddBreak", '"', '"' );
+        n->printResult = getVal( n->raw_data, "PrintRes", '"', '"' );
 
         // if there are parts, extract those
         if( inner.length() > 0 ) n->parts = getParts( inner );

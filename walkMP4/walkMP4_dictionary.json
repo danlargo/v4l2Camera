@@ -1,10 +1,6 @@
 {
 
-"TOP" : { 
-  "Type" : "ATOM_LIST", 
-  "Count" : "1", 
-  "Description" : "Top Level of MP4/MOV/3GP file" 
-},
+"TOP" : { "Type" : "ATOM_LIST", "Description" : "Top Level of MP4/MOV/3GP file" },
 
 "ALIS" : { 
   "Type" : "STRUCT", 
@@ -38,7 +34,7 @@
     { "Type" : "IGNORE", "Count" : "4", "Description" : "Res" },
     { "Type" : "UINT16", "Description" : "Num Frames" },
     { "Type" : "NEWLINE" },
-    { "Type" : "FLAGS", "Count" : "32", "Description" : "Compressor" },
+    { "Type" : "CHARS", "Count" : "32", "Description" : "Compressor" },
     { "Type" : "NEWLINE" },
     { "Type" : "UINT16", "Description" : "Depth", "Units" : "bits" },
     { "Type" : "HEX16", "Description" : "Delimiter" },
@@ -54,7 +50,20 @@
     { "Type" : "HEX8", "Description" : "Level" },
     { "Type" : "HEX8", "Description" : "Delimiter" },
     { "Type" : "NEWLINE" },
-    { "Type" : "BYTES", "Description" : "SPS and PPS Data" }
+    { "Type" : "HEX8", "Description" : "Num SPS", "Var1" : "num" },
+    { "Type" : "UINT16", "Description" : "SPS Length", "Var1" : "spslen" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "BYTES", "VarCnt" : "spslen", "Description" : "SPS Data" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT8", "Description" : "Num PPS", "Var1" : "num" },
+    { "Type" : "UINT16", "Description" : "PPS Length", "Var1" : "ppslen" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "BYTES", "VarCnt" : "ppslen", "Description" : "PPS Data" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "HEX8", "Description" : "chroma format" },
+    { "Type" : "HEX8", "Description" : "num luma bits" },
+    { "Type" : "HEX8", "Description" : "num chroma bits" },
+    { "Type" : "HEX8", "Description" : "SPS Ext Data" }
   ]
 },
 
@@ -66,13 +75,24 @@
   ] 
 },
 
+"CO64" : {  "Type" : "STRUCT", "Description" : "8-Byte Sample Sizes",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT32", "Description" : "Num Sizes, len in bytes", "Var1" : "num" },
+    { "Type" : "HEX64", "VarCnt" : "num", "Description" : "Sample Sizes", "AddBreak" : "6" }
+  ]
+},
+
 "DINF" : {  "Type" : "ATOM_LIST", "Description" : "Textual Information" },
 
 "DREF" : {  "Type" : "STRUCT", "Description" : "Media Data Source",
   "Parts" : [     
     { "Type" : "VER8", "Description" : "Ver" },
     { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
-    { "Type" : "INT32", "Description" : "Num Entries" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "INT32", "Description" : "Sources" },
     { "Type" : "ATOM_LIST", "Description" : "References" }
   ]
 },
@@ -83,8 +103,10 @@
   "Parts" : [
     { "Type" : "VER8", "Description" : "Ver" },
     { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
-    { "Type" : "UINT32", "Description" : "Num Entries" },
-    { "Type" : "LIST", "Description" : "Edits",
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT32", "Description" : "Num Edits", "Var1" : "num" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "LIST", "VarCnt" : "num", "Description" : "Edits",
       "Parts" : [
         { "Type" : "MP4TICKS", "Description" : "Duration", "Var1" : "v2", "Units" : "ticks" },
         { "Type" : "MATH_DIV", "Description" : "", "Units" : "secs", "Var1" : "v2", "Var2" : "v1" },
@@ -108,7 +130,7 @@
 
 "FIRM" : {  "Type" : "CHARS", "Description" : "Firmware Version" },
 
-"FREE" : {  "Type" : "BYTES", "Description" : "Free Space / Padding" },
+"FREE" : {  "Type" : "FREE", "Description" : "Free Space / Padding" },
 
 "FTYP" : {  "Type" : "STRUCT", "Description" : "File Type and Compatibility", 
   "Parts" : [
@@ -151,12 +173,27 @@
   ]
 },
 
-"ILST" : {  "Type" : "BYTES", "Description" : "Generic Media Header" },
+"ILST" : {  "Type" : "STRUCT", "Description" : "Generic Media Header",
+  "Parts" : [
+    { "Type" : "LIST", "Description" : "Blocks",
+      "Parts" : [     
+        { "Type" : "UINT32", "Description" : "Len" },
+        { "Type" : "HEX32", "Description" : "Tag" },
+        { "Type" : "UINT32", "Description" : "Size", "Var1" : "size" },
+        { "Type" : "TAG4", "Description" : "Type" },
+        { "Type" : "MATH_SET", "Description" : "", "Var1" : "jmpcnt", "Var2" : "8", "PrintResult" : "false" },
+        { "Type" : "MATH_SUB", "Description" : "Len", "Var1" : "size", "Var2" : "jmpcnt", "Var3" : "len", "Units" : "bytes" },
+        { "Type" : "CHARS", "VarCnt" : "len", "Description" : "Data" }
+      ]
+    }
+  ]
+},
 
 "KEYS" : {  "Type" : "STRUCT", "Description" : "Device Keys",
   "Parts" : [     
     { "Type" : "VER8", "Description" : "Ver" },
     { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "NEWLINE" },
     { "Type" : "INT32", "Description" : "number of keys" },
     { "Type" : "ATOM_LIST", "Description" : "Keys" }
   ]
@@ -245,25 +282,54 @@
   ]
 },
 
+"STCO" : {  "Type" : "STRUCT", "Description" : "Chunk Offset",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT32", "Description" : "Num Offsets", "Var1" : "numoff" },
+    { "Type" : "HEX32", "VarCnt" : "numoff", "Description" : "Offset List", "AddBreak" : "8" }
+  ]
+},
+
 "STBL" : {  "Type" : "ATOM_LIST", "Description" : "Sample Table" },
 
 "STSC" : {  "Type" : "STRUCT", "Description" : "Sample to Chunk",
   "Parts" : [     
     { "Type" : "VER8", "Description" : "Ver" },
     { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
-    { "Type" : "UINT32", "Description" : "Num Entries" },
-    { "Type" : "UINT32", "Description" : "First Chunk" },
-    { "Type" : "UINT32", "Description" : "Num Frames" },
-    { "Type" : "UINT32", "Description" : "Index" }
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT32", "Description" : "Num Chunks", "Var1" : "num" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "LIST", "VarCnt" : "num", "Description" : "Chunk Offsets",
+      "Parts" : [
+        { "Type" : "UINT32", "Description" : "First Chunk" },
+        { "Type" : "UINT32", "Description" : "Num Samples" },
+        { "Type" : "UINT32", "Description" : "Sample Desc Index" }
+      ]
+    }
   ]
 },
 
-"STSD" : {  "Type" : "STRUCT", "Description" : "Sample Description",
+"STSD" : {  "Type" : "STRUCT", "Description" : "Codec Description",
   "Parts" : [     
     { "Type" : "VER8", "Description" : "Ver" },
     { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
-    { "Type" : "INT32", "Description" : "Num Entries" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT32", "Description" : "Num codecs" },
     { "Type" : "ATOM_LIST", "Description" : "Codecs" }
+  ]
+},
+
+"STSZ" : {  "Type" : "STRUCT", "Description" : "Sample Sizes",
+  "Parts" : [     
+    { "Type" : "VER8", "Description" : "Ver" },
+    { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "HEX32", "Description" : "Sample Size Flag (0x00 = variable length, table to follow)" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT32", "Description" : "Num Sizes, len in bytes", "Var1" : "num" },
+    { "Type" : "HEX32", "VarCnt" : "num", "Description" : "Sample Sizes", "AddBreak" : "8" }
   ]
 },
 
@@ -271,9 +337,15 @@
   "Parts" : [     
     { "Type" : "VER8", "Description" : "Ver" },
     { "Type" : "FLAGS", "Count" : "3", "Description" : "Flags" },
-    { "Type" : "UINT32", "Description" : "Num Entries" },
-    { "Type" : "UINT32", "Description" : "Num Frames" },
-    { "Type" : "UINT32", "Description" : "Ticks Per Frame", "Units" : "ticks" }
+    { "Type" : "NEWLINE" },
+    { "Type" : "UINT32", "Description" : "Num Offsets", "Var1" : "num" },
+    { "Type" : "NEWLINE" },
+    { "Type" : "LIST", "VarCnt" : "num", "Description" : "Sample Offsets",
+      "Parts" : [
+        { "Type" : "UINT32", "Description" : "Num Frames" },
+        { "Type" : "UINT32", "Description" : "Ticks Per Frame", "Units" : "ticks" }
+      ]
+    }
   ]
 },
 

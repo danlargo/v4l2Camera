@@ -15,13 +15,13 @@ SRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp, build/%.o, $(SRCS))
 
 # Default target
-all: ../bin/wrapMP4
+all: ../bin/wrapH264
 
 # Ensure the build directory exists
 $(shell $(MD) build)
 
 # Link the target executable
-../bin/wrapMP4: $(OBJS)
+../bin/wrapH264: $(OBJS)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 # Pattern rule to compile .cpp files to .o files
@@ -30,7 +30,7 @@ build/%.o: %.cpp
 
 # Clean target
 clean:
-	$(RM) ../bin/wrapMP4 $(OBJS)
+	$(RM) ../bin/wrapH264 $(OBJS)
 	$(RRM) build
 
 .PHONY: all clean

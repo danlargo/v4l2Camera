@@ -7,7 +7,7 @@
 #include <string>
 #include <cstring>
 
-#include "wrapMP4.h"
+#include "wrapH264.h"
 
 // Version Info
 //

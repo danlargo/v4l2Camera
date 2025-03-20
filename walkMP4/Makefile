@@ -3,6 +3,7 @@ CXX=g++
 RM=rm -f
 RRM=rm -rf
 MD=mkdir -p
+CP=cp
 
 CPPFLAGS=-g -std=c++20
 LDLIBS=
@@ -15,7 +16,7 @@ SRCS := $(wildcard *.cpp)
 OBJS := $(patsubst %.cpp, build/%.o, $(SRCS))
 
 # Default target
-all: ../bin/walkMP4
+all: ../bin/walkMP4 dictionary
 
 # Ensure the build directory exists
 $(shell $(MD) build)
@@ -28,9 +29,12 @@ $(shell $(MD) build)
 build/%.o: %.cpp
 	$(CXX) $(CPPFLAGS) -c $< -o $@
 
+dictionary: walkMP4_dictionary.json
+	$(CP) walkMP4_dictionary.json ../bin/walkMP4_dictionary.json
+
 # Clean target
 clean:
-	$(RM) ../bin/walkMP4 $(OBJS)
+	$(RM) ../bin/walkMP4 ../bin/walkMP4_dictionary.json $(OBJS)
 	$(RRM) build
 
 .PHONY: all clean

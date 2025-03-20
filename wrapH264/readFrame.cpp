@@ -7,7 +7,7 @@
 #include <string>
 #include <cstring>
 
-#include "wrapMP4.h"
+#include "wrapH264.h"
 
 struct h264FrameHeader_t * getFrameHeader( std::ifstream & inFile )
 {

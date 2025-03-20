@@ -7,6 +7,17 @@
 
 #include "walkMP4.h"
 
+std::string getExecutablePath() {
+    char result[PATH_MAX];
+    ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
+    if (count != -1) {
+        std::string fullPath(result, count);
+        return fullPath.substr(0, fullPath.find_last_of('/')); // Extract folder path
+    }
+    return ".";
+}
+
+
 // String Utilities
 //
 
@@ -96,7 +107,24 @@ unsigned short swapEndian( unsigned short in )
     return (in >> 8) | (in << 8);
 }
 
+short swapEndian( short in )
+{
+    return (in >> 8) | (in << 8);
+}
+
 unsigned long swapEndian( unsigned long in )
+{
+    return ((in >> 56) & 0x00000000000000FF) |
+           ((in >> 40) & 0x000000000000FF00) |
+           ((in >> 24) & 0x0000000000FF0000) |
+           ((in >> 8)  & 0x00000000FF000000) |
+           ((in << 8)  & 0x000000FF00000000) |
+           ((in << 24) & 0x0000FF0000000000) |
+           ((in << 40) & 0x00FF000000000000) |
+           ((in << 56) & 0xFF00000000000000);
+}
+
+long swapEndian( long in )
 {
     return ((in >> 56) & 0x00000000000000FF) |
            ((in >> 40) & 0x000000000000FF00) |
