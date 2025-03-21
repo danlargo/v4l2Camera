@@ -57,8 +57,8 @@ void getVideoFormat( std::string deviceID );
 
 void runTimingTest( std::string deviceID );
 
-void captureImage(std::string deviceID, std::string fileName = "", std::string format = "", std::string addHeader = "" );
-void captureVideo( std::string deviceID, std::string timeInSeconds = "10", std::string fileName = "", std::string addHeader = "" );   
+void captureFrame(std::string deviceID, std::string fileName = "", std::string format = "", std::string addHeader = "" );
+void captureFrames( std::string deviceID, std::string timeInSeconds = "10", std::string fileName = "", std::string addHeader = "" );   
 
 char * addH264Header( unsigned char * buffer, int length, int rate, int width, int height );
 

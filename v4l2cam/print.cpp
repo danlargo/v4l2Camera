@@ -86,8 +86,8 @@ int printBasicHelp()
     outln( "            :   ...   if no fmt specified or not flag, image will be output as raw image data");
     outln( "-H          :   add header to H264 frames, only supported in video capture mode");
     outln( "---" );
-    outln( "-w [val]    :   set the video mode for camera -d ##, to [val]" );
-    outln( "-p [val]    :   set the frame rate for camera -d ##, to [val]" );
+    outln( "-F [val]    :   set the frame format for camera -d ##, to [val]" );
+    outln( "-R [val]    :   set the frame rate for camera -d ##, to [val]" );
     outln( "-g          :   grab an image from camera -d ##" );
     outln( "-c          :   capture video from camera -d ##, for time -t [val] seconds, default is 10 seconds" );
     outln( "-t [val]    :   specify a time duration [val] for video capture, default is 10 seconds" );

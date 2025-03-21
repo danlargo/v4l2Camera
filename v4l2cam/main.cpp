@@ -102,17 +102,7 @@ int main( int argc, char** argv )
     else if( cmdLine["g"] == "1" )
     {
         // make sure there is a device specified
-        if( cmdLine["d"].length() > 0 ) 
-        {   
-            // set video mode if requested
-            if (cmdLine["w"].length() > 0) 
-            {
-                if (cmdLine["p"].length() > 0) setVideoFormat(cmdLine["d"], cmdLine["w"], cmdLine["p"]);
-                else setVideoFormat(cmdLine["d"], cmdLine["w"], "30" );
-            } else if( cmdLine["p"].length() > 0 ) setFrameRate(cmdLine["d"], cmdLine["p"]);
-
-            captureImage(cmdLine["d"], cmdLine["o"], cmdLine["f"], cmdLine["H"]);
-        }
+        if( cmdLine["d"].length() > 0 ) captureFrame(cmdLine["d"], cmdLine["o"], cmdLine["f"]);
         else outwarn("Must provide a device number to grab an image : -d [0..63]");
     }
                     
@@ -120,18 +110,7 @@ int main( int argc, char** argv )
     else if( cmdLine["c"] == "1")
     {
         // make sure there is a device specified
-        if (cmdLine["d"].length() > 0) 
-        {
-            // set video mode if requested
-            if (cmdLine["w"].length() > 0) 
-            {
-                // set frame rate if requested
-                if (cmdLine["p"].length() > 0) setVideoFormat(cmdLine["d"], cmdLine["w"], cmdLine["p"]);
-                else setVideoFormat(cmdLine["d"], cmdLine["w"], "30");
-            } else if( cmdLine["p"].length() > 0 ) setFrameRate(cmdLine["d"], cmdLine["p"]);
-
-            captureVideo(cmdLine["d"], cmdLine["t"], cmdLine["o"], cmdLine["H"]);
-        }
+        if (cmdLine["d"].length() > 0) captureFrames(cmdLine["d"], cmdLine["t"], cmdLine["o"], cmdLine["H"]);
         else outwarn("Must provide a device number to start video capture : -d [0..63]");
     }
                         
@@ -151,24 +130,24 @@ int main( int argc, char** argv )
         else outwarn("Must provide a device number to set a control : -d [0..63]");
     }
 
-    // Set Video Mode, requires device indicator and video mode, optional frame rate
-    else if( cmdLine["w"].length() > 0 )
+    // Set Frame Format, requires device indicator and video mode, optional frame rate
+    else if( cmdLine["F"].length() > 0 )
     {
         // make sure there is a device specified
         if (cmdLine["d"].length() > 0) 
         {
             // if frame rate also set, do them both at the same time
-            if( cmdLine["p"].length() > 0 ) setVideoFormat(cmdLine["d"], cmdLine["w"], cmdLine["p"]);
-            else setVideoFormat(cmdLine["d"], cmdLine["w"], "30");
+            if( cmdLine["R"].length() > 0 ) setVideoFormat(cmdLine["d"], cmdLine["F"], cmdLine["R"]);
+            else setVideoFormat(cmdLine["d"], cmdLine["F"], "30");
         }
         else outwarn("Must provide a device number to set video mode : -d [0..63]");
     }
 
     // Set Frame Rate, requires device indicator and rate (> 0 and < 60)
-    else if( cmdLine["p"].length() > 0 )
+    else if( cmdLine["R"].length() > 0 )
     {
         // make sure there is a device specified
-        if (cmdLine["d"].length() > 0) setFrameRate(cmdLine["d"], cmdLine["p"]);
+        if (cmdLine["d"].length() > 0) setFrameRate(cmdLine["d"], cmdLine["R"]);
         else outwarn("Must provide a device number to set frame rate : -d [0..63]");
     }
 
@@ -281,23 +260,23 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
             }
         }
 
-        // Set Video Mode- specify mode number in second parameter
-        if( argS == "-w" )
+        // Set Frame Format - specify mode number in second parameter
+        if( argS == "-F" )
         {
-            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["w"] = argv[i++]; continue; }
+            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["F"] = argv[i++]; continue; }
             else
             {
-                outerr( "Invalid attribute for Set Video mode [-w]" );
+                outerr( "Invalid attribute for Set Video mode [-F]" );
                 printBasicHelp();
                 cmdLine.clear();
                 return cmdLine;
             }
         }
 
-        // Set Frame- specify mode number in second parameter
-        if( argS == "-p" )
+        // Set Frame Rate, specify mode number in second parameter
+        if( argS == "-R" )
         {
-            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["p"] = argv[i++]; continue; }
+            if( (i < argc) && (is_number(argv[i])) ) { cmdLine["R"] = argv[i++]; continue; }
             else
             {
                 outerr( "Invalid attribute for Frame Rate [-p]" );

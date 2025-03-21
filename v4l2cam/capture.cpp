@@ -22,7 +22,7 @@
 #endif
 
 
-void captureImage( std::string deviceID, std::string fileName, std::string format, std::string addHeader )
+void captureFrame( std::string deviceID, std::string fileName, std::string format, std::string addHeader )
 {
     bool sendToStdout = true;
 
@@ -203,21 +203,9 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
                             else outFile.write((char*)inB->buffer, inB->length);
                         }
                     }  else {
-                        // output as raw image data, add header if requested and this is an H264 frame
-                        if( (addHeader.length() > 0) && (data->format_str == "H264") )
-                        {
-                            outinfo( "Adding H264 header to frame" );
-                            char * h264Buffer = addH264Header( inB->buffer, inB->length, data2, data->width, data->height ); ;
-                            if( h264Buffer )
-                            {
-                                if (sendToStdout) std::cout.write( h264Buffer, inB->length + sizeof( h264FrameHeader_t) );
-                                else outFile.write( h264Buffer, inB->length + sizeof( h264FrameHeader_t) );
-                                delete h264Buffer;
-                            }
-                        } else {
-                            if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
-                            else outFile.write((char*)inB->buffer, inB->length);
-                        }
+                        // output as raw image data
+                        if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
+                        else outFile.write((char*)inB->buffer, inB->length);
                     }
 
                     // delete the returned data
@@ -242,14 +230,16 @@ void captureImage( std::string deviceID, std::string fileName, std::string forma
 
 }
 
-void captureVideo( std::string deviceID, std::string timeDuration, std::string fileName, std::string addHeader )
+void captureFrames( std::string deviceID, std::string timeDuration, std::string fileName, std::string addHeader )
 {
     bool sendToStdout = true;
     std::ofstream outFile;
     
     int timeToCapture = 10;
-    int fpsVideo = 30;      // let's try to capture 30 FPS
+    int fpsVideo = 30;      // default is 30 fps
     int framesToCapture;
+    int actualFps = fpsVideo;
+    int actualFrameCount = 0;
 
     v4l2cam_logging_mode t = v4l2cam_logging_mode::logOff;
     if (verbose) t = v4l2cam_logging_mode::logToStdOut;
@@ -281,15 +271,14 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
     else outinfo( "No time duration specified, defaulting to 10 secs");
 
     // check for max duration
-    if( timeToCapture > 60 )
+    if( timeToCapture > 120 )
     {
-        outwarn( "Max capture time is 60 secs, setting to 60 secs" );
-        timeToCapture = 60;
+        outwarn( "Max capture time is 120 secs, setting to 120 secs" );
+        timeToCapture = 120;
     }
     
     // initiate video (multiple frame) capture
     framesToCapture = timeToCapture * fpsVideo;
-    outinfo( "Video capture duration is : " + std::to_string(timeToCapture) + " seconds, " + std::to_string(framesToCapture) + " frames" );
 
     // open the output file
     if( !sendToStdout ) 
@@ -315,16 +304,22 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
     {
         // display the current video mode and frame rate
         struct v4l2cam_video_mode * data = cam->getFrameFormat();
-        int data2 = -1;
+        int data2 = fpsVideo;
         if( data )
         {
             // grab the frame format
             data2 = cam->getFrameRate();
+            //  update frame rate and frames to capture based on the retrieved frame rate
+            fpsVideo = data2;
+            framesToCapture = timeToCapture * fpsVideo;
+            // tell the user what we are doing
             outinfo( "   ...using format : " + data->format_str + 
                     " @ " + std::to_string(data->width) + " x " + std::to_string(data->height) + 
                     " : " + std::to_string(data2) + " fps" );
 
-        } else outwarn( "Failed to fetch current video format for : " + cam->getDevName() + " " + cam->getUserName() );
+        } else outwarn( "Failed to fetch current video format for : " + cam->getDevName() + " " + cam->getUserName() + ", using default of 30 fps" );
+
+        outinfo( "   ...video capture duration is : " + std::to_string(timeToCapture) + " seconds, " + std::to_string(framesToCapture) + " frames" );
 
         // initialize the camera
         if( cam->init( v4l2cam_fetch_mode::userPtrMode ) )
@@ -338,15 +333,20 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
 
             // grab a a bunch of frames
             if( (addHeader.length() > 0) && (data->format_str == "H264") ) outinfo( "Adding H264 header to frames" );
+            // start the calc fps at the requeted fps
+            actualFps = fpsVideo;
 
             while( framesToCapture > 0 )
             {
                 bool goodFrame = false;
+                
+                // fetch will block if no frame is available 
                 struct v4l2cam_image_buffer * inB = cam->fetch(framesToCapture == 1);
 
                 // check the return buffers
                 if( inB && inB->buffer )
                 {
+
                     // check for invalid JPG file (if Motion-JPEG selected)
                     if( "MJPG" == data->format_str )
                     {
@@ -357,10 +357,17 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
 
                     if( goodFrame )
                     {
+                        actualFrameCount++;
+
+                        // calculate how much time we are actually waiting
+                        delta = std::chrono::duration_cast<millisec_t> (std::chrono::steady_clock::now() - start );
+                        actualFps = (1000*actualFrameCount) / delta.count();
+
                         // add header if requested and this is an H264 frame
                         if( (addHeader.length() > 0) && (data->format_str == "H264") )
                         {
-                            char * h264Buffer = addH264Header( inB->buffer, inB->length, data2, data->width, data->height ); ;
+                            // send the actual FPS to the other side, just in case it skews during capture
+                            char * h264Buffer = addH264Header( inB->buffer, inB->length, actualFps, data->width, data->height ); ;
                             if( h264Buffer )
                             {
                                 if (sendToStdout) std::cout.write( h264Buffer, inB->length + sizeof( h264FrameHeader_t) );
@@ -372,7 +379,7 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
                             if( sendToStdout ) std::cout.write( (char*)inB->buffer, inB->length );
                             else outFile.write( (char *)inB->buffer, inB->length );
                         }
-                    }
+                    } else outwarn( "Invalid frame returned, skipping" );
 
                     // delete the returned data
                     delete inB->buffer;
@@ -382,16 +389,12 @@ void captureVideo( std::string deviceID, std::string timeDuration, std::string f
 
                 framesToCapture--;
 
-                // make sure we are waiting 1000/fpsVideo milliseconds each look
-                delta = std::chrono::duration_cast<millisec_t> (std::chrono::steady_clock::now() - start );
-                while( delta < (std::chrono::milliseconds)(1000/fpsVideo) )
-                {
-                    delta = std::chrono::duration_cast<millisec_t> (std::chrono::steady_clock::now() - start );
-                    // usleep( 1000 );
-                }
-                start = std::chrono::steady_clock::now();
-
             }
+
+            // print out a summary message
+            outinfo( "   ...actual capture rate was : " + std::to_string(actualFps) + " fps" );
+            outinfo( "   ...actual frames captured : " + std::to_string(actualFrameCount) );
+
         } else outerr( "Failed to initilize fetch mode for : " + cam->getDevName() + " " + cam->getUserName()  );
 
         // close the camera
