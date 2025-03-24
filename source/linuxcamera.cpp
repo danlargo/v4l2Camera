@@ -22,6 +22,8 @@ LinuxCamera::LinuxCamera( std::string device_name )
     m_cameraType = "generic Linux UVC";
 
     m_healthCounter = 0;
+
+    memset(&buf, 0, NUM_QBUF* sizeof(struct v4l2_buffer));
 }
 
 
@@ -29,6 +31,13 @@ LinuxCamera::~LinuxCamera()
 {
     // close the device before we disappear - if m_fid is set then the device is likely open
     if( m_fid > -1 ) ::close(m_fid);
+
+    // free the buffers if they have been allocated
+    for( int i=0;i<NUM_QBUF;i++ )
+    {
+        if( buf[i].m.userptr > 0 ) delete (unsigned char *)buf[i].m.userptr;
+    }
+
 }
 
 
@@ -188,39 +197,46 @@ bool LinuxCamera::init( enum v4l2cam_fetch_mode newMode )
                 else
                 {
                     // queuing up this->numBuffers fetch buffers
-                    m_frameBuffer = new struct v4l2cam_image_buffer;
-                    m_frameBuffer->length =  m_currentMode.size;
-                    m_frameBuffer->buffer = new unsigned char[this->m_currentMode.size];
+                    //m_frameBuffer = new struct v4l2cam_image_buffer;
+                    //m_frameBuffer->length =  m_currentMode.size;
+                    //m_frameBuffer->buffer = new unsigned char[this->m_currentMode.size];
 
                     // queue up the buffer
-                    struct v4l2_buffer buf;
+                    //struct v4l2_buffer buf;
 
-                    memset(&buf, 0, sizeof(struct v4l2_buffer));
-                    buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                    buf.memory = V4L2_MEMORY_USERPTR;
-                    buf.index = 0;
-                    buf.m.userptr = (unsigned long)(m_frameBuffer->buffer);
-                    buf.length = m_frameBuffer->length;
+                    memset(&buf, 0, NUM_QBUF * sizeof(struct v4l2_buffer));
 
-                    if( -1 == ioctl(m_fid, VIDIOC_QBUF, &buf) ) 
+                    // queue up all the buffers
+                    for( int i=0;i<NUM_QBUF;i++ )
                     {
-                        log( "ioctl(VIDIOC_QBUF) failed : " + std::string(strerror(errno)), error );
-                        m_healthCounter++;
-                    }
-                    else
-                    {
-                        // turn streaming on
-                        enum v4l2_buf_type type;
-                        type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                        if( -1 == ioctl(m_fid, VIDIOC_STREAMON, &type) ) 
+                        buf[i].type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                        buf[i].memory = V4L2_MEMORY_USERPTR;
+                        buf[i].index = i;
+                        //buf.m.userptr = (unsigned long)(m_frameBuffer->buffer);
+                        buf[i].m.userptr = (unsigned long)(new unsigned char[this->m_currentMode.size]);
+                        //buf.length = m_frameBuffer->length;
+                        buf[i].length = m_currentMode.size;
+
+                        if( -1 == ioctl(m_fid, VIDIOC_QBUF, &(buf[i]) ) )
                         {
-                            log( "ioctl(VIDIOC_STREAMON) failed : " + std::string(strerror(errno)), error );
+                            log( "ioctl(VIDIOC_QBUF) failed : " + std::string(strerror(errno)), error );
                             m_healthCounter++;
                         }
                         else
                         {
-                            ret = true;
-                            m_healthCounter = 0;
+                            // turn streaming on
+                            enum v4l2_buf_type type;
+                            type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                            if( -1 == ioctl(m_fid, VIDIOC_STREAMON, &type) ) 
+                            {
+                                log( "ioctl(VIDIOC_STREAMON) failed : " + std::string(strerror(errno)), error );
+                                m_healthCounter++;
+                            }
+                            else
+                            {
+                                ret = true;
+                                m_healthCounter = 0;
+                            }
                         }
                     }
                 }
@@ -255,13 +271,13 @@ struct v4l2cam_image_buffer * LinuxCamera::fetch( bool lastOne )
 
             case userPtrMode:
                 // dequeue one frame
-                struct v4l2_buffer buf;
-                memset(&buf, 0, sizeof(struct v4l2_buffer));
+                struct v4l2_buffer tmp_buf;
+                memset(&tmp_buf, 0, sizeof(struct v4l2_buffer));
 
-                buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                buf.memory = V4L2_MEMORY_USERPTR;
+                tmp_buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                tmp_buf.memory = V4L2_MEMORY_USERPTR;
 
-                if( -1 == ioctl(m_fid, VIDIOC_DQBUF, &buf) ) 
+                if( -1 == ioctl(m_fid, VIDIOC_DQBUF, &tmp_buf) ) 
                 {
                     log( "ioctl(VIDIOC_DQBUF) failed : " + std::string(strerror(errno)), error );
                     m_healthCounter++;
@@ -270,28 +286,33 @@ struct v4l2cam_image_buffer * LinuxCamera::fetch( bool lastOne )
                 {
                     retBuffer = new struct v4l2cam_image_buffer;
                     // this should have de-queued into the previous buffer we allocated
-                    retBuffer->buffer = m_frameBuffer->buffer;
-                    retBuffer->length = buf.bytesused;
+                    //retBuffer->buffer = m_frameBuffer->buffer;
+                    //retBuffer->buffer = (unsigned char*)buf.m.userptr;
+                    retBuffer->buffer = new unsigned char[tmp_buf.bytesused];
+                    retBuffer->length = tmp_buf.bytesused;
+                    memcpy( retBuffer->buffer, (unsigned char*)tmp_buf.m.userptr, tmp_buf.bytesused );
 
                     // only re-queue if we are going to be getting more
                     if( !lastOne )
                     {
                         // aloocating for this->numBuffers fetch buffers
-                        m_frameBuffer = new struct v4l2cam_image_buffer;
-                        m_frameBuffer->length =  m_currentMode.size;
-                        m_frameBuffer->buffer = new unsigned char[this->m_currentMode.size];
+                        //m_frameBuffer = new struct v4l2cam_image_buffer;
+                        //m_frameBuffer->length =  m_currentMode.size;
+                        //m_frameBuffer->buffer = new unsigned char[this->m_currentMode.size];
 
                         // queue up the first buffer
-                        struct v4l2_buffer buf;
+                        //struct v4l2_buffer buf;
 
-                        memset(&buf, 0, sizeof(struct v4l2_buffer));
-                        buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-                        buf.memory = V4L2_MEMORY_USERPTR;
-                        buf.index = 0;
-                        buf.m.userptr = (unsigned long)(this->m_frameBuffer->buffer);
-                        buf.length = m_frameBuffer->length;
+                        //memset(&buf, 0, sizeof(struct v4l2_buffer));
+                        //buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+                        //buf.memory = V4L2_MEMORY_USERPTR;
+                        //buf.index = 0;
+                        //buf.m.userptr = (unsigned long)(this->m_frameBuffer->buffer);
+                        //buf.length = m_frameBuffer->length;
 
-                        if( -1 == ioctl(m_fid, VIDIOC_QBUF, &buf) ) 
+                        // just re-queue the one that was already there
+
+                        if( -1 == ioctl(m_fid, VIDIOC_QBUF, &tmp_buf) ) 
                         {
                             log( "ioctl(VIDIOC_QBUF) failed : " + std::string(strerror(errno) ), error );
                             m_healthCounter++;

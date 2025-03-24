@@ -8,12 +8,15 @@
 #include <vector>
 #include <string>
 
+# define NUM_QBUF 5
+
 class LinuxCamera: public V4l2Camera
 {
 private:
     // device identifiers
     int m_fid;
     std::string m_devName;
+    struct v4l2_buffer buf[NUM_QBUF];
 
 public:
     LinuxCamera( std::string );

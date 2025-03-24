@@ -35,16 +35,16 @@ void captureFrame( std::string deviceID, std::string fileName, std::string forma
 		else 
         {
             format = "raw";
-            outwarn("Invalid image format specified, defaulting to <raw>");
+            outwarn("Invalid or no image format specified, defaulting to <raw>");
 		}
     } else {
         format = "raw";
-        outwarn("No format specified, writing raw output data");
+        outwarn("No format specified, writing <raw> output data");
     }
 
     // check if filename is specified
     if( fileName.length() > 0 ) sendToStdout = false;
-    else outwarn( "No filename specified, writing raw output data (image frame) to STDOUT");
+    else outwarn( "No filename specified, writing <raw> output data (image frame) to STDOUT");
 
     // open the output file
     if( !sendToStdout ) 
@@ -165,7 +165,7 @@ void captureFrame( std::string deviceID, std::string fileName, std::string forma
                     //
                     if ("MJPG" == data->format_str)
                     {
-                        if (format != "jpg")  outwarn("Invalid format specified for Motion-JPEG capture, defaulting to <jpg> format");
+                        if (format != "jpg")  outwarn("Invalid or no format specified for Motion-JPEG capture, defaulting to <jpg> format");
 
                         // output as native JPEG (basically raw output)
                         if (sendToStdout) std::cout.write((char*)inB->buffer, inB->length);
