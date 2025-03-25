@@ -21,7 +21,7 @@
 #endif
 
 // Functional demonstration functions
-void listUSBCameras()
+void listUSBCameras( bool streamingOnly )
 {
     // never run silent
     //
@@ -33,7 +33,7 @@ void listUSBCameras()
 
     #ifdef __linux__
         std::vector<LinuxCamera *> camList;
-        camList = LinuxCamera::discoverCameras(t);
+        camList = LinuxCamera::discoverCameras(t, streamingOnly);
     #elif __APPLE__
         std::vector<MACCamera *> camList;
         camList = MACCamera::discoverCameras(t);
@@ -59,28 +59,36 @@ void listUSBCameras()
         {
             if( x->open() )
             {
-                std::string out = "[" + std::to_string(camIndex++) + "] "
-                        + x->getDevName() + " : " + x->getUserName() + " : ";
-                if( x->getVideoModes().size() > 0 ) out += std::to_string(x->getVideoModes().size()) + " video modes, ";
-                if( x->getControls().size() > 0 ) out += std::to_string(x->getControls().size()) + " user controls, ";
-                        
+                std::string out = "\n--------------\n"
+                        + x->getDevName() + " : " + x->getUserName();
+                if( x->getVideoModes().size() > 0 ) out += "\n  - " + std::to_string(x->getVideoModes().size()) + " video modes";
+                if( x->getControls().size() > 0 )   out += "\n  - " + std::to_string(x->getControls().size()) + " user controls";
+                outln( out );
+
+                // output the capabilities info
+                if( 0 == x->m_capabilities ) out = "  - devcaps... none";
+                else 
+                {
+                    out = "  - devcaps... ";
+                    for( const auto &y : x->capabilitiesToStr() ) 
+                    { 
+                        out += y;
+                        out += ", ";
+                    }
+                }
+                outln( out );
+
+                // check if it supports meta data
                 char tmp[5]; tmp[4] = 0;
                 x->fourcc_int_to_charArray(x->getMetaMode(), tmp);
                 if( x->getMetaMode() > 0 ) 
                 {
-                    out += tmp;
+                    out = "    > ";
+                    out +=  tmp;
                     out += " meta format" ;
+                    outln( out );
                 }
-
-                outln( out );
-                // output the capabilities info
-                if( 0 == x->m_capabilities ) outln( "    devcaps...none\r\n" );
-                else 
-                {
-                    outln( "    devcaps..." );
-                    for( const auto &y : x->capabilitiesToStr() ) { outln ( "     > " + y ); }
-                    outln( "" );
-                }
+                
             }
             // close the camera now that we are done with it
             x->close();

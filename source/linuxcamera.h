@@ -22,7 +22,7 @@ public:
     LinuxCamera( std::string );
     virtual ~LinuxCamera();
 
-    static std::vector<LinuxCamera *>  discoverCameras(v4l2cam_logging_mode logMode);
+    static std::vector<LinuxCamera *>  discoverCameras(v4l2cam_logging_mode logMode, bool streamingOnly = false);
     static std::vector<std::string> buildCamList();
 
     // Methods that should be overridden in sublcass

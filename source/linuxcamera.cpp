@@ -41,7 +41,7 @@ LinuxCamera::~LinuxCamera()
 }
 
 
-std::vector<LinuxCamera *> LinuxCamera::discoverCameras( v4l2cam_logging_mode logMode )
+std::vector<LinuxCamera *> LinuxCamera::discoverCameras( v4l2cam_logging_mode logMode, bool streamingOnly )
 {
     std::vector<LinuxCamera *> camList;
     int count = 0;
@@ -75,10 +75,12 @@ std::vector<LinuxCamera *> LinuxCamera::discoverCameras( v4l2cam_logging_mode lo
 
                         if( tmpC->m_capabilities > 0 )
                         {
-                            // save the camera for display later
-                            keep = true;
-                            camList.push_back(tmpC);
-
+                            if( !streamingOnly || (streamingOnly && (tmpC->m_capabilities & V4L2_CAP_STREAMING) && (tmpC->m_modes.size() > 0) ) )
+                            {
+                                // save the camera for display later
+                                keep = true;
+                                camList.push_back(tmpC);
+                            }
                         }
                     }
                 }
@@ -185,7 +187,7 @@ bool LinuxCamera::init( enum v4l2cam_fetch_mode newMode )
 
                 memset(&req,0,sizeof(struct v4l2_requestbuffers));
 
-                req.count  = 1;
+                req.count  = NUM_QBUF;
                 req.type   = V4L2_BUF_TYPE_VIDEO_CAPTURE;
                 req.memory = V4L2_MEMORY_USERPTR;
 
@@ -499,40 +501,40 @@ std::vector<std::string> LinuxCamera::capabilitiesToStr()
     // if( m_capabilities & V4L2_CAP_DEVICE_CAPS ) ret += "device-caps ";
 
     if( (m_capabilities & V4L2_CAP_STREAMING) && (m_modes.size() > 0) ) ret.push_back("can stream");
-    if( (m_capabilities & V4L2_CAP_EXT_PIX_FORMAT) && (m_modes.size() > 0) ) ret.push_back("can query pixel formats ");
+    if( (m_capabilities & V4L2_CAP_EXT_PIX_FORMAT) && (m_modes.size() > 0) ) ret.push_back("can query pixel formats");
     
-    if( (m_capabilities & V4L2_CAP_META_CAPTURE) && (m_metamode > 0) ) ret.push_back("can read metadata ");
-    if( (m_capabilities & V4L2_CAP_META_OUTPUT ) && (m_metamode > 0) ) ret.push_back("can write metadata ");
+    if( (m_capabilities & V4L2_CAP_META_CAPTURE) && (m_metamode > 0) ) ret.push_back("can read metadata");
+    if( (m_capabilities & V4L2_CAP_META_OUTPUT ) && (m_metamode > 0) ) ret.push_back("can write metadata");
 
-    if( m_capabilities & V4L2_CAP_READWRITE ) ret.push_back("can read/write ");
-    if( m_capabilities & V4L2_CAP_ASYNCIO ) ret.push_back("supports async IO ");
+    if( m_capabilities & V4L2_CAP_READWRITE ) ret.push_back("can read/write");
+    if( m_capabilities & V4L2_CAP_ASYNCIO ) ret.push_back("supports async IO");
 
-    if( (m_capabilities & V4L2_CAP_VIDEO_CAPTURE) && (m_modes.size() > 0) ) ret.push_back("supports single-planar video capture ");
-    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT ) ret.push_back("video-output ");
-    if( m_capabilities & V4L2_CAP_VIDEO_OVERLAY ) ret.push_back("video-overlay ");
-    if( m_capabilities & V4L2_CAP_TIMEPERFRAME ) ret.push_back("timerperframe ");
+    if( (m_capabilities & V4L2_CAP_VIDEO_CAPTURE) && (m_modes.size() > 0) ) ret.push_back("supports single-planar video capture");
+    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT ) ret.push_back("video-output");
+    if( m_capabilities & V4L2_CAP_VIDEO_OVERLAY ) ret.push_back("video-overlay");
+    if( m_capabilities & V4L2_CAP_TIMEPERFRAME ) ret.push_back("timerperframe");
 
-    if( m_capabilities & V4L2_CAP_VBI_CAPTURE ) ret.push_back("vbi-capture ");
-    if( m_capabilities & V4L2_CAP_VBI_OUTPUT ) ret.push_back("vbi-output ");
-    if( m_capabilities & V4L2_CAP_SLICED_VBI_CAPTURE ) ret.push_back("slided-vbi-capture ");
-    if( m_capabilities & V4L2_CAP_SLICED_VBI_OUTPUT ) ret.push_back("slided-vbi-output ");
+    if( m_capabilities & V4L2_CAP_VBI_CAPTURE ) ret.push_back("vbi-capture");
+    if( m_capabilities & V4L2_CAP_VBI_OUTPUT ) ret.push_back("vbi-output");
+    if( m_capabilities & V4L2_CAP_SLICED_VBI_CAPTURE ) ret.push_back("slided-vbi-capture");
+    if( m_capabilities & V4L2_CAP_SLICED_VBI_OUTPUT ) ret.push_back("slided-vbi-output");
 
-    if( m_capabilities & V4L2_CAP_RDS_CAPTURE ) ret.push_back("rds-capture ");
-    if( m_capabilities & V4L2_CAP_RDS_OUTPUT ) ret.push_back("rds-output ");
-    if( m_capabilities & V4L2_CAP_SDR_CAPTURE ) ret.push_back("sdr-capture ");
+    if( m_capabilities & V4L2_CAP_RDS_CAPTURE ) ret.push_back("rds-capture");
+    if( m_capabilities & V4L2_CAP_RDS_OUTPUT ) ret.push_back("rds-output");
+    if( m_capabilities & V4L2_CAP_SDR_CAPTURE ) ret.push_back("sdr-capture");
 
-    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT_OVERLAY ) ret.push_back("video-output-overlay ");
+    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT_OVERLAY ) ret.push_back("video-output-overlay");
 
-    if( m_capabilities & V4L2_CAP_VIDEO_M2M ) ret.push_back("video-m2m ");
-    if( m_capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE ) ret.push_back("supports multi-planar video capture  ");
-    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT_MPLANE ) ret.push_back("video-output-mplane ");
-    if( m_capabilities & V4L2_CAP_VIDEO_M2M_MPLANE ) ret.push_back("video-m2m-mplane ");
+    if( m_capabilities & V4L2_CAP_VIDEO_M2M ) ret.push_back("video-m2m");
+    if( m_capabilities & V4L2_CAP_VIDEO_CAPTURE_MPLANE ) ret.push_back("supports multi-planar video capture");
+    if( m_capabilities & V4L2_CAP_VIDEO_OUTPUT_MPLANE ) ret.push_back("video-output-mplane");
+    if( m_capabilities & V4L2_CAP_VIDEO_M2M_MPLANE ) ret.push_back("video-m2m-mplane");
 
-    if( m_capabilities & V4L2_CAP_HW_FREQ_SEEK ) ret.push_back("hw-freq-seek ");
-    if( m_capabilities & V4L2_CAP_TUNER ) ret.push_back("tuner ");
-    if( m_capabilities & V4L2_CAP_AUDIO ) ret.push_back("audio ");
-    if( m_capabilities & V4L2_CAP_RADIO ) ret.push_back("radio ");
-    if( m_capabilities & V4L2_CAP_MODULATOR ) ret.push_back("modulator ");
+    if( m_capabilities & V4L2_CAP_HW_FREQ_SEEK ) ret.push_back("hw-freq-seek");
+    if( m_capabilities & V4L2_CAP_TUNER ) ret.push_back("tuner");
+    if( m_capabilities & V4L2_CAP_AUDIO ) ret.push_back("audio");
+    if( m_capabilities & V4L2_CAP_RADIO ) ret.push_back("radio");
+    if( m_capabilities & V4L2_CAP_MODULATOR ) ret.push_back("modulator");
 
     return ret;
 }

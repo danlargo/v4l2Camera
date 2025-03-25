@@ -59,7 +59,10 @@ int main( int argc, char** argv )
 	if (cmdLine["x"] == "1") { printExamples(); return 0; }
 
     // list of USB Cameras in the system
-	if (cmdLine["l"] == "1") { listUSBCameras(); return 0; }
+	if (cmdLine["l"] == "1") { listUSBCameras( false ); return 0; }
+    
+    // list of streaming capable USB Cameras in the system
+	if (cmdLine["L"] == "1") { listUSBCameras( true ); return 0; }
 
 	// list all devices
 	if (cmdLine["i"] == "1") { listAllDevices(); return 0; }
@@ -192,6 +195,9 @@ std::map<std::string, std::string> parseCmdLine( int argc, char** argv )
 
         // Discover USB Cameras
         if( argS == "-l" ) { cmdLine["l"] = "1"; continue; }
+        
+        // Discover USB Cameras
+        if( argS == "-L" ) { cmdLine["L"] = "1"; continue; }
 
         // Add header to output H264 frames
         if( argS == "-H" ) { cmdLine["H"] = "1"; continue; }

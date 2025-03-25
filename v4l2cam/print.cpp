@@ -65,6 +65,7 @@ int printBasicHelp()
     outln( "-i          :   identify all openable devices in /dev/videoX driver space" );
     #endif
     outln( "-l          :   list all UVC compatible cameras in the USB device space" );
+    outln( "-L          :   list only UVC compatible cameras that have streaming capability" );
     outln( "---" );
     outln( "-d [0..63]  :   select camera ## for operation" );
     outln( "-? [0..63]  :   display current video format and frame rate for camera ##" );

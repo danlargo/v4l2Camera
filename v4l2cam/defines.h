@@ -48,7 +48,7 @@ void outinfo( std::string );
 
 // Command processors
 //
-void listUSBCameras();
+void listUSBCameras( bool streamingOnly=false );
 void listAllDevices();
 void listVideoModes( std::string deviceID );
 void listUserControls( std::string deviceID );
