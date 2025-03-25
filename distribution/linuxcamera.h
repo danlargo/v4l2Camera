@@ -40,6 +40,7 @@ public:
     virtual int getValue( int id, bool openOnDemand = false ) override;
 
     virtual bool enumVideoModes() override;
+    virtual bool setFrameFormat( std::string mode, int width, int height ) override;
     virtual bool setFrameFormat( struct v4l2cam_video_mode, int fps = -1 ) override;
     virtual struct v4l2cam_video_mode * getFrameFormat() override;
     virtual int getFrameRate() override;

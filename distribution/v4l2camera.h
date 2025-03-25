@@ -27,6 +27,7 @@
 // v1.3.010 : started adding Windows support
 // v1.3.068 : moved Windows support for C# into separate file , V4l2Camea.cs
 // v1.3.089 : added frame rate support for video mode queries
+// v1.4.020 : added multiple fetch buffers for low level userptr interface, release 1.4.020
 
 #include <map>
 #include <vector>
@@ -104,7 +105,7 @@ enum v4l2cam_msg_type
 };
 
 const std::string s_codeName = "Syd";
-const std::string s_lastCommitMsg = "[danlargo] added frame rate support for video mode queries";
+const std::string s_lastCommitMsg = "[danlargo] added multiple fetch buffers for low level userptr interface, release 1.4.020";
 
 // V4l2Camera - base class for all camera types
 //
@@ -114,8 +115,8 @@ private:
     // Version Info
     //
     static const int s_majorVersion = 1;
-    static const int s_minorVersion = 3;
-    static const int s_revision = 89;
+    static const int s_minorVersion = 4;
+    static const int s_revision = 20;
 
     static const int s_logDepth = 500;
 
@@ -187,8 +188,6 @@ public:
 
     bool checkCapabilities( unsigned int val );
 
-    bool setFrameFormat( std::string mode, int width, int height );
-
     // Methods that should be overridden in sublcass
     //
     virtual std::string getDevName();
@@ -225,7 +224,8 @@ public:
     //
     virtual struct v4l2cam_video_mode * getFrameFormat();
     virtual int getFrameRate();
-    virtual bool setFrameFormat( struct v4l2cam_video_mode, int fps = -1 );
+    virtual bool setFrameFormat( std::string mode, int width, int height );
+    virtual bool setFrameFormat( struct v4l2cam_video_mode, int fps = 30 );
     virtual bool setFrameRate( int fps );
     virtual struct v4l2cam_image_buffer * fetch( bool lastOne );
 
