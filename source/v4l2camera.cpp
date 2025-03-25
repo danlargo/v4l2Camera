@@ -234,14 +234,14 @@ bool V4l2Camera::setFrameFormat( struct v4l2cam_video_mode vm, int fps )
 }
 
 
-bool V4l2Camera::setFrameFormat( std::string mode, int width, int height )
+bool V4l2Camera::setFrameFormat( std::string mode, int width, int height, int fps )
 {
     // lets see if we can find the requested mode
     for( auto x : m_modes )
     {
         if( (x.format_str == mode) && (x.width == width) && (x.height == height) )
         {
-            return setFrameFormat( x );
+            return setFrameFormat( x, fps );
         }
     }
 

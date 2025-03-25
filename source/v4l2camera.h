@@ -224,7 +224,7 @@ public:
     //
     virtual struct v4l2cam_video_mode * getFrameFormat();
     virtual int getFrameRate();
-    virtual bool setFrameFormat( std::string mode, int width, int height );
+    virtual bool setFrameFormat( std::string mode, int width, int height, int fps = 30 );
     virtual bool setFrameFormat( struct v4l2cam_video_mode, int fps = 30 );
     virtual bool setFrameRate( int fps );
     virtual struct v4l2cam_image_buffer * fetch( bool lastOne );

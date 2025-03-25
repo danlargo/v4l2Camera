@@ -602,10 +602,10 @@ int LinuxCamera::getFrameRate()
     return ret;
 }
 
-bool LinuxCamera::setFrameFormat( std::string mode, int width, int height )
+bool LinuxCamera::setFrameFormat( std::string mode, int width, int height, int fps )
 {
     // included here to allow it to be overridden by inherited classes
-    return V4l2Camera::setFrameFormat( mode, width, height );
+    return setFrameFormat( mode, width, height, fps );
 }
 
 bool LinuxCamera::setFrameFormat( struct v4l2cam_video_mode vm, int fps )
