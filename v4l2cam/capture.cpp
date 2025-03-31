@@ -361,7 +361,8 @@ void captureFrames( std::string deviceID, std::string timeDuration, std::string 
 
                         // calculate how much time we are actually waiting
                         delta = std::chrono::duration_cast<millisec_t> (std::chrono::steady_clock::now() - start );
-                        actualFps = (1000*actualFrameCount) / delta.count();
+                        if( delta.count() > 0 ) actualFps = (1000*actualFrameCount) / delta.count();
+                        else actualFps = fpsVideo;
 
                         // add header if requested and this is an H264 frame
                         if( (addHeader.length() > 0) && (data->format_str == "H264") )
