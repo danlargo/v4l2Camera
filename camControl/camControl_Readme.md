@@ -1,6 +1,6 @@
 # Overview
 
-- This document supports the camControl application (currently executable on Debian/Ubuntu/Rapbian OSs, with AMD64 or ARM64 processors, coming soon to MacOS and Windows)
+- This document supports the camControl application (currently executable on Debian/Ubuntu/Rapbian OSs, with AMD64 or ARM64 processors, coming soon Windows)
 - No installer was created as there should be no dependencies on shared libraries other than Qt5 (installation/upgrade instructions provided below)
     - direct download instructions for binary for AMD64 or ARM64, sha256 checksum provided.
 - UVC camera access is based on [Video4Linux](https://www.kernel.org/doc/html/v4.9/media/uapi/v4l/v4l2.html) api and the [V4l2Camera](https://github.com/danlargo/v4l2Camera) open source project
@@ -21,9 +21,13 @@
 - Can capture AVI-MJPEG video files to file (didn't want any library dependencies on install so no MP4 capure right now)
 - CamControl is based on the Qt UI api and has native support for snapshot of JPG, BMP and PNG image formats.
 
-- [ ] To Do - add raw MJPEG, H.264 and H.265 frame capture to video support with no re-encoding (raw dump to file)
-- [ ] To Do - add RTSP and RTMP casting for Motion-JPEG, H.264 and H.265 image formats.
+**NEW**
 
+- video capture support to AVI for all formats other than H264.
+- video capture support to MP4 for H264 frames
+
+- streaming support for all image formats (other than H264), using multi-part HTTP
+- streaming support for H264 frames using RTSP and RTP
 
 <br/><br/><hr/>
 

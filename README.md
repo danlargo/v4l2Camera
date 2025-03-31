@@ -47,8 +47,8 @@ V4l2Camera is an attempt to abstract the video4linux2 api into something more ea
 
 ### General
 - Makefile is absolutely generic, I spent time on the source code and know I could clean up the Makeifle, will get to it :)
-    - Currenly uses the gcc/g++ compiler and has been tested on Linux and MacOS (sort of)
-    - MacOS version has not attempted to include AVFoundation api so may require changes to use the LLVM compiler and different include paths
+    - Currenly uses the gcc/g++ compiler and has been tested on Linux
+    - MacOS version has partial support
     - Windows version has not been started
 - Makefile will be updated to use native compiler on each platform (as required, would prefer to use gcc/g+ if possible)
 
@@ -59,7 +59,7 @@ V4l2Camera is an attempt to abstract the video4linux2 api into something more ea
 - In progress, will (hopefully) be designed to work with the [AVFoundation](https://developer.apple.com/av-foundation/) api
 
 ### Windows
-- In progress, will be designed to work with the [Media.Capture](https://learn.microsoft.com/en-us/uwp/api/windows.media.capture.mediacapture?view=winrt-26100) api
+- not in progress
 
 
 
@@ -75,7 +75,7 @@ $ git clone https://github.com/danlargo/v4l2Camera.git
 
 ```
 
-### Make (MAC and Linux)
+### Make (Linux only)
 
 - Run **make** in the source folder, this will create the example binary (v4l2cam) and create a distribution folder for inclusion in other apps (v4l2cam-dist)
 ```
@@ -89,30 +89,6 @@ $ cp -r ./v4l2cam-dist ../myProject
 
 ```
 
-### Make (Windows)
-- Check out this link for help if command line tools are not installed - [here](https://learn.microsoft.com/en-us/cpp/build/building-on-the-command-line?view=msvc-170)
-
-- Verify the C++ command line tools are installed
-    - Open a Developer Power Shell from the Visual Studio app 
-        - Tools -> Command Line -> Developer Power Shell
-    - change folder to v4l2camera
-    - run nmake
-
-```
-C:\...> cd v4l2camera
-C:\...> dir
-...should show the file structure for v4l2camera
-
-c:\...> nmake
-```
-- should build the v4l2camera library and command line files
-    - might say "nmake : The term 'nmake' is not recognized as the name of a cmdlet...", which means the command line tools are not installed or not in the command path
-
-- Copy the distribution folder into the top level of your project
-```
-$ cp -r ./v4l2cam-dist ../myProject
-
-```
 
 ### Add to your project source - Linux
 
@@ -185,14 +161,14 @@ g++ -g -o main main.o v4l2cam-dist/libv4l2cam-linux-arm64.a
 
 # ToDo
 
-- Add better support for fourCC codes in Video modes
+- DONE : Add better support for fourCC codes in Video modes
     - currently lookup and display is managed via string version of fourCC code, which is not guarranteed to be unique
     - fourCC convertion functions are provided in v4l2camera.cpp but not used in video mode queries and selection
 
-- Add User Control interface into example command line app (v4l2cam)
+- DONE : Add User Control interface into example command line app (v4l2cam)
     - User Controls are fully supported in the V4l2Camera class
 
-- MacOS support for V4l2Camera
+- STILL IN PROGRESS : MacOS support for V4l2Camera
     - went down a few blind alleys...
         - libucv [here](https://libuvc.github.io/libuvc/)
             - not unhappy with the api, but found it frustrating in that they still haven't dealt with the app permission issue on MacOS (which may not be solveable)
@@ -209,12 +185,23 @@ g++ -g -o main main.o v4l2cam-dist/libv4l2cam-linux-arm64.a
         - I want to provide command line and GUI support for C++, so may be banging my head on a wall here
         - I want to make sure to properly support the request and maintenance of proper user/device permissionsas well
 
-- MacOS build of camControl
+- DROPPED : MacOS build of camControl
     - will use this an indication that the class library actually works on MacOS
 
-- Windows support
-    - looking at the Media.Capture api
-    - very preliminary
-
-- Windows build of camControl
+- SEPARATE APP, IN PROGRESS : Windows build of camControl
     - will use this an indication that the class library actually works on Windows
+
+
+
+# NEW Applications created
+
+## wrapH264
+
+- command line app for taking dump from v4l2cam and wrapping in a minimal MP4 wrapper
+- displays properly in ffplay and vlc
+
+
+## walkMP4
+
+- dictionary based application that will display all (most) header information in MP4, MOV and QT video files
+- great for testing MP4 apps
