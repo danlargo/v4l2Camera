@@ -478,6 +478,7 @@ bool LinuxCamera::enumCapabilities()
         {
             // grab the device name
             m_userName = (char *)(tmpV.card);
+
             // truncate the name if it is duplicated
             int colon = m_userName.find(":");
             if(  colon > -1 ) m_userName = m_userName.substr(0,m_userName.find(":"));
@@ -928,8 +929,8 @@ bool LinuxCamera::enumControls()
     if( !isOpen() ) log( "Unable to call enumControls() as device is NOT open", warning );
     else
     {
-        // walk all the private extended controls starting at V4L2_CID_PRIVATE_BASE
-        // call should fail when there are no more private controls
+        // walk all the controls 
+        // call should fail when there are no more controls to list
         struct v4l2_query_ext_ctrl query_ext_ctrl;
 
         memset(&query_ext_ctrl, 0, sizeof(query_ext_ctrl));

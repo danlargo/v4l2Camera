@@ -46,7 +46,8 @@ std::string V4l2Camera::getDevName()
 
 std::string V4l2Camera::getUserName()
 {
-    return m_userName;
+    if( m_userName.length() > 0 ) return m_userName;
+    else return "unknown";
 }
 
 bool V4l2Camera::canFetch()

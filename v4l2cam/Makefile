@@ -14,11 +14,16 @@ UNAME_M := $(shell uname -m)
 ifeq ($(UNAME_S),Linux)
     ifeq ($(UNAME_M),x86_64)
         LDLIBS=-L../distribution -lv4l2camera-linux-amd64
+        LIB_FILE=../distribution/libv4l2camera-linux-amd64.a
     endif
     ifeq ($(UNAME_M),aarch64)
         LDLIBS=-L../distribution -lv4l2camera-linux-aarch64
+        LIB_FILE=../distribution/libv4l2camera-linux-aarch64.a
     endif
 endif
+
+# Distribution dependencies
+DIST_HEADERS = ../distribution/v4l2camera.h ../distribution/linuxcamera.h
 
 LDFLAGS=-g
 
@@ -38,14 +43,14 @@ $(shell $(MD) build/image_utils)
 $(shell $(MD) ../bin)
 
 # Link the target executable
-../bin/v4l2cam: $(OBJS)
-	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+../bin/v4l2cam: $(OBJS) $(LIB_FILE)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
 
 # Pattern rule to compile .cpp files to .o files
-build/%.o: %.cpp
+build/%.o: %.cpp $(DIST_HEADERS)
 	$(CXX) $(CPPFLAGS) -c $< -o $@
 
-build/image_utils/%.o: image_utils/%.cpp
+build/image_utils/%.o: image_utils/%.cpp $(DIST_HEADERS)
 	$(CXX) $(CPPFLAGS) -c $< -o $@
 
 # Clean target

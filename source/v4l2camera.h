@@ -28,6 +28,7 @@
 // v1.3.068 : moved Windows support for C# into separate file , V4l2Camea.cs
 // v1.3.089 : added frame rate support for video mode queries
 // v1.4.020 : added multiple fetch buffers for low level userptr interface, release 1.4.020
+// v1.5.010 : adding extended control support for Linux UVC cameras
 
 #include <map>
 #include <vector>
@@ -104,8 +105,8 @@ enum v4l2cam_msg_type
     info, warning, error, critical
 };
 
-const std::string s_codeName = "Syd";
-const std::string s_lastCommitMsg = "[danlargo] added multiple fetch buffers for low level userptr interface, release 1.4.020";
+const std::string s_codeName = "Shelley";
+const std::string s_lastCommitMsg = "[danlargo] adding extended control support for linux UVC cameras, release 1.5.120";
 
 // V4l2Camera - base class for all camera types
 //
@@ -115,8 +116,9 @@ private:
     // Version Info
     //
     static const int s_majorVersion = 1;
-    static const int s_minorVersion = 4;
-    static const int s_revision = 20;
+    static const int s_minorVersion = 5;
+    static const int s_revision = 10;
+    static const int s_build = 754;
 
     static const int s_logDepth = 500;
 
@@ -134,6 +136,7 @@ public:
         ver += std::to_string(s_majorVersion); ver += "."; 
         ver += std::to_string(s_minorVersion); ver += "."; 
         ver += std::to_string(s_revision);  
+        ver += " (build " + std::to_string(s_build) + ")";
         return ver;
     }
     static std::string getCodeName() { return "(" + s_codeName +")"; }
