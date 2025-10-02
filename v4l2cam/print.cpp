@@ -59,7 +59,6 @@ int printBasicHelp()
     outln( "-V          :   operate in verbose mode (lots of information messages from low level functions)");
     outln( "-S          :   run totally silent so that this app will not be chatty when used in scripts");
     outln( "-x          :   display some sample commands");
-    outln( "-!          :   display information about h264 encapulation mode" );
     outln( "---" );
     #ifdef __linux__
     outln( "-i          :   identify all openable devices in /dev/videoX driver space" );
@@ -86,6 +85,9 @@ int printBasicHelp()
     outln( "            :   ...   any other fmt, image will be output as raw image data");
     outln( "            :   ...   if no fmt specified or not flag, image will be output as raw image data");
     outln( "-H          :   add header to H264 frames, only supported in video capture mode");
+    outln( "                ... H264 header has frame rate and frame size information");
+    outln( "                ... if this option is excluded and normal raw header is used the header is");
+    outln( "                ... 4 bytes [slap] followed by 4 byte length in little endian");
     outln( "---" );
     outln( "-F [val]    :   set the frame format for camera -d ##, to [val]" );
     outln( "-R [val]    :   set the frame rate for camera -d ##, to [val]" );

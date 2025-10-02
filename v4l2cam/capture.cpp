@@ -376,7 +376,19 @@ void captureFrames( std::string deviceID, std::string timeDuration, std::string 
                                 delete h264Buffer;
                             }
                         } else {
-                            // write the buffer out to the file
+                            // add the default frame header (4 bytes 'slap' and 4 byte length in little endian)
+                            char slap[4] = {'s','l','a','p'};
+                            int len = inB->length;
+                            len = swapEndian( len );
+                            if( sendToStdout )
+                            {
+                                std::cout.write( slap, 4 );
+                                std::cout.write( (char*)&len, 4 );
+                            } else {
+                                outFile.write( slap, 4 );
+                                outFile.write( (char*)&len   , 4 );
+                            }
+                            // write the rest of the buffer out to the file
                             if( sendToStdout ) std::cout.write( (char*)inB->buffer, inB->length );
                             else outFile.write( (char *)inB->buffer, inB->length );
                         }
