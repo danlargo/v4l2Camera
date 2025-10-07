@@ -41,13 +41,12 @@ cd ~/Desktop
 mkdir camControl
 cd camControl
 
-wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-amd64
-wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-amd64.sha256sum
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-amd64.deb
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-amd64.deb.sha256sum
 sha256sum -c camControl-amd64.sha256sum
 
 # if sha256sum returns OK
-mv camControl-amd64 camControl
-chmod +x camControl
+sudo dpkg -i install/camcontrol.arm64.deb
 
 # run it
 ./camControl
@@ -60,13 +59,12 @@ chmod +x camControl
 - built and tested on Raspbian (Debian GNU/Linux 12 (bookworm)), ARM64 Cortex-A76 CPU @ 2.4Ghz (Pi5)
 - installation commands
 ```
-wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-aarch64
-wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-aarch64.sha256sum
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-aarch64.deb
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-aarch64.deb.sha256sum
 sha256sum -c camControl-aarch64.sha256sum
 
 # if sha256sum returns OK
-mv camControl-aarch64 camControl
-chmod +x camControl
+sudo dpkg -i install/camcontrol.aarch64.deb
 
 # run it
 ./camControl
