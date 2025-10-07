@@ -41,15 +41,18 @@ cd ~/Desktop
 mkdir camControl
 cd camControl
 
-wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-amd64.deb
-wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-amd64.deb.sha256sum
-sha256sum -c camControl-amd64.sha256sum
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camcontrol-amd64.deb
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camcontrol-amd64.deb.sha256sum
+sha256sum -c camcontrol-amd64.sha256sum
 
 # if sha256sum returns OK
-sudo dpkg -i install/camcontrol.arm64.deb
+sudo dpkg -i camcontrol.arm64.deb
+
+# If there are any errors in the install...fix the install and run the previous cmd again
+sudo apt install -f
 
 # run it
-./camControl
+./camcontrol
 
 ```
 
@@ -59,15 +62,18 @@ sudo dpkg -i install/camcontrol.arm64.deb
 - built and tested on Raspbian (Debian GNU/Linux 12 (bookworm)), ARM64 Cortex-A76 CPU @ 2.4Ghz (Pi5)
 - installation commands
 ```
-wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-aarch64.deb
-wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camControl-aarch64.deb.sha256sum
-sha256sum -c camControl-aarch64.sha256sum
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camcontrol-aarch64.deb
+wget https://github.com/danlargo/v4l2Camera/raw/refs/heads/main/camControl/camcontrol-aarch64.deb.sha256sum
+sha256sum -c camcontrol-aarch64.sha256sum
 
 # if sha256sum returns OK
-sudo dpkg -i install/camcontrol.aarch64.deb
+sudo dpkg -i camcontrol.aarch64.deb
+
+# If there are any errors in the install...fix the install and run the previous cmd again
+sudo apt install -f
 
 # run it
-./camControl
+./camcontrol
 
 ```
 
