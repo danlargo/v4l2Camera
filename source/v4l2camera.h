@@ -118,7 +118,7 @@ private:
     static const int s_majorVersion = 1;
     static const int s_minorVersion = 5;
     static const int s_revision = 12;
-    static const int s_build = 757;
+    static const int s_build = 758;
 
     static const int s_logDepth = 500;
 
