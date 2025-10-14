@@ -76,26 +76,3 @@ sudo apt install -f
 ./camcontrol
 
 ```
-
-<br/><br/><hr/>
-
-### Qt5 Runtime
-
-- camControl is developed and dependent on the Qt5 apis
-> [!WARNING]
-> In Debian 12 aka Bookworm, Qt5 is part of the baseline installation. 
->   - This is how the camControl installers are set up. (i.e. No Qt5 dependencies are included)
->   - If you want to install on Buster or Bullseye, run the following commands (depending on your OS) from the cmd line. 
->   - This should resolve any shared library issues with Qt5.
-
-```
-$ sudo apt-get update
-$ sudo apt-get upgrade
-
-# for Buster, Debian 10
-$ sudo apt-get install qt5-default
-
-# for Bullseye, Debian 11
-$ sudo apt-get install qtbase5-dev qtchooser
-
-```
